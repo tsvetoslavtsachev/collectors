@@ -8,7 +8,7 @@ dependencies = [
   "requests>=2.31",
   "pandas>=2.0",
   "yfinance>=0.2.40",
-  "datacore @ git+https://github.com/tsvetoslavtsachev/data-core@v0.1.2",
+  "datacore @ git+https://github.com/tsvetoslavtsachev/data-core@v0.1.3",
 ]
 
 [build-system]
