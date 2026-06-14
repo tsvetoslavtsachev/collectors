@@ -1,0 +1,59 @@
+# Два часовника — конфигурация на праговете (v1, 11 юни 2026)
+# Промяна на праг = промяна тук, не в кода.
+
+prices:
+  wti_flat_ticker: "CL=F"
+  brent_flat_ticker: "BZ=F"
+  brent_contract_prefix: "BZ"        # Yahoo: BZ<код на месец><гг>.NYM
+  contract_suffix: ".NYM"
+  history_days: 400
+
+series1_spread:                       # Brent M1–M2 (бекуордейшън)
+  bull_threshold: 1.50                # USD/барел — устойчиво над = ✅
+  bear_threshold: 0.50                # под, или контанго = ❌
+  persistence_days: 5                 # колко затваряния за "устойчиво"
+
+series2_hormuz:                       # IMF PortWatch — транзити
+  arcgis_url: "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/Daily_Chokepoints_Data/FeatureServer/0/query"
+  port_filter_field: "portname"
+  port_filter_value: "Hormuz"         # LIKE филтър
+  date_field_candidates: ["date", "Date", "date_"]
+  tanker_field_candidates: ["n_tankers", "n_tanker", "tankers", "n_cargo", "n_total"]
+  baseline_start: "2026-01-01"        # предвоенна база
+  baseline_end: "2026-02-27"
+  bull_pct_of_baseline: 50            # 7-дн. средно под 50% от базата...
+  bull_weeks: 4                       # ...поне 4 седмици = ✅
+  bear_pct_of_baseline: 75            # над 75%...
+  bear_weeks: 3                       # ...3 поредни седмици = ❌
+
+series3_eia:                          # Запаси — EIA седмично
+  series_crude: "PET.WCESTUS1.W"      # US търговски суров петрол
+  series_cushing: "PET.W_EPC0_SAX_YCUOK_MBBL.W"
+  seasonal_years: 5
+  bull_avg_deviation_mbbl: -3.0       # средно отклонение от сезонната норма
+  bull_window_weeks: 4                #   за последните 4 седмици = ✅
+  bear_consecutive_builds: 2          # 2 поредни седмици build над нормата = ❌
+
+series5_cot:                          # CFTC managed money, WTI (NYMEX 067651)
+  socrata_url: "https://publicreporting.cftc.gov/resource/72hh-3qpy.json"
+  contract_code: "067651"
+  history_rows: 600
+  bull_pctile_jump: 20                # +20 п.п. за <= 2 седмици...
+  bull_from_below_pctile: 40          # ...от база под 40-ия персентил = ✅
+  bear_flat_band: 5                   # |Δ| < 5 п.п. за 4 седмици при затягане = ❌
+
+falsifier:                            # ценови фалсификатори (WTI затваряния)
+  dead_below: 80.0
+  dead_consecutive_closes: 15         # ~3 седмици
+  confirm_above: 95.0
+  confirm_consecutive_closes: 5
+
+composite:                           # при 5 активни серии: 3 от 5
+  bull_needed: 3                      # от 4 активни серии
+  bull_must_include: ["S1", "S2"]     # поне една от двете
+  bear_needed: 3
+
+series6_canary:                       # Brent−WTI спред — вносният регион срещу производителския
+  bull_threshold: 8.0                 # USD/барел — устойчиво над = ✅ вносният стрес се връща
+  bear_threshold: 4.0                 # под = ❌ атлантическият басейн се справя
+  persistence_days: 5

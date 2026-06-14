@@ -1,0 +1,61 @@
+name: oil-two-clocks
+
+# Needs two repo secrets:
+#   DATACORE_PAT  - PAT (repo scope) to checkout + push the private data-core
+#   EIA_API_KEY   - EIA series C3 (eia.gov/opendata)
+
+on:
+  schedule:
+    - cron: "45 15 * * 3"   # Wed, ~75 min after EIA weekly
+    - cron: "0 16 * * 5"    # Fri weekly composite
+  workflow_dispatch:
+
+permissions:
+  contents: write           # commit the светофар into this (collectors) repo
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout collectors
+        uses: actions/checkout@v4
+
+      - name: Checkout data-core (private)
+        uses: actions/checkout@v4
+        with:
+          repository: tsvetoslavtsachev/data-core
+          token: ${{ secrets.DATACORE_PAT }}
+          path: _data-core
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install deps + writer lib
+        run: |
+          pip install -r requirements.txt
+          pip install -e ./_data-core
+
+      - name: Run oil monitor
+        env:
+          EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+          DATACORE_ROOT: ${{ github.workspace }}/_data-core
+        run: python -m collectors.oil.run
+
+      - name: Commit canonical + health -> data-core (private)
+        working-directory: _data-core
+        run: |
+          git config user.name "collectors-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data health
+          git diff --cached --quiet || git commit -m "oil: $(date -u +%Y-%m-%d) canonical write"
+          git push
+
+      - name: Commit светофар -> collectors
+        run: |
+          git config user.name "collectors-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs
+          git diff --cached --quiet || git commit -m "oil: $(date -u +%Y-%m-%d) светофар"
+          git push

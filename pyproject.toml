@@ -1,0 +1,19 @@
+[project]
+name = "collectors"
+version = "0.1.0"
+description = "INIT-22 collectors (public): sensors that fetch and write through the data-core gate"
+requires-python = ">=3.10"
+dependencies = [
+  "pyyaml>=6.0",
+  "requests>=2.31",
+  "pandas>=2.0",
+  "yfinance>=0.2.40",
+  "datacore @ git+https://github.com/tsvetoslavtsachev/data-core@v0.1.2",
+]
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["collectors", "collectors.oil"]
