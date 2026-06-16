@@ -38,7 +38,7 @@ jobs:
       - name: Install deps + writer lib
         run: |
           pip install -r requirements.txt
-          pip install -e ./_data-core
+          pip install -e "./_data-core[watch]"   # [watch] = jsonschema + pyyaml (state write + watchers.yaml)
 
       - name: Run oil monitor
         env:
@@ -82,4 +82,29 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add Dashboard/Health.md
           git diff --cached --quiet || git commit -m "health: $(date -u +%Y-%m-%d) digest"
+          git push
+
+      # Watch (INIT-22 S9): check the trigger conditions against the current
+      # canonical/state series, write the derived fired-state into data-core, and
+      # render the morning Watch surface into tsachev-ops. Guarded by OPS_PAT like
+      # the Health digest; skips cleanly (CI stays green) when the secret is absent.
+      # vrm_watch_state commits only when fires actually change (idempotent - no
+      # spam); Watch.md re-commits on the date bump, like Health.md.
+      - name: Watch -- check triggers, write fired-state + render Watch.md
+        if: ${{ env.OPS_PAT != '' }}
+        env:
+          DATACORE_ROOT: ${{ github.workspace }}/_data-core
+        run: |
+          python -m datacore.watch --write --out _ops/Dashboard/Watch.md
+          cd _data-core
+          git config user.name "collectors-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/state
+          git diff --cached --quiet || git commit -m "watch: $(date -u +%Y-%m-%d) fired-state"
+          git push
+          cd ../_ops
+          git config user.name "collectors-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add Dashboard/Watch.md
+          git diff --cached --quiet || git commit -m "watch: $(date -u +%Y-%m-%d) surface"
           git push
