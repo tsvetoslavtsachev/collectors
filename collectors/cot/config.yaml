@@ -1,0 +1,15 @@
+# COT citizen — configuration (S13). Thresholds/params here, not in code.
+
+endpoints:
+  tff: "https://publicreporting.cftc.gov/resource/gpe5-46if.json"       # Traders in Financial Futures
+  disaggregated: "https://publicreporting.cftc.gov/resource/kh3c-gbw2.json"  # Disaggregated (commodities)
+
+fetch:
+  limit: 5000           # CFTC rows per query (covers full available history)
+  timeout: 30
+  user_agent: "cot-citizen/1.0 (INIT-22)"
+
+# Percentile windows are PARAMETRIZED, never baked into the data. The base stores
+# raw net; consumers (and the report) ask for these explicit windows on the clean
+# segment. 156 = cot-cta CTA view (3y); 520 = cot-monitor view (10y).
+percentile_windows: [156, 520]
