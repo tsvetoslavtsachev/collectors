@@ -9,6 +9,12 @@ is downstream in to_datacore: any key whose rows still carry >1 contract identit
 and is not a declared splice is refused. Where a stable `cftc_code` is known the
 fetch pins by contract_market_code instead (structurally single identity — the
 real fix; oil does this for WTI). Code discovery is a separate hardening step.
+
+Each normalized row carries the FULL cohort breakdown (primary/secondary/tertiary
+long-short-net + open interest), ported verbatim from cot-monitor's normalizers
+(INIT-22 S13c, full base expansion). `primary_net` stays the headline that lands
+as the canonical `value`; the rest are additive fields the dashboards reproduce
+from the base so they can retire their own CFTC fetch.
 """
 from __future__ import annotations
 import requests
@@ -33,19 +39,33 @@ def _sub(a, b):
 
 
 def _normalize_tff(row):
+    # Financial futures: primary = leveraged funds (fast money), secondary =
+    # asset managers (slow money), tertiary = dealers (intermediaries).
     lev_l, lev_s = _num(row.get("lev_money_positions_long")), _num(row.get("lev_money_positions_short"))
+    am_l, am_s = _num(row.get("asset_mgr_positions_long")), _num(row.get("asset_mgr_positions_short"))
+    dlr_l, dlr_s = _num(row.get("dealer_positions_long_all")), _num(row.get("dealer_positions_short_all"))
     return {"date": row.get("report_date_as_yyyy_mm_dd"),
             "market_name": row.get("market_and_exchange_names"),
             "open_interest": _num(row.get("open_interest_all")),
-            "primary_net": _sub(lev_l, lev_s)}
+            "primary_long": lev_l, "primary_short": lev_s, "primary_net": _sub(lev_l, lev_s),
+            "secondary_long": am_l, "secondary_short": am_s, "secondary_net": _sub(am_l, am_s),
+            "tertiary_long": dlr_l, "tertiary_short": dlr_s, "tertiary_net": _sub(dlr_l, dlr_s)}
 
 
 def _normalize_disagg(row):
+    # Commodities: primary = managed money (CTA proxy), secondary = producers/
+    # merchants (natural hedgers), tertiary = swap dealers. NB CFTC API quirk —
+    # swap LONG is single underscore, swap SHORT is DOUBLE underscore; the wrong
+    # key silently returns None and hides the cohort.
     mm_l, mm_s = _num(row.get("m_money_positions_long_all")), _num(row.get("m_money_positions_short_all"))
+    pm_l, pm_s = _num(row.get("prod_merc_positions_long")), _num(row.get("prod_merc_positions_short"))
+    sw_l, sw_s = _num(row.get("swap_positions_long_all")), _num(row.get("swap__positions_short_all"))
     return {"date": row.get("report_date_as_yyyy_mm_dd"),
             "market_name": row.get("market_and_exchange_names"),
             "open_interest": _num(row.get("open_interest_all")),
-            "primary_net": _sub(mm_l, mm_s)}
+            "primary_long": mm_l, "primary_short": mm_s, "primary_net": _sub(mm_l, mm_s),
+            "secondary_long": pm_l, "secondary_short": pm_s, "secondary_net": _sub(pm_l, pm_s),
+            "tertiary_long": sw_l, "tertiary_short": sw_s, "tertiary_net": _sub(sw_l, sw_s)}
 
 
 def _safe_oi(row):

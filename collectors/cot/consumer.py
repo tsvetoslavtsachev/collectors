@@ -101,6 +101,46 @@ def positioning_view(key: str, window: Optional[int] = None) -> dict:
     }
 
 
+def cot_rows(key: str) -> list[dict]:
+    """Reproduce a market's full weekly cohort rows FROM THE BASE — the dashboards'
+    `markets/<key>.json` `cot` array, sourced from data-core instead of a local CFTC
+    fetch (S13c cut-over). Each row mirrors cot-monitor's normalizer output exactly
+    (date, market_name, open_interest, primary/secondary/tertiary long/short/net,
+    report_family), so derive_metrics / cta_model / index.html run unchanged.
+
+    Returns [] for WTI (reuse: the base holds only the oil percentile, not cohort
+    detail) and for any unmigrated / absent series — the caller keeps its own thin
+    fetch for those.
+    """
+    m = next((x for x in markets.MARKETS if x["key"] == key), None)
+    if not m or not m.get("canonical"):
+        return []  # WTI-reuse or unknown -> caller's thin fetch
+    sid = m["canonical"]
+    path = _root() / "data" / "canonical" / f"{sid}.json"
+    if not path.exists():
+        return []
+    recs = json.loads(path.read_text(encoding="utf-8"))
+    fam = m["family"]
+    rows = []
+    for r in recs:
+        rows.append({
+            "date": r.get("as_of"),
+            "market_name": r.get("market_name"),
+            "open_interest": r.get("open_interest"),
+            "primary_long": r.get("primary_long"),
+            "primary_short": r.get("primary_short"),
+            "primary_net": r.get("primary_net"),
+            "secondary_long": r.get("secondary_long"),
+            "secondary_short": r.get("secondary_short"),
+            "secondary_net": r.get("secondary_net"),
+            "tertiary_long": r.get("tertiary_long"),
+            "tertiary_short": r.get("tertiary_short"),
+            "tertiary_net": r.get("tertiary_net"),
+            "report_family": fam,
+        })
+    return rows
+
+
 def cta_lens(key: str) -> dict:
     """cot-cta's COT cross-reference, sourced from the base (pipeline retired).
 

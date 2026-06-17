@@ -22,6 +22,13 @@ from . import markets
 
 COHORT_LABEL = {markets.MM: "managed money", markets.LEV: "leveraged funds"}
 
+# The three reporting cohorts per CFTC report family (primary/secondary/tertiary),
+# recorded so the catalog documents the full S13c record shape — not just `value`.
+COHORTS_BY_FAMILY = {
+    "tff": ("leveraged funds", "asset managers", "dealers"),
+    "disaggregated": ("managed money", "producers/merchants", "swap dealers"),
+}
+
 
 def entry(m: dict) -> dict:
     cohort = COHORT_LABEL[m["cohort"]]
@@ -54,6 +61,16 @@ def entry(m: dict) -> dict:
         quality.append("name_break_2022: LIKE query matches post-2022 only")
     if quality:
         e["quality"] = quality
+    # S13c full row (added last so the diff stays purely additive): `value` is the
+    # cohort net headline; each record also carries the full breakdown the dashboards
+    # reproduce from the base.
+    prim, sec, ter = COHORTS_BY_FAMILY[m["family"]]
+    e["record_fields"] = (
+        f"value = {prim} net (primary_net, headline). Each record also carries the "
+        f"full cohort row: primary ({prim}), secondary ({sec}), tertiary ({ter}) — "
+        f"each long/short/net — plus open_interest and market_name (the rebrand/"
+        f"splice scar stays visible per row)."
+    )
     return e
 
 

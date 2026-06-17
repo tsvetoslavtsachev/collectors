@@ -57,8 +57,24 @@ def push(raw_markets: dict) -> list[dict]:
 
         # --- mark-don't-clean: keep all rows, record the seam ---
         flags = derive.data_quality(rows, m)
+        # Full cohort row (S13c expansion): `value` stays primary_net so every
+        # analytical consumer that reads `value` is byte-stable; the named cohort
+        # fields are additive and let the dashboards reproduce their full markets/
+        # <key>.json shape from the base (retiring their own CFTC fetch). market_name
+        # is kept per row so the rebrand/splice scar stays visible at row level.
         records = [{"as_of": (r["date"] or "")[:10],
-                    "value": r["primary_net"], "source": "cftc"} for r in rows]
+                    "value": r["primary_net"], "source": "cftc",
+                    "primary_long": r.get("primary_long"),
+                    "primary_short": r.get("primary_short"),
+                    "primary_net": r.get("primary_net"),
+                    "secondary_long": r.get("secondary_long"),
+                    "secondary_short": r.get("secondary_short"),
+                    "secondary_net": r.get("secondary_net"),
+                    "tertiary_long": r.get("tertiary_long"),
+                    "tertiary_short": r.get("tertiary_short"),
+                    "tertiary_net": r.get("tertiary_net"),
+                    "open_interest": r.get("open_interest"),
+                    "market_name": r.get("market_name")} for r in rows]
         try:
             res = datacore.write(sid, records, schema_version=SCHEMA_VERSION)
             if flags:

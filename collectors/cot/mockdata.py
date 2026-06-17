@@ -12,9 +12,20 @@ from __future__ import annotations
 
 
 def _series(name, start_net, n, step=500):
-    return [{"date": f"2016-{i:04d}", "market_name": name,
-             "open_interest": 100000 + i, "primary_net": start_net + (i % 20) * step}
-            for i in range(n)]
+    rows = []
+    for i in range(n):
+        net = start_net + (i % 20) * step
+        # invariant-respecting synthetic cohorts (long - short == net), so the
+        # offline run exercises the full S13c record shape, not just primary_net.
+        p_short = 20_000
+        s_net, s_short = -net // 2, 15_000
+        t_net, t_short = net // 4, 8_000
+        rows.append({"date": f"2016-{i:04d}", "market_name": name,
+                     "open_interest": 100_000 + i,
+                     "primary_long": p_short + net, "primary_short": p_short, "primary_net": net,
+                     "secondary_long": s_short + s_net, "secondary_short": s_short, "secondary_net": s_net,
+                     "tertiary_long": t_short + t_net, "tertiary_short": t_short, "tertiary_net": t_net})
+    return rows
 
 
 def raw(cfg=None) -> dict:
