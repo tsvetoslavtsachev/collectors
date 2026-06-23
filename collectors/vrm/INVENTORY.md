@@ -253,16 +253,31 @@ rule must not rest on operator memory):**
     ~PCE carry-forward); within tol but ~55% of the velocity budget. Watch in the CI parallel.
   - **NOTE** bloomberg_era=False on the latest week (2026-06-19) -> value_tr==value (yfinance
     retroactive dividend adj); score-safe this week, self-corrects on next pull.
-- **Gate 5** — sign-off → real base write + CI autorun (Session 2). **Carry into Gate 5
-  (ultracode flags):** (b) **liq_* frontier creep** — `liq_tga_level`/`liq_anfci` are
-  FRED-monthly so they sit in `_anchor_ids`; they complete a month earlier than the
-  regime macro, so in an early-month run they could push the frontier and phantom-extend
-  the regime by a carried month. Recommend `frontier_anchor: false` for liq + core_cpi +
-  pce_nowcast (bound the frontier to the 7 FRED regime inputs). (c) **MIN_RETAIN_RATIO
-  0.5** too loose for a fixed-length series — a cleared/short slot at 49.6% passes;
-  tighten or assert the known length. (d) move `assert_safe_root` into the write path
-  (already a Gate-2 deferral). (e) **verify_s6b is migration-scoped** — it asserts
-  `bloomberg_era` on the FRED macro too, which `full_replace` intentionally drops; the
-  recurring collector verify is regime-reproduction + bystander + git-clean, NOT
-  verify_s6b. (f) adopt `git status --porcelain` clean as the canonical bystander; git-track
-  the SHA baseline manifest.
+- **Gate 5 ✅ DEPLOYED (2026-06-23)** — sign-off (Цветослав "Deploy now") → real-base write +
+  CI autorun + first commit. **Scope = FOOD-ONLY** (strangler): canonical refreshed + weekly CI;
+  the state engines (vrm_regime/overlay/B5/B6/B8/matrix/scorecard) are NOT recomputed — the
+  brain-switch is deferred until the parallel run agrees over several weeks (Excel stays the
+  source of truth; see README "Deploy state"). So vrm_regime stays 228 this session (the
+  228->225 happens at the deferred switch).
+  - **Hardening shipped (the carried flags):** (b) frontier_anchor:false on liq_tga/liq_anfci/
+    core_cpi/pce_nowcast — `_anchor_ids` (the 7 FRED regime inputs) decoupled from `_fill_ids`/
+    `_cohort_ids` (full cohort still carried). (c) MIN_RETAIN_RATIO 0.5 -> 0.9. (d) assert_safe_root
+    moved into to_datacore.push (write-path guard). (e) verify_s6b doc-noted migration-scoped.
+    (f) git --porcelain adopted as the bystander.
+  - **Real write:** 51 written / 0 skipped; awh head WARN 246->243 (expected); 5 new mkt_* series;
+    2 ISM byte-identical (slot seeded from frozen). Acceptance on the real base: REFLATION = Excel,
+    alignment 6/8, GMS 4/8 MEDIUM, 222/225 = 98.7%. Bystander: 44 non-VRM canonical byte-identical,
+    data/state untouched.
+  - **CI:** `.github/workflows/vrm.yml` (oil/cot pattern); FRED_API_KEY secret set on collectors.
+    Verified end-to-end (run SUCCESS): 49 written / 2 skipped (ISM = manual, gitignored -> skipped
+    in CI, existing canonical preserved; refresh locally monthly).
+  - **CI caught a real bug:** a key set via PowerShell `gh secret set` (stdin pipe) carried a BOM
+    (U+FEFF) -> urllib ASCII-encode failure -> 13 FRED skipped on the first run. Fixed:
+    fetch_observations strips BOM/ZWSP; secret re-set via `--body`. Lesson: secrets via `--body`,
+    not the stdin pipe.
+  - **Commits:** collectors `3f66322` + `26780c6` (BOM fix); data-core `9ed830f` + merge `d64d872`
+    + tag **v0.12.0** (ism_manual.json gitignored — never in the public repo).
+  - **Ultracode adversarial verify: PUSH, 0 blockers.** One MAJOR (add frontier_anchor:false to
+    core_pce) was REJECTED with reasoning: core_pce IS one of the 7 regime inputs (belongs in the
+    frontier) and cannot phantom-extend (frontier from pre-fill records; PCE lags, never leads
+    alone). Flagged for the user's judgment, not a blocker.
