@@ -97,6 +97,17 @@ def main() -> int:
         print(f"  + {r['series_id']}: {r['rows']} rows, as_of {r['as_of']}{warn}")
     for r in skipped:
         print(f"  - {r['series_id']}: SKIP ({r.get('skipped')})")
+    # ISM is the licensed manual holdout: its slot (ism_manual.json) is gitignored, so
+    # it is absent in CI -> those 2 series skip there EVERY run. Flag that explicitly so
+    # a green CI's two skips don't read as a failure. The write path skips a series with
+    # no records (it never zeroes one), so the existing ISM canonical is preserved.
+    ism_ids = set(cfg.get("manual", {}).get("series", {}))
+    ism_skipped = [r for r in skipped if r["series_id"] in ism_ids]
+    if ism_skipped:
+        ids = ", ".join(r["series_id"] for r in ism_skipped)
+        print(f"  [i] {len(ism_skipped)} manual ISM slot(s) skipped ({ids}) -- EXPECTED without "
+              f"the licensed ism_manual.json (e.g. in CI); existing ISM canonical is PRESERVED, "
+              f"not zeroed. Refresh ISM locally when the monthly Bloomberg print is entered.")
     warned = [r for r in wrote if r.get("warnings")]
     if warned:
         print(f"  ! {len(warned)} series written WITH edge/gap warnings (see [WARN] above): "
