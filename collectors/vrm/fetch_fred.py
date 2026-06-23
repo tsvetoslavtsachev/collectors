@@ -1,13 +1,13 @@
-"""FEED 2 — FRED via the official API (14 series).
+"""FEED 2 - FRED via the official API (14 series).
 
 Live port of migrations/s9b_ahe_yoy/fetch_ahe_yoy.py + s6b_vrm_macro/fred_verify.py:
 api.stlouisfed.org/fred/series/observations + FRED_API_KEY (the keyless
-fredgraph.csv bot-stalls — see memory init22-no-local-egress). Key is read from
+fredgraph.csv bot-stalls - see memory init22-no-local-egress). Key is read from
 env ONLY, never printed, never written to any artifact (4 retries, UA header).
 
 Responsibility split: this module does network + downsample-to-model-frequency.
 The two computed transforms (macro_ahe_yoy = 12m YoY; macro_pce_nowcast = OLS on
-CPI MoM) live in compute.py — this returns their raw monthly levels for it.
+CPI MoM) live in compute.py - this returns their raw monthly levels for it.
 
   transform=level + model_freq=monthly, source monthly -> pass through FRED dates.
   transform=level + source daily/weekly, model monthly -> mean_of_month (VERIFIED
@@ -15,7 +15,7 @@ CPI MoM) live in compute.py — this returns their raw monthly levels for it.
   transform=level + model_freq=daily (mkt_*) -> all daily observations.
   computed=true (ahe) -> levels only; compute.py builds the YoY records.
 
-NETWORK STEP — exercised in Gate 2. Gate 1 proves wiring offline via run.py --mock.
+NETWORK STEP - exercised in Gate 2. Gate 1 proves wiring offline via run.py --mock.
 """
 from __future__ import annotations
 import os
@@ -27,6 +27,13 @@ import urllib.request
 from collections import defaultdict
 
 FRED_API_BASE = "https://api.stlouisfed.org/fred/series/observations"
+
+# Characters that can ride along on a key pasted from a BOM-prefixed .env or piped
+# through PowerShell 5.1 to `gh secret set`: BOM (U+FEFF) and zero-width space
+# (U+200B). Python's bare str.strip() does NOT remove them (neither is whitespace),
+# and a leading BOM then makes urllib fail to ASCII-encode the URL (the CI caught
+# exactly this). Built via chr() to keep this source pure ASCII.
+_KEY_JUNK = chr(0xFEFF) + chr(0x200B)
 
 
 def _month_end(ym: str) -> str:
@@ -43,7 +50,8 @@ def _current_ym() -> str:
 
 def fetch_observations(ticker: str) -> list:
     """[(YYYY-MM-DD, float)] for a FRED ticker. S9b pattern; key never logged."""
-    key = os.environ.get("FRED_API_KEY", "").strip()
+    # strip whitespace, then any BOM/ZWSP, then whitespace again (handles any order)
+    key = os.environ.get("FRED_API_KEY", "").strip().strip(_KEY_JUNK).strip()
     if not key:
         raise RuntimeError("FRED_API_KEY not in env (keyless fredgraph bot-stalls)")
     url = f"{FRED_API_BASE}?series_id={ticker}&file_type=json&api_key={key}"
@@ -118,6 +126,6 @@ def fetch_fred(cfg: dict) -> dict:
                                   "resolution": res} for d, v in levels]
             out[series_id] = {"ok": True, "levels": levels,
                               "model_records": model_records}
-        except Exception as e:  # noqa: BLE001 — isolate per series
+        except Exception as e:  # noqa: BLE001 - isolate per series
             out[series_id] = {"ok": False, "error": f"{type(e).__name__}: {e}"}
     return out
