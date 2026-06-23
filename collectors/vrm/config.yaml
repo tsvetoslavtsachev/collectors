@@ -1,0 +1,123 @@
+# VRM weekly collector — series map = the machine-readable input inventory.
+# INIT-22 E4/E5. Образец: collectors/oil + collectors/cot.
+#
+# Three deterministic feeds + one manual slot un-freeze the VRM canonical series
+# (frozen at the S6 migration date: prices 2026-06-12, macro 2026-05-31). The two
+# VRM engines read from canonical, never Excel:
+#   regime_engine.py (S6c)  -> 9 monthly macro series (value = raw level; engine
+#                              applies its own YoY / diff(12) transforms)
+#   overlay_engine.py (S6d) -> weekly price series; value_tr (Adj Close) for
+#                              momentum/GMS, value (Close) for KS; SPY = master grid
+#
+# Cardinal rule: a model never writes numbers here. Only the deterministic path
+# (fetcher -> datacore.write) does. Gate 1 writes ONLY to a TEMP DATACORE_ROOT.
+
+settings:
+  weekly_rule: "W-FRI"              # exact mirror of S5/S6 recon_engine.weekly()
+  bloomberg_era_cut: "2026-06-12"   # provenance boundary (last MID Friday, S5)
+  history_period_prices: "max"      # yfinance full-history pull, then full-replace write
+  round_dp: 6
+  # FEED 5 bridge source — ETF-rr barometer published JSON (Pages). Snapshot feed:
+  # one reading per indicator; the bridge forward-accumulates (Gate 2 wiring).
+  barometer_feed_url: "https://tsvetoslavtsachev.github.io/ETF-rotationradar/barometer_feed.json"
+  # WRITE MODE — DECIDED (Цветослав, 2026-06-22): full re-pull + replace.
+  #   Re-pull full history each run, one write/series (mirrors the S6 importer;
+  #   storage.write_canonical overwrites the whole file). Catches FRED revisions.
+  #   Safe for MACRO because S6b verified FRED ~= the Bloomberg paste (9 flips,
+  #   all value-aligned) -> replacing Bloomberg-paste history with FRED should
+  #   reproduce the regime; Gate 4 confirms empirically. Price value_tr micro-drift
+  #   on yfinance re-adjustment was already accepted in S6e. The truncation floor
+  #   (to_datacore) guards against a short pull silently truncating history.
+  write_mode: "full_replace"
+
+# ---- FEED 1: yfinance (34 symbols: 32 ETF/idx dual-basis + ^VIX/^MOVE levels) ----
+# series_id -> {symbol, dual_basis}. dual_basis=true writes value (Close) +
+# value_tr (Adj Close). dual_basis=false writes value only (index/levels), with
+# value_tr mirrored to value for shape parity (как idx_dxy в catalog).
+# forward_only=true -> bloomberg_era=false for all rows (not in the MID paste).
+yfinance:
+  etf_spy:  {symbol: "SPY",        dual_basis: true}
+  etf_qqq:  {symbol: "QQQ",        dual_basis: true}
+  etf_iwm:  {symbol: "IWM",        dual_basis: true}
+  etf_xle:  {symbol: "XLE",        dual_basis: true}
+  etf_xlf:  {symbol: "XLF",        dual_basis: true}
+  etf_xlv:  {symbol: "XLV",        dual_basis: true}
+  etf_xlp:  {symbol: "XLP",        dual_basis: true}
+  etf_xlu:  {symbol: "XLU",        dual_basis: true}
+  etf_xly:  {symbol: "XLY",        dual_basis: true}
+  etf_xli:  {symbol: "XLI",        dual_basis: true}
+  etf_xlb:  {symbol: "XLB",        dual_basis: true}
+  etf_tlt:  {symbol: "TLT",        dual_basis: true}
+  etf_ief:  {symbol: "IEF",        dual_basis: true}
+  etf_tip:  {symbol: "TIP",        dual_basis: true}
+  etf_lqd:  {symbol: "LQD",        dual_basis: true}
+  etf_hyg:  {symbol: "HYG",        dual_basis: true}
+  etf_gld:  {symbol: "GLD",        dual_basis: true}
+  etf_slv:  {symbol: "SLV",        dual_basis: true}
+  etf_dbc:  {symbol: "DBC",        dual_basis: true}
+  etf_vnq:  {symbol: "VNQ",        dual_basis: true}
+  etf_efa:  {symbol: "EFA",        dual_basis: true}
+  etf_eem:  {symbol: "EEM",        dual_basis: true}
+  etf_fxi:  {symbol: "FXI",        dual_basis: true}
+  etf_emb:  {symbol: "EMB",        dual_basis: true}
+  etf_vug:  {symbol: "VUG",        dual_basis: true}
+  etf_vtv:  {symbol: "VTV",        dual_basis: true}
+  etf_uso:  {symbol: "USO",        dual_basis: true,  forward_only: true}
+  etf_xlk:  {symbol: "XLK",        dual_basis: true,  forward_only: true}
+  etf_uup:  {symbol: "UUP",        dual_basis: true,  forward_only: true}
+  etf_soxx: {symbol: "SOXX",       dual_basis: true,  forward_only: true}
+  etf_ewy:  {symbol: "EWY",        dual_basis: true,  forward_only: true}
+  idx_dxy:  {symbol: "DX-Y.NYB",   dual_basis: false}
+  # market-context (D2) — DECIDED (Цветослав, 2026-06-22): BRIDGE from the ETF-rr
+  # barometer feed, NOT a direct yfinance pull. bridge:true makes fetch_prices skip
+  # these; fetch_bridge.py reads the barometer feed (single source shared with the
+  # barometer). The barometer-feed location/shape is wired at Gate 2. resolution
+  # daily kept for when the bridge supplies the series. (symbol kept for reference.)
+  mkt_vix:  {symbol: "^VIX",       dual_basis: false, resolution: daily, bridge: true}
+  mkt_move: {symbol: "^MOVE",      dual_basis: false, resolution: daily, bridge: true}
+
+# ---- FEED 2: FRED (14 series via api.stlouisfed.org + FRED_API_KEY) ----
+# series_id -> {ticker, transform, model_freq, source_freq, downsample}.
+# transform=level -> write the raw FRED level (regime_engine does YoY/diff itself).
+# downsample=mean_of_month for daily/weekly sources the model consumes monthly
+# (VERIFIED method, S6b threshold_baseline: VRM2 = mean-of-month for TGA/ANFCI).
+# frontier_anchor=false (Gate-5 hardening): a month-end cohort series that is FILLED
+# by carry_forward but must NOT define the regime FRONTIER. liq_tga/liq_anfci complete
+# a month earlier (daily/weekly source -> mean_of_month closes at month end) and
+# core_cpi/pce_nowcast ride the CPI calendar; anchoring on them would phantom-extend
+# the regime by a carried month in an early-month run. The frontier = the 7 FRED
+# regime inputs regime_engine actually reads (awh/u6/claims/retail/core_pce/ppi/shelter).
+fred:
+  macro_awh_total_private: {ticker: "AWHAE",        transform: level, model_freq: monthly, source_freq: monthly}
+  macro_u6:                {ticker: "U6RATE",       transform: level, model_freq: monthly, source_freq: monthly}
+  macro_continued_claims:  {ticker: "CCSA",         transform: level, model_freq: monthly, source_freq: weekly,  downsample: mean_of_month}
+  macro_retail_sales:      {ticker: "RSXFS",        transform: level, model_freq: monthly, source_freq: monthly}
+  macro_core_pce:          {ticker: "PCEPILFE",     transform: level, model_freq: monthly, source_freq: monthly}
+  macro_ppi_commodity:     {ticker: "PPIACO",       transform: level, model_freq: monthly, source_freq: monthly}
+  macro_shelter_cpi:       {ticker: "CUSR0000SAH1", transform: level, model_freq: monthly, source_freq: monthly}
+  macro_core_cpi:          {ticker: "CPILFESL",     transform: level, model_freq: monthly, source_freq: monthly, frontier_anchor: false}
+  liq_tga_level:           {ticker: "WTREGEN",      transform: level, model_freq: monthly, source_freq: daily,   downsample: mean_of_month, frontier_anchor: false}
+  liq_anfci:               {ticker: "ANFCI",        transform: level, model_freq: monthly, source_freq: weekly,  downsample: mean_of_month, frontier_anchor: false}
+  mkt_hy_oas:              {ticker: "BAMLH0A0HYM2", transform: level, model_freq: daily,   source_freq: daily}
+  mkt_breakeven_10y:       {ticker: "T10YIE",       transform: level, model_freq: daily,   source_freq: daily}
+  mkt_curve_10y2y:         {ticker: "T10Y2Y",       transform: level, model_freq: daily,   source_freq: daily}
+  # AHE is FRED-fetched but COMPUTED (value = 12m YoY %, the salary watcher input).
+  # Listed under fred for the fetch; the YoY transform lives in compute.py.
+  macro_ahe_yoy:           {ticker: "CES0500000003", transform: yoy12, model_freq: monthly, source_freq: monthly, computed: true}
+
+# ---- FEED 3: computed (derived from a fetched FRED series, no own ticker) ----
+computed:
+  macro_pce_nowcast:
+    from_series: "macro_core_cpi"          # CPI MoM of the fetched core CPI level
+    formula: "0.1252 + 0.5632 * cpi_mom"   # frozen 60m OLS snapshot (catalog basis)
+    model_freq: monthly
+    provisional: true
+    frontier_anchor: false                 # Gate-5: filled, but never pushes the frontier
+
+# ---- FEED 4: manual (ISM — licensed, no free FRED; hand-entered Bloomberg) ----
+# Read from a hand-maintained slot file; the collector never fetches these.
+manual:
+  slot_file: "ism_manual.json"             # {series_id: [{as_of, value}, ...]}
+  series:
+    macro_ism_mfg:      {provisional: true}
+    macro_ism_services: {provisional: true}

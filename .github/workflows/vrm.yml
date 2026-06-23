@@ -1,0 +1,75 @@
+name: vrm-weekly
+
+# Needs repo secrets:
+#   DATACORE_PAT   - PAT (repo scope) to checkout + push the private data-core
+#   FRED_API_KEY   - FRED api.stlouisfed.org key (macro feed); set on THIS repo
+#
+# Refreshes the 51 VRM canonical series -- the "food pipe" (INIT-22 E4/E5): yfinance
+# prices/idx + ^VIX/^MOVE bridge, FRED macro/liquidity levels, computed ahe_yoy +
+# pce_nowcast. Mirrors the oil/cot collectors: fetch -> write canonical -> commit.
+#
+# ISM (macro_ism_mfg / macro_ism_services) is the LICENSED manual holdout. Its slot
+# file (ism_manual.json) is gitignored -> NOT in this checkout -> the 2 ISM series
+# are skipped here and their EXISTING canonical is preserved untouched (the write
+# path skips a series with no records; it never zeroes one). ISM is refreshed LOCALLY
+# when Цветослав enters the monthly Bloomberg print. So CI auto-refreshes the 49
+# free-source series; ISM stays manual/monthly. (Future option: move the slot into the
+# private data-core repo so CI can refresh it too.)
+#
+# SCOPE -- this is a canonical refresh ONLY. It does NOT recompute the VRM state engines
+# (vrm_regime / vrm_overlay / B5 / B6 / B8 / matrix / scorecard). That brain recompute
+# is the strangler "switch" step, deferred until the weekly parallel run agrees with
+# Excel over several weeks. Until then Excel stays the source of truth and this job just
+# keeps the food (canonical) fresh, in parallel, for comparison.
+
+on:
+  schedule:
+    - cron: "0 6 * * 6"     # Sat 06:00 UTC -- after the Friday close has settled
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout collectors
+        uses: actions/checkout@v5
+
+      - name: Checkout data-core (private)
+        uses: actions/checkout@v5
+        with:
+          repository: tsvetoslavtsachev/data-core
+          token: ${{ secrets.DATACORE_PAT }}
+          path: _data-core
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install deps + writer lib
+        run: |
+          pip install -r requirements.txt
+          pip install -e "./_data-core[watch]"   # [watch] = jsonschema + pyyaml (superset; harmless)
+
+      - name: Run VRM collector
+        env:
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          DATACORE_ROOT: ${{ github.workspace }}/_data-core
+          # In CI the data-core checkout IS the installed package's repo (editable
+          # install), so assert_safe_root sees DATACORE_ROOT == "real" and requires the
+          # explicit opt-in. Writing to the checkout is the intended CI behavior here
+          # (the same as oil/cot writing to their data-core checkout).
+          DATACORE_ALLOW_REAL: "1"
+        run: python -m collectors.vrm.run
+
+      - name: Commit canonical + health -> data-core (private)
+        working-directory: _data-core
+        run: |
+          git config user.name "collectors-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data health
+          git diff --cached --quiet || git commit -m "vrm: $(date -u +%Y-%m-%d) canonical write"
+          git push
