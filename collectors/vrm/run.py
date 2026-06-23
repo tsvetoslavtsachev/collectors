@@ -63,9 +63,15 @@ def assemble(cfg: dict) -> dict:
     raw.update(compute.compute_all(fred_raw, cfg))   # ahe_yoy, pce_nowcast
     raw.update(manual_ism.load_ism(cfg))
 
-    # Carry-forward fill the month-end macro cohort (Gate-4 decision: carry-forward)
-    # so a live FRED source gap (Oct-2025 BLS delay, lagging PCE tip) does not null
-    # the recent regime. Filled cells are flagged (filled=carry_forward, provisional).
+    # PCE tip = CPI nowcast, not flat carry (Цветослав 2026-06-23): core PCE lags ~a
+    # month; nowcast its latest level from the released core CPI (the Excel RAW_MACRO!H
+    # approach), so inflation is not understated. Runs BEFORE carry_forward so core_pce
+    # reaches the frontier as a nowcast, never a flat carry.
+    for sid, months in carry_forward.pce_nowcast_fill(raw, cfg):
+        print(f"  pce-nowcast-fill {sid}: {months}")
+    # Carry-forward fill the rest of the month-end macro cohort (Gate-4 decision) so a
+    # live FRED source gap (Oct-2025 BLS delay) does not null the recent regime. Filled
+    # cells are flagged (filled=carry_forward, provisional).
     for sid, months in carry_forward.carry_forward_macro(raw, cfg):
         print(f"  carry-forward {sid}: filled {months}")
     return raw

@@ -87,6 +87,44 @@ def _fill_ids(cfg: dict) -> list:
     return _cohort_ids(cfg)
 
 
+def pce_nowcast_fill(raw: dict, cfg: dict) -> list:
+    """Fill macro_core_pce's lagging TIP with the CPI->PCE nowcast, NOT a flat carry.
+
+    DECISION (Цветослав, 2026-06-23): "in the table I use CPI to predict PCE -- do the
+    same here." Core PCE releases ~a month late (BEA, end of next month), so 3 of every
+    4 weeks the latest PCE is missing. The Excel model nowcasts it from the already-
+    released core CPI (the RAW_MACRO!H paste): a flat carry-forward UNDERSTATES inflation
+    in a regime where PCE runs hotter than its old print (the Gate-4 I-side low bias).
+
+    Mirror the Excel: for each month M present in the (CPI-derived) pce_nowcast but
+    missing in core_pce, walk the level forward from the last real PCE:
+        core_pce[M] = core_pce[M-1] * (1 + pce_nowcast[M] / 100)
+    (pce_nowcast = the pinned OLS bridge 0.1252 + 0.5632*CPI_MoM, a PCE MoM% prediction;
+    chained so multiple missing months compound correctly). Deterministic (pinned OLS)
+    -> cardinal-rule clean; flagged filled='pce_nowcast' + provisional; SELF-HEALING --
+    full_replace overwrites the nowcast once BEA publishes the real PCE. Runs BEFORE
+    carry_forward_macro so core_pce reaches the frontier as a nowcast, never a flat carry.
+    Falls back to carry_forward (no fill here) if core CPI also lags (no nowcast tip)."""
+    rdp = int(cfg["settings"].get("round_dp", 6))
+    pce = raw.get("macro_core_pce") or {}
+    nc = raw.get("macro_pce_nowcast") or {}
+    if not (pce.get("ok") and pce.get("records") and nc.get("ok") and nc.get("records")):
+        return []
+    pce_recs = pce["records"]
+    nc_by_ym = {r["as_of"][:7]: r["value"] for r in nc["records"]}
+    last_ym = pce_recs[-1]["as_of"][:7]            # last real PCE month (records sorted)
+    level = pce_recs[-1]["value"]
+    filled = []
+    for ym in sorted(ym for ym in nc_by_ym if ym > last_ym):
+        level = round(level * (1 + nc_by_ym[ym] / 100.0), rdp)
+        pce_recs.append({"as_of": _month_end(ym), "value": level,
+                         "source": "computed (core_pce tip = prev * (1 + pce_nowcast MoM))",
+                         "resolution": "monthly", "filled": "pce_nowcast",
+                         "provisional": True})
+        filled.append(_month_end(ym))
+    return [("macro_core_pce", filled)] if filled else []
+
+
 def carry_forward_macro(raw: dict, cfg: dict) -> list:
     """Fill interior gaps + tail-align the month-end macro cohort by carry-forward.
     Mutates raw in place; each filled record carries filled='carry_forward' +
