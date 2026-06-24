@@ -1,0 +1,60 @@
+name: cot-weekly
+
+# Needs repo secrets:
+#   DATACORE_PAT  - PAT (repo scope) to checkout + push the private data-core
+#
+# Refreshes the 37 COT spec-net canonical series (cot_<key>_net) in data-core -- the
+# COT positioning citizen (INIT-22 S13). CFTC is keyless (Socrata), so NO API key and
+# NO DATACORE_ALLOW_REAL (the cot collector writes canonical through the data-core gate
+# like oil, which has no real-base guard; only the VRM brain runner needs the opt-in).
+# Mirrors oil.yml / vrm.yml: fetch per market -> write canonical through the gate -> commit.
+# The cot dashboards (cot-monitor) read this base; this job keeps the base fresh.
+#
+# Was the only one of the three citizens (oil/cot/vrm) without scheduled CI -- the COT
+# canonical sat frozen at the last manual run. This closes that gap (INIT-22 Phase 2).
+
+on:
+  schedule:
+    - cron: "30 7 * * 6"    # Sat 07:30 UTC -- after the Fri CFTC release settles; staggered after vrm (06:00)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout collectors
+        uses: actions/checkout@v5
+
+      - name: Checkout data-core (private)
+        uses: actions/checkout@v5
+        with:
+          repository: tsvetoslavtsachev/data-core
+          token: ${{ secrets.DATACORE_PAT }}
+          path: _data-core
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install deps + writer lib
+        run: |
+          pip install -r requirements.txt
+          pip install -e "./_data-core[watch]"   # [watch] = jsonschema + pyyaml (writer gate deps)
+
+      - name: Run COT collector
+        env:
+          DATACORE_ROOT: ${{ github.workspace }}/_data-core
+        run: python -m collectors.cot.run
+
+      - name: Commit canonical + health -> data-core (private)
+        working-directory: _data-core
+        run: |
+          git config user.name "collectors-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data health
+          git diff --cached --quiet || git commit -m "cot: $(date -u +%Y-%m-%d) canonical write"
+          git push
