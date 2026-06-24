@@ -16,11 +16,14 @@ name: vrm-weekly
 # free-source series; ISM stays manual/monthly. (Future option: move the slot into the
 # private data-core repo so CI can refresh it too.)
 #
-# SCOPE -- this is a canonical refresh ONLY. It does NOT recompute the VRM state engines
-# (vrm_regime / vrm_overlay / B5 / B6 / B8 / matrix / scorecard). That brain recompute
-# is the strangler "switch" step, deferred until the weekly parallel run agrees with
-# Excel over several weeks. Until then Excel stays the source of truth and this job just
-# keeps the food (canonical) fresh, in parallel, for comparison.
+# SCOPE -- two stages, same job: (1) refresh the 51 canonical series (the food), then
+# (2) run the VRM brain (run_brain.py) so the 8 deterministic state engines recompute
+# the full VRM state layer (vrm_regime / vrm_overlay / B5 / B6 / B8 / matrix / scorecard)
+# on that fresh canonical. Both land in one commit (data + health). This is the Gate-3
+# "brain switch" (INIT-22, 2026-06-24): data-core state is now LIVE weekly.
+# Excel/Cowork VRM still RUNS IN PARALLEL and stays the published source of truth -- the
+# real flip (skills -> data-core, Excel retired) is a separate holistic call by Цветослав
+# after several agreeing parallel weeks. Nothing here publishes; zero client risk.
 
 on:
   schedule:
@@ -65,11 +68,23 @@ jobs:
           DATACORE_ALLOW_REAL: "1"
         run: python -m collectors.vrm.run
 
-      - name: Commit canonical + health -> data-core (private)
+      - name: Run VRM brain (recompute state on the fresh canonical)
+        env:
+          DATACORE_ROOT: ${{ github.workspace }}/_data-core
+          # Same real-base opt-in as the collector step: in CI the data-core checkout IS
+          # the editable-installed package repo, so run_brain's assert_safe_root sees
+          # DATACORE_ROOT == "real" and requires the explicit flag. The 8 state engines
+          # recompute (in dependency order, each an isolated subprocess) on the canonical
+          # the collector just wrote; run_brain forces the absolute root into every child
+          # env and applies a per-step truncation floor. Writes ONLY data/state.
+          DATACORE_ALLOW_REAL: "1"
+        run: python _data-core/migrations/vrm_brain/run_brain.py
+
+      - name: Commit canonical + state + health -> data-core (private)
         working-directory: _data-core
         run: |
           git config user.name "collectors-bot"
           git config user.email "actions@users.noreply.github.com"
           git add data health
-          git diff --cached --quiet || git commit -m "vrm: $(date -u +%Y-%m-%d) canonical write"
+          git diff --cached --quiet || git commit -m "vrm: $(date -u +%Y-%m-%d) canonical + state write"
           git push
