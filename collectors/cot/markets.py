@@ -31,9 +31,12 @@ CFTC publicreporting (full date span under the code). The 18 markets that alread
 resolve to a single stable identity via LIKE keep `cftc_code: None` (proven full
 history) — pinning their codes is forward-hardening, not a correctness fix.
 
-WTI is NOT migrated here: the clean NYMEX-pinned series already lives in the base
-as `oil_cot_wti_mm_pctile` (oil collector, contract 067651). cot reuses it rather
-than duplicating the fetch (Цветослав, S13). Documented via `reuse`.
+WTI is a full cot citizen as of INIT-22 A1 (Цветослав 2026-06-24, best-for-analysis,
+reversing the earlier S13 reuse decision): `cot_wti_net`, code-pinned NYMEX 067651,
+full 1045-week cohort history. The oil collector keeps its own `oil_cot_wti_mm_pctile`
+(MM 52w percentile for the oil two-clocks dashboard) — complementary, both NYMEX
+067651 but never the same number (full-history net + cohort here vs a 52w percentile
+there). Documented via `complements`.
 """
 from __future__ import annotations
 
@@ -149,10 +152,17 @@ MARKETS = [
     # ── Energy (disaggregated) ───────────────────────────────────────────────
     {"key": "wti", "title": "WTI Crude", "subtitle": "Commodities",
      "family": "disaggregated", "cohort": MM, "query_name": "CRUDE OIL, LIGHT SWEET",
-     "cftc_code": "067651", "canonical": None,
-     # REUSE: clean NYMEX series already in base via oil collector. Not migrated
-     # here (avoids duplicate fetch + the LIKE splice). Consumer reads the oil one.
-     "reuse": "oil_cot_wti_mm_pctile"},
+     "cftc_code": "067651", "canonical": "cot_wti_net",
+     # 067651 = NYMEX WTI, full 2006-2026 (1045 wks). The 2022 rename "CRUDE OIL,
+     # LIGHT SWEET" -> "WTI-PHYSICAL" is a benign name_rebrand under ONE code; the
+     # old cot-monitor LIKE on "CRUDE OIL, LIGHT SWEET" lost the renamed NYMEX after
+     # 2022 and matched the ICE "...-WTI - ICE FUTURES EUROPE" satellite instead =
+     # the spliced 28.14 percentile (audit P1.1). Code-pin -> one clean contract.
+     # MIGRATED to a first-class cot citizen (INIT-22 A1, Цветослав 2026-06-24:
+     # best-for-analysis, reversing the S13 reuse decision). The oil collector keeps
+     # oil_cot_wti_mm_pctile (MM 52w percentile for oil two-clocks) — complementary,
+     # both NYMEX 067651, never the same number (full-history net vs 52w percentile).
+     "complements": "oil_cot_wti_mm_pctile"},
     {"key": "natgas", "title": "Natural Gas", "subtitle": "Commodities",
      "family": "disaggregated", "cohort": MM, "query_name": "NATURAL GAS",
      "cftc_code": "023651", "canonical": "cot_natgas_net"},
@@ -235,5 +245,5 @@ assert len(_codes) == len(set(_codes)), "duplicate cftc_code"
 
 
 def migrated():
-    """Markets that write a new canonical series (everything except WTI-reuse)."""
+    """Markets that write a canonical series — all 38 since WTI became a citizen."""
     return [m for m in MARKETS if m.get("canonical")]

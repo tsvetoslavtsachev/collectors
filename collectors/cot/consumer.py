@@ -17,9 +17,11 @@ The CTA lens (cot-cta) stays a PRICE-based TSMOM model; only its COT cross-
 reference net now comes from the base. cot-monitor's positioning view (percentile
 / zscore / crowding) is reproduced here from the base directly.
 
-WTI is special: its clean series is `oil_cot_wti_mm_pctile` (already a percentile,
-written by the oil collector). The consumer reads that value as-is — no recompute,
-no duplicate (decision 3).
+WTI is a full cot citizen now (`cot_wti_net`, code-pinned NYMEX 067651) — it reads
+through the same raw-net path as every other market (INIT-22 A1, 2026-06-24:
+best-for-analysis, reversing the S13 reuse decision). The oil collector's own
+`oil_cot_wti_mm_pctile` (MM 52w percentile) stays for the oil two-clocks dashboard —
+complementary, both NYMEX 067651, never the same number.
 
 Usage:
     DATACORE_ROOT=C:\\Projects\\data-core \\
@@ -58,11 +60,11 @@ def read_base_net(series_id: str) -> list[tuple]:
 
 
 def series_for(key: str) -> Optional[str]:
-    """Resolve a market key to its base series_id (canonical, or WTI's reuse)."""
+    """Resolve a market key to its base canonical series_id (every market now has one)."""
     m = next((x for x in markets.MARKETS if x["key"] == key), None)
     if not m:
         return None
-    return m.get("canonical") or m.get("reuse")
+    return m.get("canonical")
 
 
 def positioning_view(key: str, window: Optional[int] = None) -> dict:
@@ -76,15 +78,9 @@ def positioning_view(key: str, window: Optional[int] = None) -> dict:
     if sid is None:
         return {"key": key, "error": "unknown market"}
 
-    # WTI reuse: the base already stores a percentile, not a raw net.
-    if key == "wti":
-        ser = read_base_net(sid)
-        if not ser:
-            return {"key": key, "series_id": sid, "error": "no data"}
-        asof, pct = ser[-1]
-        return {"key": key, "series_id": sid, "reused": True,
-                "percentile": pct, "asof": asof, "n_obs": len(ser)}
-
+    # WTI is a full cot citizen now (cot_wti_net, NYMEX 067651) — it flows through
+    # the same raw-net -> percentile path as every other market (INIT-22 A1). The
+    # oil collector's oil_cot_wti_mm_pctile is a separate, complementary series.
     ser = read_base_net(sid)
     if not ser:
         return {"key": key, "series_id": sid, "error": "no data"}
@@ -108,13 +104,13 @@ def cot_rows(key: str) -> list[dict]:
     (date, market_name, open_interest, primary/secondary/tertiary long/short/net,
     report_family), so derive_metrics / cta_model / index.html run unchanged.
 
-    Returns [] for WTI (reuse: the base holds only the oil percentile, not cohort
-    detail) and for any unmigrated / absent series — the caller keeps its own thin
-    fetch for those.
+    Returns [] only for an unknown / unmigrated key (every real market — WTI now
+    included via cot_wti_net — has a canonical series) — the caller keeps its own
+    thin CFTC fetch for anything absent.
     """
     m = next((x for x in markets.MARKETS if x["key"] == key), None)
     if not m or not m.get("canonical"):
-        return []  # WTI-reuse or unknown -> caller's thin fetch
+        return []  # unknown / unmigrated -> caller's thin fetch
     sid = m["canonical"]
     path = _root() / "data" / "canonical" / f"{sid}.json"
     if not path.exists():
@@ -163,12 +159,8 @@ def main() -> int:
             print(f"  ! {key:12} {v['error']} ({v.get('series_id')})")
             continue
         rows.append(v)
-        if v.get("reused"):
-            print(f"  ~ {key:12} (reuse {v['series_id']}) pctile={v['percentile']} "
-                  f"asof {v['asof']} n={v['n_obs']}")
-        else:
-            print(f"  + {key:12} net={v['net']:>10.0f} pctile={v['percentile']:>6} "
-                  f"z={v['zscore']} n={v['n_obs']:>4} asof {v['asof']}")
+        print(f"  + {key:12} net={v['net']:>10.0f} pctile={v['percentile']:>6} "
+              f"z={v['zscore']} n={v['n_obs']:>4} asof {v['asof']}")
     print(f"\ncot consumer: {len(rows)} markets read from base "
           f"(DATACORE_ROOT={_root()})")
     return 0

@@ -10,8 +10,9 @@ Proves the audit's gap is closed:
   G4 percentile_<window>    — the window is an explicit parameter; different
                               windows give different, self-describing reads.
   G5 guard math             — insufficient history / zero dispersion -> None.
-  G6 registry invariants    — 38 markets, unique keys + canonical ids + cftc_codes,
-                              WTI reused.
+  G6 registry invariants    — 38 markets, all 38 migrated (WTI now a code-pinned
+                              citizen, cot_wti_net 067651), unique keys + canonical
+                              ids + cftc_codes, no 'reuse' market remaining.
   G7 rebrand vs splice      — a code-pinned rename is a BENIGN name_rebrand (keep
                               whole); a non-pinned 2-identity key is a real
                               contract_splice (the audit's hazard).
@@ -107,20 +108,27 @@ def main() -> int:
     if "G5" not in str(fails):
         print("  G5 PASS insufficient-history -> None, zero-dispersion -> None")
 
-    # G6 — registry invariants
+    # G6 — registry invariants (WTI is a full citizen as of INIT-22 A1, 2026-06-24)
     if len(markets.MARKETS) != 38:
         fails.append(f"G6: not 38 markets ({len(markets.MARKETS)})")
-    if len(markets.migrated()) != 37:
-        fails.append(f"G6: migrated != 37 ({len(markets.migrated())})")
+    if len(markets.migrated()) != 38:
+        fails.append(f"G6: migrated != 38 ({len(markets.migrated())})")
     wti = next(m for m in markets.MARKETS if m["key"] == "wti")
-    if wti.get("canonical") is not None or wti.get("reuse") != "oil_cot_wti_mm_pctile":
-        fails.append("G6: WTI not reusing oil series")
+    if wti.get("canonical") != "cot_wti_net" or wti.get("cftc_code") != "067651":
+        fails.append(f"G6: WTI not a code-pinned citizen "
+                     f"({wti.get('canonical')}, {wti.get('cftc_code')})")
+    if any(m.get("reuse") for m in markets.MARKETS):
+        fails.append("G6: a 'reuse' market remains — every market should be a citizen")
+    # one canonical series per key, all present + unique (no two markets share a sid)
+    canon = [m["canonical"] for m in markets.migrated()]
+    if not all(canon) or len(canon) != len(set(canon)):
+        fails.append("G6: canonical ids not complete/unique")
     codes = [m["cftc_code"] for m in markets.MARKETS if m.get("cftc_code")]
     if len(codes) != len(set(codes)):
         fails.append("G6: duplicate cftc_code in registry")
     if "G6" not in str(fails):
-        print(f"  G6 PASS 38 markets, 37 migrated, {len(codes)} pinned codes "
-              f"(unique), WTI reuses {wti['reuse']}")
+        print(f"  G6 PASS 38 markets, 38 migrated, WTI=cot_wti_net (067651), "
+              f"{len(codes)} unique pinned codes")
 
     # G7 — code-pinned rename is benign (name_rebrand, keep whole); a non-pinned
     # 2-identity key is a real contract_splice that the consumer must restrict.
