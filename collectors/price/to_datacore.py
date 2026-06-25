@@ -36,17 +36,23 @@ import json
 import os
 from pathlib import Path
 
-# P1 default; tightest-safe (captures every restatement). TWO daily-RE-PULL hazards
-# belong to P4/P5, NOT P3 (P3 writes a TEMP root ONCE, so neither arises here):
-#  (1) value_tr (Adj Close) is dividend-back-adjusted and IS in P1's value-diff set, so
-#      every future ex-dividend nudges ALL prior bars' value_tr a few bps -> a re-pull
-#      would cascade-restate the whole history. P4/P5 calibration: loosen value_tol, or
-#      exclude value_tr from the conflict diff (conflict only on as-traded close*factor).
-#  (2) SAME-calendar-day restatement collision: the citizen does not pass recorded_on, so
-#      P1 defaults to date.today(). A finalized bar whose close changes on a SECOND run the
-#      SAME day cannot advance recorded_on -> P1 raises ArchiveError -> caught as a LOUD
-#      per-series skip (the stale bar is dropped for that run, the symbol reported skipped).
-#      P5 (one run/day) avoids it; a same-day re-run would thread an explicit recorded_on.
+# P1 default; tightest-safe (captures every restatement). TWO daily-RE-PULL hazards were named
+# here for P3; P5 RESOLVED both (see collectors/price/config.yaml + price-archive/price-daily.yml):
+#  (1) value_tr (Adj Close) is dividend-back-adjusted and IS in P1's value-diff set, so every
+#      future ex-dividend nudges ALL prior bars' value_tr a few bps -> a "max" daily re-pull
+#      would cascade-restate the whole history. RESOLVED: P5 runs a SHORT window (`run --daily`
+#      -> settings.daily_period "1mo"), which bounds the cascade to ~the window (and leaves
+#      pre-window value_tr at its last in-window vintage -- the documented value_tr trade-off,
+#      NOT a P1 change; _NON_VALUE_KEYS is untouched).
+#  (2) SAME-calendar-day restatement collision: the citizen does not pass recorded_on, so P1
+#      defaults to date.today(). If a finalized bar's value changed since the FIRST run, a SECOND
+#      run the SAME day cannot advance recorded_on -> archive.append raises ArchiveError -> caught
+#      as a LOUD per-series skip below. BLAST RADIUS (precise): the skip drops that symbol's WHOLE
+#      batch for the run -- INCLUDING the genuinely-new tip bar, not just the colliding stale bar
+#      (push isolates per series, not per record). Unchanged symbols skip cleanly; only genuinely-
+#      revised ones collide. Self-heals on the next day's run. RESOLVED operationally: P5 is one
+#      scheduled run/day; do NOT manually workflow_dispatch the daily job on the same UTC day as a
+#      scheduled fire (a deliberate same-day re-run would need to thread an explicit recorded_on).
 # Named here so P5 inherits these, not discovers them.
 DEFAULT_VALUE_TOL = 1e-6
 

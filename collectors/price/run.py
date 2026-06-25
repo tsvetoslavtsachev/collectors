@@ -3,7 +3,9 @@
 Run:
     python -m collectors.price.run --mock              # offline wiring (Gate 1)
     python -m collectors.price.run --spot SPY,QQQ      # live, a few ETFs (Gate 2)
-    python -m collectors.price.run                     # live, full universe (P4/P5)
+    python -m collectors.price.run --daily             # live, full universe, SHORT window (P5 daily CI)
+    python -m collectors.price.run                     # live, full universe, "max" window (manual full pull)
+    python -m collectors.price.run --period 10d        # live, full universe, explicit window override
 
 Flow: fetch per symbol (each isolated) -> push every bar through the P1 archive
 primitive into the SEPARATE price-archive store (append-only, year-partitioned,
@@ -55,13 +57,21 @@ def main() -> int:
         mode = "mock"
     else:
         only = None
-        period = None
+        # Window precedence: explicit --period wins; then --spot / --daily presets; else
+        # None -> fetch_prices falls back to settings.history_period_prices ("max").
+        # --daily is the routine P5 CI entry: a SHORT settings.daily_period window that
+        # appends the new bar, freezes the prior provisional tip, and BOUNDS the value_tr
+        # dividend cascade to the window (a "max" daily pull would restate ALL history).
+        period = _arg(args, "--period")
         spot = _arg(args, "--spot")
         if spot:
             only = _sids_for_symbols(cfg, spot.split(","))
-            period = cfg["settings"].get("spot_check_period")
+            period = period or cfg["settings"].get("spot_check_period")
+        elif "--daily" in args:
+            period = period or cfg["settings"].get("daily_period", "1mo")
         raw = fetch_prices(cfg, period=period, only=only)
-        mode = f"live ({'spot ' + spot if spot else 'full universe'})"
+        scope = "spot " + spot if spot else ("daily" if "--daily" in args else "full universe")
+        mode = f"live ({scope}{', period=' + period if period else ''})"
 
     value_tol = float(cfg["settings"].get("value_tol", to_datacore.DEFAULT_VALUE_TOL))
     pushed = to_datacore.push(raw, value_tol=value_tol)

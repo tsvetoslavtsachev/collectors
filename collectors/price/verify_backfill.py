@@ -18,19 +18,40 @@ Gates (exit non-zero if any HARD gate fails):
   v5 isolation  soft  -- dead/missing series listed for the operator (HARD coverage is v2a)
   v6 shape      HARD  -- every bar carries the full record shape + recorded_on
 
+``--daily`` (P5 routine-daily CI commit gate) keeps v1a/v1b/v2/v3/v5/v6 VERBATIM, ADDS a
+recency catch (v2c), and swaps ONLY the conflict gate: after daily runs a bar legitimately
+carries >1 vintage (a split/dividend restatement, or the prior provisional tip frozen), so the
+seed's "exactly one line" v4 would false-fail. The daily v4' asserts the on-disk BITEMPORAL
+SHAPE is sound -- distinct, advancing recorded_on per as_of (the multi-vintage corruption mode),
+the view resolving to one bar per as_of, and the provisional-tip invariant (<=1 provisional,
+at the tip). NOTE the scope: v4' is NOT an independent backstop against a single-line in-place
+tamper (one line, value changed, same vintage) -- that leaves exactly one line and slips past
+v4'. The "no finalized bar is silently overwritten" guarantee is enforced at WRITE time by
+archive.append's advancing-recorded_on refusal, not re-proven here. The default (no flag) is the
+seed gate, byte-for-byte unchanged -- so price-backfill.yml is untouched.
+
 Run:
   PYTHONPATH=<data-core>;<collectors> python -m collectors.price.verify_backfill --root <root>
+  PYTHONPATH=<data-core>;<collectors> python -m collectors.price.verify_backfill --root <root> --daily
 """
 from __future__ import annotations
 
 import argparse
 import json
 import sys
+from collections import Counter
+from datetime import date
 from pathlib import Path
 
 import yaml
 
 from datacore import archive
+
+# A series whose latest as_of lags the UNIVERSE session by more than this many calendar days
+# is surfaced by the --daily recency gate (v2c). Generous enough that a 1-2 day seed-time
+# misalignment or a single missed session does not fire; tight enough that a real partial
+# throttle (a symbol stuck behind the pack for a week) is flagged.
+_STALE_WARN_DAYS = 4
 
 HERE = Path(__file__).resolve().parent
 
@@ -153,16 +174,19 @@ def _raw_lines(root: Path, sid: str) -> list[dict]:
     return out
 
 
-def verify(root: Path, cfg: dict, g: Gate) -> dict:
+def verify(root: Path, cfg: dict, g: Gate, *, daily: bool = False) -> dict:
     sids = _series_ids(cfg)
     sym = {sid: m["symbol"] for sid, m in cfg["price"].items()}
 
-    # Read every series once (current view) + raw line counts.
+    # Read every series once (current view) + raw line counts (+ raw lines for --daily,
+    # which needs each line's recorded_on to prove restatements are bitemporal).
     views: dict[str, list] = {}
     rawcounts: dict[str, dict] = {}
+    rawlines: dict[str, list] = {}
     for sid in sids:
         views[sid] = archive.read(sid, root=str(root))
         lines = _raw_lines(root, sid)
+        rawlines[sid] = lines
         per_asof: dict[str, int] = {}
         for r in lines:
             per_asof[r["as_of"]] = per_asof.get(r["as_of"], 0) + 1
@@ -203,6 +227,31 @@ def verify(root: Path, cfg: dict, g: Gate) -> dict:
     g.check("v2b no live series truncated to < 5 bars (silent-truncation smell)",
             not thin, f"thin={thin}", hard=False)
 
+    if daily:
+        # v2c (DAILY RECENCY) -- the partial-throttle catch that v2a CANNOT make. v2a passes as
+        # long as every series has SOME bar (the P4 seed), so a day where Yahoo serves only a
+        # SUBSET of the 132 symbols commits a GREEN run while silently omitting today's bar for
+        # the rest (the rest keep yesterday's tip). Compare each series' latest as_of to the
+        # UNIVERSE MODE (the session the pack reached): a series lagging the mode is genuinely
+        # behind. Mode-relative by design -> a FULL-block day shifts the whole pack together so
+        # the mode moves with it and NOTHING lags (no weekend/holiday false-fire); only a series
+        # stuck BEHIND an advanced majority is flagged. SOFT/surfaced (not HARD): one unrecoverable
+        # >1mo hole must not block committing every OTHER symbol's good new bar -- but it is no
+        # longer SILENT (the count + laggards print in the CI log; run.py's skip headline echoes it).
+        latest = {sid: v[-1]["as_of"] for sid, v in live.items()}
+        if latest:
+            mode_asof = Counter(latest.values()).most_common(1)[0][0]
+            laggards = sorted(
+                (sid, ao, abs((date.fromisoformat(mode_asof) - date.fromisoformat(ao)).days))
+                for sid, ao in latest.items()
+                if ao < mode_asof
+                and abs((date.fromisoformat(mode_asof) - date.fromisoformat(ao)).days) > _STALE_WARN_DAYS)
+            g.check(f"v2c daily recency: 0 series lag the universe session {mode_asof} by >{_STALE_WARN_DAYS}d",
+                    not laggards,
+                    f"laggards={[(s, a) for s, a, _ in laggards][:8]} (n={len(laggards)} -- "
+                    f"partial throttle: today's bar missing for these; self-heals within the window "
+                    f"unless the gap exceeds daily_period)", hard=False)
+
     # ---- v3 split: as-traded reconstruction over the FULL history ----
     # Detect ANY split (factor != 1.0) -- FORWARD (>1, e.g. QQQ 2:1) AND REVERSE (<1,
     # e.g. USO 1:8 -> 0.125, common in commodity/thematic ETFs). The earlier "monotone
@@ -241,17 +290,51 @@ def verify(root: Path, cfg: dict, g: Gate) -> dict:
         g.check("v3a ETF universe had no split in-window (split_factor==1.0 throughout)",
                 True, "formula proven separately by the P3 NVDA/AAPL live gate", hard=False)
 
-    # ---- v4 conflict: restatement-free seed -> exactly one line per as_of ----
-    dup = {sid: {ao: c for ao, c in pa.items() if c > 1}
-           for sid, pa in rawcounts.items()}
-    dup = {sid: d for sid, d in dup.items() if d}
-    g.check("v4a no as_of has > 1 jsonl line (first seed is restatement-free, restated=0)",
-            not dup, f"dup_series={list(dup)[:5]}")
-    # current view line-count must equal raw line-count when there are no restatements
-    mismatched = [sid for sid in live
-                  if len(views[sid]) != sum(rawcounts[sid].values())]
-    g.check("v4b current view == raw lines (no hidden extra vintages)",
-            not mismatched, f"mismatched={mismatched[:5]}")
+    if not daily:
+        # ---- v4 conflict (SEED): restatement-free -> exactly one line per as_of ----
+        dup = {sid: {ao: c for ao, c in pa.items() if c > 1}
+               for sid, pa in rawcounts.items()}
+        dup = {sid: d for sid, d in dup.items() if d}
+        g.check("v4a no as_of has > 1 jsonl line (first seed is restatement-free, restated=0)",
+                not dup, f"dup_series={list(dup)[:5]}")
+        # current view line-count must equal raw line-count when there are no restatements
+        mismatched = [sid for sid in live
+                      if len(views[sid]) != sum(rawcounts[sid].values())]
+        g.check("v4b current view == raw lines (no hidden extra vintages)",
+                not mismatched, f"mismatched={mismatched[:5]}")
+    else:
+        # ---- v4 conflict (DAILY): restatements are LEGITIMATE but must be BITEMPORAL ----
+        # After daily runs there ARE >1 lines per as_of (a split/dividend restatement, or the
+        # prior provisional tip frozen). The seed "exactly one line" gate would false-fail. The
+        # honest daily invariant: every restatement is AUDITABLE (distinct, advancing recorded_on
+        # -> the prior line stays reachable point-in-time, never silently overwritten), the view
+        # still resolves to one bar per as_of, and the finalization (provisional-tip) holds.
+        bad_vintage = []   # an as_of whose lines SHARE a recorded_on -> a prior value is unreachable
+        for sid in live:
+            by_asof: dict[str, list] = {}
+            for r in rawlines[sid]:
+                by_asof.setdefault(r["as_of"], []).append(r.get("recorded_on", ""))
+            for ao, ros in by_asof.items():
+                if len(ros) != len(set(ros)):
+                    bad_vintage.append((sid, ao, sorted(ros)))
+        g.check("v4a' restatements are bitemporal: distinct recorded_on per as_of (no silent overwrite)",
+                not bad_vintage, f"violations={bad_vintage[:5]}")
+        # current view collapses to exactly ONE bar per DISTINCT as_of (read picks latest vintage);
+        # a mismatch = a bar lost or a stale vintage leaking into the view.
+        view_mismatch = [sid for sid in live
+                         if len(views[sid]) != len(rawcounts[sid])]
+        g.check("v4b' current view == one bar per distinct as_of (read dedup is vintage-correct)",
+                not view_mismatch, f"mismatched={view_mismatch[:5]}")
+        # Provisional-tip finalization invariant: at most ONE provisional bar per series, and it
+        # is the TIP (latest as_of). A finalized bar left provisional, or a stale mid-history
+        # provisional bar, is look-ahead corruption (the prior tip did not freeze).
+        prov_bad = []
+        for sid, v in live.items():
+            provs = [b["as_of"] for b in v if b.get("provisional")]
+            if len(provs) > 1 or (provs and provs[-1] != v[-1]["as_of"]):
+                prov_bad.append((sid, provs, v[-1]["as_of"]))
+        g.check("v4c' at most one provisional bar per series and it is the tip (finalization OK)",
+                not prov_bad, f"violations={prov_bad[:5]}")
 
     # ---- v5 isolation: dead-series LISTING (informational; the HARD coverage gate is v2a).
     # A non-empty `dead` already HARD-FAILED v2a above; this just names them for the operator.
@@ -273,18 +356,21 @@ def verify(root: Path, cfg: dict, g: Gate) -> dict:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="INIT-22 P4 backfill verify")
+    ap = argparse.ArgumentParser(description="INIT-22 price-archive verify (P4 seed / P5 daily)")
     ap.add_argument("--root", required=True, help="archive root to verify")
+    ap.add_argument("--daily", action="store_true",
+                    help="P5 routine-daily gate: restatements are bitemporal (not a clean seed)")
     args = ap.parse_args(argv)
     root = Path(args.root).resolve()
     cfg = yaml.safe_load((HERE / "config.yaml").read_text(encoding="utf-8"))
 
     g = Gate()
-    print(f"P4 backfill verify: root = {root}")
-    summary = verify(root, cfg, g)
+    label = "P5 daily" if args.daily else "P4 backfill"
+    print(f"{label} verify: root = {root}")
+    summary = verify(root, cfg, g, daily=args.daily)
     print(f"\n  summary: {summary['live']} live, {len(summary['dead'])} dead, "
           f"{len(summary['split_syms'])} split ETF(s), SPY->{summary['spy_earliest']}")
-    print("\nP4 verify: %d/%d PASS" % (g.total - len(g.fails), g.total))
+    print("\n%s verify: %d/%d PASS" % (label, g.total - len(g.fails), g.total))
     if g.fails:
         print("FAILED (hard): " + ", ".join(g.fails))
         return 1

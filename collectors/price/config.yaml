@@ -15,6 +15,26 @@
 
 settings:
   history_period_prices: "max"   # full-history daily pull (yfinance period=max); P4 backfill
+  daily_period: "1mo"            # SHORT routine-daily window (P5 `run --daily`): the new bar +
+                                 # re-finalize of the prior provisional tip + the last few
+                                 # restatements -- and it BOUNDS the value_tr dividend cascade
+                                 # to ~this window (a "max" daily pull would cascade-restate ALL
+                                 # history on every ex-dividend). 1mo (~21 trading days) also
+                                 # self-heals a few missed runs (holidays / CI outage) SHORTER
+                                 # than the window; a per-symbol gap LONGER than 1mo leaves a hole
+                                 # the daily run cannot reach (surfaced by verify_backfill --daily
+                                 # v2c; heal it with a one-off `run --period max` for that symbol).
+                                 # LIMITATION (value_tr): because the window never re-touches a
+                                 # pre-window bar, every bar older than ~this window keeps the
+                                 # dividend-adjusted Adj Close (value_tr) that was current when it
+                                 # last fell in-window. So the stored value_tr is NOT identical to
+                                 # a fresh full pull -- it drifts ~the dividend yield/year at the
+                                 # window boundary. The split-adjusted `close`/`value` (what TA --
+                                 # 200-DMA/RSI/MACD -- uses) is unaffected. A consumer needing an
+                                 # EXACT total-return series must recompute value_tr from the stored
+                                 # `close` + `dividend` (reconstructible to ~0.03%), or a periodic
+                                 # (e.g. monthly) `run --period max` can re-heal value_tr across
+                                 # history at bounded frequency. P1 _NON_VALUE_KEYS stays untouched.
   spot_check_period: "1mo"       # short window for the Gate 2 live spot-check (a few ETFs)
   round_dp: 6                    # price rounding (matches the VRM collector); volume stays int
   source: "yfinance"
