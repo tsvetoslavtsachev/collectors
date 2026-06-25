@@ -1,0 +1,156 @@
+# collectors/price -- canonical daily ETF price citizen (INIT-22 P3).
+# ONE yfinance pull/day for the ETF universe -> EVERY bar (split-adj OHLCV + adj
+# close + split/dividend factors) written through the P1 primitive
+# (datacore.archive.append) into the SEPARATE price-archive store (P2), append-only
+# + year-partitioned + bitemporal. ETF only (131 ETF-rr universe + idx_dxy = 132);
+# stocks are P7+. Backfill to inception = P4. P3 writes a TEMP archive root only.
+#
+# series_id -> {symbol, name, category}. Each series is one px_<ticker>_daily.
+# Universe = an EXACT snapshot of ETF-rr src/universe.py get_universe_tickers()
+# (131, survivorship-clean) + idx_dxy (DX-Y.NYB) from the VRM collector.
+#
+# Cardinal rule: this deterministic fetch->archive path is the only price writer;
+# a model never writes here. P3 build writes ONLY a TEMP DATACORE_ROOT (real
+# prices arrive in P4 after sign-off).
+
+settings:
+  history_period_prices: "max"   # full-history daily pull (yfinance period=max); P4 backfill
+  spot_check_period: "1mo"       # short window for the Gate 2 live spot-check (a few ETFs)
+  round_dp: 6                    # price rounding (matches the VRM collector); volume stays int
+  source: "yfinance"
+  archive_namespace: "px_"       # register_catalog upserts ONLY this namespace
+
+# ---- the ETF universe: 131 ETF (ETF-rr) + idx_dxy = 132 daily series ----
+price:
+  px_spy_daily:    {symbol: "SPY", name: "SPDR S&P 500", category: "US Equity"}
+  px_qqq_daily:    {symbol: "QQQ", name: "Invesco Nasdaq 100", category: "US Equity"}
+  px_iwm_daily:    {symbol: "IWM", name: "iShares Russell 2000", category: "US Equity"}
+  px_dia_daily:    {symbol: "DIA", name: "SPDR Dow Jones", category: "US Equity"}
+  px_vti_daily:    {symbol: "VTI", name: "Vanguard Total Market", category: "US Equity"}
+  px_mdy_daily:    {symbol: "MDY", name: "SPDR S&P 400 Mid-Cap", category: "US Equity"}
+  px_ijh_daily:    {symbol: "IJH", name: "iShares Core S&P Mid-Cap", category: "US Equity"}
+  px_ijr_daily:    {symbol: "IJR", name: "iShares Core S&P Small-Cap", category: "US Equity"}
+  px_ivv_daily:    {symbol: "IVV", name: "iShares Core S&P 500", category: "US Equity"}
+  px_voo_daily:    {symbol: "VOO", name: "Vanguard S&P 500", category: "US Equity"}
+  px_xlk_daily:    {symbol: "XLK", name: "Technology Select", category: "US Sector"}
+  px_xlf_daily:    {symbol: "XLF", name: "Financial Select", category: "US Sector"}
+  px_xle_daily:    {symbol: "XLE", name: "Energy Select", category: "US Sector"}
+  px_xlv_daily:    {symbol: "XLV", name: "Health Care Select", category: "US Sector"}
+  px_xli_daily:    {symbol: "XLI", name: "Industrial Select", category: "US Sector"}
+  px_xly_daily:    {symbol: "XLY", name: "Consumer Discret Select", category: "US Sector"}
+  px_xlp_daily:    {symbol: "XLP", name: "Consumer Staples Select", category: "US Sector"}
+  px_xlu_daily:    {symbol: "XLU", name: "Utilities Select", category: "US Sector"}
+  px_xlb_daily:    {symbol: "XLB", name: "Materials Select", category: "US Sector"}
+  px_xlc_daily:    {symbol: "XLC", name: "Communication Services", category: "US Sector"}
+  px_qual_daily:   {symbol: "QUAL", name: "iShares MSCI Quality", category: "Factor"}
+  px_mtum_daily:   {symbol: "MTUM", name: "iShares MSCI Momentum", category: "Factor"}
+  px_usmv_daily:   {symbol: "USMV", name: "iShares Min Volatility", category: "Factor"}
+  px_vlue_daily:   {symbol: "VLUE", name: "iShares MSCI Value", category: "Factor"}
+  px_size_daily:   {symbol: "SIZE", name: "iShares MSCI USA Size", category: "Factor"}
+  px_iwf_daily:    {symbol: "IWF", name: "iShares Russell 1000 Growth", category: "Factor"}
+  px_iwd_daily:    {symbol: "IWD", name: "iShares Russell 1000 Value", category: "Factor"}
+  px_dgro_daily:   {symbol: "DGRO", name: "iShares Core Dividend Growth", category: "Factor"}
+  px_vig_daily:    {symbol: "VIG", name: "Vanguard Dividend Appreciation", category: "Factor"}
+  px_dvy_daily:    {symbol: "DVY", name: "iShares Select Dividend", category: "Factor"}
+  px_schd_daily:   {symbol: "SCHD", name: "Schwab US Dividend Equity", category: "Factor"}
+  px_ita_daily:    {symbol: "ITA", name: "iShares US Aerospace & Def", category: "Thematic"}
+  px_xar_daily:    {symbol: "XAR", name: "SPDR Aerospace & Defense", category: "Thematic"}
+  px_ppa_daily:    {symbol: "PPA", name: "Invesco Aerospace & Defense", category: "Thematic"}
+  px_ura_daily:    {symbol: "URA", name: "VanEck Uranium & Nuclear", category: "Thematic"}
+  px_urnm_daily:   {symbol: "URNM", name: "Sprott Uranium Miners", category: "Thematic"}
+  px_nlr_daily:    {symbol: "NLR", name: "VanEck Nuclear Energy", category: "Thematic"}
+  px_icln_daily:   {symbol: "ICLN", name: "iShares Global Clean Energy", category: "Thematic"}
+  px_qcln_daily:   {symbol: "QCLN", name: "First Trust NASDAQ Clean Edge", category: "Thematic"}
+  px_tan_daily:    {symbol: "TAN", name: "Invesco Solar", category: "Thematic"}
+  px_fan_daily:    {symbol: "FAN", name: "First Trust Global Wind", category: "Thematic"}
+  px_cnrg_daily:   {symbol: "CNRG", name: "SPDR S&P Kensho Clean Power", category: "Thematic"}
+  px_soxx_daily:   {symbol: "SOXX", name: "iShares Semiconductor", category: "Thematic"}
+  px_smh_daily:    {symbol: "SMH", name: "VanEck Semiconductor", category: "Thematic"}
+  px_aiq_daily:    {symbol: "AIQ", name: "Global X AI & Technology", category: "Thematic"}
+  px_arkk_daily:   {symbol: "ARKK", name: "ARK Innovation", category: "Thematic"}
+  px_botz_daily:   {symbol: "BOTZ", name: "Global X Robotics & AI", category: "Thematic"}
+  px_robo_daily:   {symbol: "ROBO", name: "ROBO Global Robotics", category: "Thematic"}
+  px_hack_daily:   {symbol: "HACK", name: "ETFMG Prime Cyber Security", category: "Thematic"}
+  px_bug_daily:    {symbol: "BUG", name: "Global X Cybersecurity", category: "Thematic"}
+  px_cibr_daily:   {symbol: "CIBR", name: "First Trust Cybersecurity", category: "Thematic"}
+  px_wcld_daily:   {symbol: "WCLD", name: "WisdomTree Cloud Computing", category: "Thematic"}
+  px_clou_daily:   {symbol: "CLOU", name: "Global X Cloud Computing", category: "Thematic"}
+  px_finx_daily:   {symbol: "FINX", name: "Global X FinTech", category: "Thematic"}
+  px_blok_daily:   {symbol: "BLOK", name: "Amplify Transformational Data", category: "Thematic"}
+  px_ibb_daily:    {symbol: "IBB", name: "iShares Biotech", category: "Thematic"}
+  px_xbi_daily:    {symbol: "XBI", name: "SPDR Biotech", category: "Thematic"}
+  px_ihi_daily:    {symbol: "IHI", name: "iShares Medical Devices", category: "Thematic"}
+  px_arkg_daily:   {symbol: "ARKG", name: "ARK Genomic Revolution", category: "Thematic"}
+  px_pave_daily:   {symbol: "PAVE", name: "Global X US Infrastructure Dev", category: "Thematic"}
+  px_ifra_daily:   {symbol: "IFRA", name: "iShares US Infrastructure", category: "Thematic"}
+  px_gii_daily:    {symbol: "GII", name: "SPDR Global Infrastructure", category: "Thematic"}
+  px_ewu_daily:    {symbol: "EWU", name: "iShares MSCI UK", category: "Intl Equity"}
+  px_ewg_daily:    {symbol: "EWG", name: "iShares MSCI Germany", category: "Intl Equity"}
+  px_ewq_daily:    {symbol: "EWQ", name: "iShares MSCI France", category: "Intl Equity"}
+  px_ewi_daily:    {symbol: "EWI", name: "iShares MSCI Italy", category: "Intl Equity"}
+  px_ewp_daily:    {symbol: "EWP", name: "iShares MSCI Spain", category: "Intl Equity"}
+  px_vgk_daily:    {symbol: "VGK", name: "Vanguard FTSE Europe", category: "Intl Equity"}
+  px_ezu_daily:    {symbol: "EZU", name: "iShares MSCI Eurozone", category: "Intl Equity"}
+  px_ieur_daily:   {symbol: "IEUR", name: "iShares Core MSCI Europe", category: "Intl Equity"}
+  px_ewj_daily:    {symbol: "EWJ", name: "iShares MSCI Japan", category: "Intl Equity"}
+  px_ewa_daily:    {symbol: "EWA", name: "iShares MSCI Australia", category: "Intl Equity"}
+  px_ewc_daily:    {symbol: "EWC", name: "iShares MSCI Canada", category: "Intl Equity"}
+  px_ewt_daily:    {symbol: "EWT", name: "iShares MSCI Taiwan", category: "Intl Equity"}
+  px_ewy_daily:    {symbol: "EWY", name: "iShares MSCI South Korea", category: "Intl Equity"}
+  px_ews_daily:    {symbol: "EWS", name: "iShares MSCI Singapore", category: "Intl Equity"}
+  px_inda_daily:   {symbol: "INDA", name: "iShares MSCI India", category: "Intl Equity"}
+  px_mchi_daily:   {symbol: "MCHI", name: "iShares MSCI China", category: "Intl Equity"}
+  px_fxi_daily:    {symbol: "FXI", name: "iShares China Large-Cap", category: "Intl Equity"}
+  px_kweb_daily:   {symbol: "KWEB", name: "KraneShares CSI China Internet", category: "Intl Equity"}
+  px_ewz_daily:    {symbol: "EWZ", name: "iShares MSCI Brazil", category: "Intl Equity"}
+  px_eem_daily:    {symbol: "EEM", name: "iShares MSCI EM", category: "Intl Equity"}
+  px_vwo_daily:    {symbol: "VWO", name: "Vanguard FTSE EM", category: "Intl Equity"}
+  px_iemg_daily:   {symbol: "IEMG", name: "iShares Core MSCI EM", category: "Intl Equity"}
+  px_eww_daily:    {symbol: "EWW", name: "iShares MSCI Mexico", category: "Intl Equity"}
+  px_eis_daily:    {symbol: "EIS", name: "iShares MSCI Israel", category: "Intl Equity"}
+  px_acwi_daily:   {symbol: "ACWI", name: "iShares MSCI ACWI", category: "Intl Equity"}
+  px_vt_daily:     {symbol: "VT", name: "Vanguard Total World Stock", category: "Intl Equity"}
+  px_tlt_daily:    {symbol: "TLT", name: "iShares 20+ Yr Treasury", category: "Fixed Income"}
+  px_ief_daily:    {symbol: "IEF", name: "iShares 7-10 Yr Treasury", category: "Fixed Income"}
+  px_shy_daily:    {symbol: "SHY", name: "iShares 1-3 Yr Treasury", category: "Fixed Income"}
+  px_govt_daily:   {symbol: "GOVT", name: "iShares US Treasury Bond", category: "Fixed Income"}
+  px_bnd_daily:    {symbol: "BND", name: "Vanguard Total Bond Market", category: "Fixed Income"}
+  px_agg_daily:    {symbol: "AGG", name: "iShares Core US Aggregate Bond", category: "Fixed Income"}
+  px_bndx_daily:   {symbol: "BNDX", name: "Vanguard Total Intl Bond", category: "Fixed Income"}
+  px_lqd_daily:    {symbol: "LQD", name: "iShares IG Corp Bond", category: "Fixed Income"}
+  px_hyg_daily:    {symbol: "HYG", name: "iShares High Yield Bond", category: "Fixed Income"}
+  px_jnk_daily:    {symbol: "JNK", name: "SPDR High Yield Bond", category: "Fixed Income"}
+  px_emb_daily:    {symbol: "EMB", name: "iShares EM Bond", category: "Fixed Income"}
+  px_tip_daily:    {symbol: "TIP", name: "iShares TIPS Bond", category: "Fixed Income"}
+  px_vtip_daily:   {symbol: "VTIP", name: "Vanguard Short-Term TIPS", category: "Fixed Income"}
+  px_mub_daily:    {symbol: "MUB", name: "iShares National Muni Bond", category: "Fixed Income"}
+  px_vcit_daily:   {symbol: "VCIT", name: "Vanguard Interm-Term Corp Bond", category: "Fixed Income"}
+  px_vcsh_daily:   {symbol: "VCSH", name: "Vanguard Short-Term Corp Bond", category: "Fixed Income"}
+  px_bkln_daily:   {symbol: "BKLN", name: "Invesco Senior Loan", category: "Fixed Income"}
+  px_flot_daily:   {symbol: "FLOT", name: "iShares Floating Rate Bond", category: "Fixed Income"}
+  px_gld_daily:    {symbol: "GLD", name: "SPDR Gold Shares", category: "Commodity"}
+  px_iau_daily:    {symbol: "IAU", name: "iShares Gold Trust", category: "Commodity"}
+  px_slv_daily:    {symbol: "SLV", name: "iShares Silver Trust", category: "Commodity"}
+  px_uso_daily:    {symbol: "USO", name: "United States Oil Fund", category: "Commodity"}
+  px_dbc_daily:    {symbol: "DBC", name: "Invesco DB Commodity", category: "Commodity"}
+  px_dba_daily:    {symbol: "DBA", name: "Invesco DB Agriculture", category: "Commodity"}
+  px_pdbc_daily:   {symbol: "PDBC", name: "Invesco Optimum Yield Cmdty", category: "Commodity"}
+  px_cper_daily:   {symbol: "CPER", name: "United States Copper Index", category: "Commodity"}
+  px_weat_daily:   {symbol: "WEAT", name: "Teucrium Wheat Fund", category: "Commodity"}
+  px_corn_daily:   {symbol: "CORN", name: "Teucrium Corn Fund", category: "Commodity"}
+  px_pall_daily:   {symbol: "PALL", name: "Aberdeen Palladium ETF", category: "Commodity"}
+  px_pplt_daily:   {symbol: "PPLT", name: "Aberdeen Platinum ETF", category: "Commodity"}
+  px_copx_daily:   {symbol: "COPX", name: "Global X Copper Miners", category: "Commodity"}
+  px_gdx_daily:    {symbol: "GDX", name: "VanEck Gold Miners", category: "Commodity"}
+  px_gdxj_daily:   {symbol: "GDXJ", name: "VanEck Junior Gold Miners", category: "Commodity"}
+  px_sil_daily:    {symbol: "SIL", name: "Global X Silver Miners", category: "Commodity"}
+  px_vnq_daily:    {symbol: "VNQ", name: "Vanguard Real Estate", category: "Real Estate"}
+  px_iyr_daily:    {symbol: "IYR", name: "iShares US Real Estate", category: "Real Estate"}
+  px_schh_daily:   {symbol: "SCHH", name: "Schwab US REIT", category: "Real Estate"}
+  px_xlre_daily:   {symbol: "XLRE", name: "Real Estate Select SPDR", category: "Real Estate"}
+  px_vnqi_daily:   {symbol: "VNQI", name: "Vanguard Global ex-US REIT", category: "Real Estate"}
+  px_uup_daily:    {symbol: "UUP", name: "Invesco DB US Dollar", category: "Currency"}
+  px_fxe_daily:    {symbol: "FXE", name: "Invesco CurrencyShares Euro", category: "Currency"}
+  px_fxy_daily:    {symbol: "FXY", name: "Invesco CurrencyShares Yen", category: "Currency"}
+  px_fxf_daily:    {symbol: "FXF", name: "Invesco CurrencyShares CHF", category: "Currency"}
+  px_dxy_daily:    {symbol: "DX-Y.NYB", name: "US Dollar Index", category: "Currency Index"}
