@@ -56,10 +56,10 @@ def entry(m: dict) -> dict:
             f"unknown family {family!r} for {m.get('symbol')!r} -- expected 'etf' or 'stock'. "
             f"Refusing to fail OPEN to the ETF branch (which would drop the survivorship flag).")
     if family == "stock":
-        return {
+        out = {
             "description": f"{m['name']} ({m['symbol']}) daily price bar -- "
                            f"split-adjusted OHLCV + fully-adjusted close + split/dividend "
-                           f"factors. SP500 member ({m['category']}), "
+                           f"factors. Current index constituent ({m['category']}), "
                            f"CURRENT-MEMBERS-ONLY (survivorship-flagged: backtest_valid=false). "
                            f"Written by collectors/price through datacore.archive "
                            f"(append-only, year-partitioned, bitemporal).",
@@ -76,6 +76,20 @@ def entry(m: dict) -> dict:
             "category": m["category"],
             "record_fields": _RECORD_FIELDS,
         }
+        # Multi-currency families (STOXX600, P7a-2) carry currency + quote_basis per series
+        # (decision 4a: store RAW; GBX = London pence -> /100 to GBP is a CONSUMER step, NOT
+        # baked into the archive, same spirit as split_factor). currency comes from the index
+        # source (iShares), NEVER inferred from the exchange suffix (IHG.L / CPG.L are USD on
+        # the LSE). A single-currency family (SP500, USD) omits these -> absence means
+        # "native major units"; presence is the machine-readable per-series basis.
+        cur = m.get("currency")
+        if cur:
+            out["currency"] = cur
+            out["quote_basis"] = m.get("quote_basis", cur)
+            if out["quote_basis"] != cur:
+                out["description"] += (f" Quoted in {out['quote_basis']} "
+                                       f"(={cur} minor units; /100 -> {cur}).")
+        return out
     return {
         "description": f"{m['name']} ({m['symbol']}) daily price bar -- "
                        f"split-adjusted OHLCV + fully-adjusted close + split/dividend "

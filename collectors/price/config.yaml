@@ -703,3 +703,620 @@ price:
   px_zbh_daily: {symbol: "ZBH", name: "Zimmer Biomet", category: "Health Care", family: "stock"}
   px_zbra_daily: {symbol: "ZBRA", name: "Zebra Technologies", category: "Information Technology", family: "stock"}
   px_zts_daily: {symbol: "ZTS", name: "Zoetis", category: "Health Care", family: "stock"}
+
+  # ---- STOXX600 stock family (current members; snapshot from
+  # stoxx600-momentumrank/data.json, iShares EXSA + yfinance, updated 2026-06-24;
+  # generated 2026-06-27 P7a-2) ----
+  # survivorship: current-members-only -> backtest_valid:false (machine flag).
+  # suffix RETAINED in series_id -> 0 collision vs bare SP500/ETF. currency +
+  # quote_basis per series (decision 4a: store RAW; GBX = London pence, /100 -> GBP
+  # is a CONSUMER concern, not baked in). TA-scope ~6y. Real backfill = P8.
+  px_a2a_mi_daily: {symbol: "A2A.MI", name: "A2A", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_a5g_ir_daily: {symbol: "A5G.IR", name: "AIB GROUP PLC", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_aaf_l_daily: {symbol: "AAF.L", name: "AIRTEL AFRICA PLC", category: "Communication Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_aak_st_daily: {symbol: "AAK.ST", name: "AAK", category: "Consumer Defensive", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_aal_l_daily: {symbol: "AAL.L", name: "ANGLO AMERICAN PLC", category: "Basic Materials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_aalb_as_daily: {symbol: "AALB.AS", name: "AALBERTS NV", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_abbn_sw_daily: {symbol: "ABBN.SW", name: "ABB LTD", category: "Industrials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_abdn_l_daily: {symbol: "ABDN.L", name: "ABERDEEN GROUP PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_abf_l_daily: {symbol: "ABF.L", name: "ASSOCIATED BRITISH FOODS PLC", category: "Consumer Defensive", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_abi_br_daily: {symbol: "ABI.BR", name: "ANHEUSER-BUSCH INBEV SA", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_abn_as_daily: {symbol: "ABN.AS", name: "ABN AMRO BANK NV", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_abvx_pa_daily: {symbol: "ABVX.PA", name: "ABIVAX SA", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ac_pa_daily: {symbol: "AC.PA", name: "ACCOR SA", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_aca_pa_daily: {symbol: "ACA.PA", name: "CREDIT AGRICOLE SA", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ackb_br_daily: {symbol: "ACKB.BR", name: "ACKERMANS & VAN HAAREN NV", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_acln_sw_daily: {symbol: "ACLN.SW", name: "ACCELLERON N AG", category: "Industrials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_acp_wa_daily: {symbol: "ACP.WA", name: "ASSECO POLAND SA", category: "Technology", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_acs_mc_daily: {symbol: "ACS.MC", name: "ACS ACTIVIDADES DE CONSTRUCCION Y", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_acx_mc_daily: {symbol: "ACX.MC", name: "ACERINOX SA", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ad_as_daily: {symbol: "AD.AS", name: "KONINKLIJKE AHOLD DELHAIZE NV", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_addt_b_st_daily: {symbol: "ADDT-B.ST", name: "ADDTECH CLASS B", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_aden_sw_daily: {symbol: "ADEN.SW", name: "ADECCO GROUP AG", category: "Industrials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_adm_l_daily: {symbol: "ADM.L", name: "ADMIRAL GROUP PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_adp_pa_daily: {symbol: "ADP.PA", name: "AEROPORTS DE PARIS SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ads_de_daily: {symbol: "ADS.DE", name: "ADIDAS N AG", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_adyen_as_daily: {symbol: "ADYEN.AS", name: "ADYEN NV", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_aed_br_daily: {symbol: "AED.BR", name: "AEDIFICA NV", category: "Real Estate", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_aena_mc_daily: {symbol: "AENA.MC", name: "AENA SME SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ag1_de_daily: {symbol: "AG1.DE", name: "AUTO1 GROUP", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_agn_as_daily: {symbol: "AGN.AS", name: "AEGON LTD", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ags_br_daily: {symbol: "AGS.BR", name: "AGEAS SA", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ai_pa_daily: {symbol: "AI.PA", name: "LAIR LIQUIDE SOCIETE ANONYME POUR", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_air_pa_daily: {symbol: "AIR.PA", name: "AIRBUS GROUP", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_aixa_de_daily: {symbol: "AIXA.DE", name: "AIXTRON", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ake_pa_daily: {symbol: "AKE.PA", name: "ARKEMA SA", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_aker_ol_daily: {symbol: "AKER.OL", name: "AKER", category: "Industrials", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_akrbp_ol_daily: {symbol: "AKRBP.OL", name: "AKER BP", category: "Energy", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_akza_as_daily: {symbol: "AKZA.AS", name: "AKZO NOBEL NV", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_alc_sw_daily: {symbol: "ALC.SW", name: "ALCON AG", category: "Healthcare", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_ale_wa_daily: {symbol: "ALE.WA", name: "ALLEGRO SA", category: "Consumer Cyclical", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_alfa_st_daily: {symbol: "ALFA.ST", name: "ALFA LAVAL", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_alk_b_co_daily: {symbol: "ALK-B.CO", name: "ALK-ABELLO CLASS B", category: "Healthcare", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_allfg_as_daily: {symbol: "ALLFG.AS", name: "ALLFUNDS GROUP PLC", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_alln_sw_daily: {symbol: "ALLN.SW", name: "ALLREAL HOLDING AG", category: "Real Estate", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_alo_pa_daily: {symbol: "ALO.PA", name: "ALSTOM SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_alsydb_co_daily: {symbol: "ALSYDB.CO", name: "AL SYDBANK", category: "Financial Services", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_alv_de_daily: {symbol: "ALV.DE", name: "ALLIANZ", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_am_pa_daily: {symbol: "AM.PA", name: "DASSAULT AVIATION SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ambu_b_co_daily: {symbol: "AMBU-B.CO", name: "AMBU CLASS B", category: "Healthcare", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_ams_mc_daily: {symbol: "AMS.MC", name: "AMADEUS IT GROUP SA", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_amun_pa_daily: {symbol: "AMUN.PA", name: "AMUNDI SA", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_amv0_de_daily: {symbol: "AMV0.DE", name: "AUMOVIO N", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ana_mc_daily: {symbol: "ANA.MC", name: "ACCIONA SA", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_andr_vi_daily: {symbol: "ANDR.VI", name: "ANDRITZ AG", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_anto_l_daily: {symbol: "ANTO.L", name: "ANTOFAGASTA PLC", category: "Basic Materials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_arcad_as_daily: {symbol: "ARCAD.AS", name: "ARCADIS NV", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_argx_br_daily: {symbol: "ARGX.BR", name: "ARGENX", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_asm_as_daily: {symbol: "ASM.AS", name: "ASM INTERNATIONAL NV", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_asml_as_daily: {symbol: "ASML.AS", name: "ASML HOLDING NV", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_asrnl_as_daily: {symbol: "ASRNL.AS", name: "ASR NEDERLAND NV", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_assa_b_st_daily: {symbol: "ASSA-B.ST", name: "ASSA ABLOY B", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_atco_a_st_daily: {symbol: "ATCO-A.ST", name: "ATLAS COPCO CLASS A", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_ats_vi_daily: {symbol: "ATS.VI", name: "AT & S AUSTRIA TECHNOLOGIE & SYSTE", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_auto_l_daily: {symbol: "AUTO.L", name: "AUTOTRADER GROUP PLC", category: "Communication Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_av_l_daily: {symbol: "AV.L", name: "AVIVA PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_avol_sw_daily: {symbol: "AVOL.SW", name: "AVOLTA AG", category: "Consumer Cyclical", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_axfo_st_daily: {symbol: "AXFO.ST", name: "AXFOOD", category: "Consumer Defensive", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_ayv_pa_daily: {symbol: "AYV.PA", name: "AYVENS SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_aza_st_daily: {symbol: "AZA.ST", name: "AVANZA BANK HOLDING", category: "Financial Services", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_azm_mi_daily: {symbol: "AZM.MI", name: "AZIMUT HOLDING", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_azn_l_daily: {symbol: "AZN.L", name: "ASTRAZENECA PLC", category: "Healthcare", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_ba_l_daily: {symbol: "BA.L", name: "BAE SYSTEMS PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_bab_l_daily: {symbol: "BAB.L", name: "BABCOCK INTERNATIONAL GROUP PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_baer_sw_daily: {symbol: "BAER.SW", name: "JULIUS BAER GRUPPE AG", category: "Financial Services", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_bakka_ol_daily: {symbol: "BAKKA.OL", name: "BAKKAFROST", category: "Consumer Defensive", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_bald_b_st_daily: {symbol: "BALD-B.ST", name: "FASTIGHETS BALDER CLASS B", category: "Real Estate", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_bami_mi_daily: {symbol: "BAMI.MI", name: "BANCO BPM", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bamnb_as_daily: {symbol: "BAMNB.AS", name: "BAM GROEP KONINKLIJKE NV", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_barc_l_daily: {symbol: "BARC.L", name: "BARCLAYS PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_barn_sw_daily: {symbol: "BARN.SW", name: "BARRY CALLEBAUT AG", category: "Consumer Defensive", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_bas_de_daily: {symbol: "BAS.DE", name: "BASF N", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bats_l_daily: {symbol: "BATS.L", name: "BRITISH AMERICAN TOBACCO", category: "Consumer Defensive", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_bava_co_daily: {symbol: "BAVA.CO", name: "BAVARIAN NORDIC", category: "Healthcare", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_bayn_de_daily: {symbol: "BAYN.DE", name: "BAYER AG", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bbox_l_daily: {symbol: "BBOX.L", name: "TRITAX BIG BOX REIT PLC", category: "Real Estate", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_bbva_mc_daily: {symbol: "BBVA.MC", name: "BANCO BILBAO VIZCAYA ARGENTARIA SA", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bby_l_daily: {symbol: "BBY.L", name: "BALFOUR BEATTY PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_bc_mi_daily: {symbol: "BC.MI", name: "BRUNELLO CUCINELLI", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bc8_de_daily: {symbol: "BC8.DE", name: "BECHTLE AG", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bcp_ls_daily: {symbol: "BCP.LS", name: "BANCO COMERCIAL PORTUGUES SA", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bcvn_sw_daily: {symbol: "BCVN.SW", name: "BC VAUD N", category: "Financial Services", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_bean_sw_daily: {symbol: "BEAN.SW", name: "BELIMO N AG", category: "Industrials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_bei_de_daily: {symbol: "BEI.DE", name: "BEIERSDORF AG", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_beij_b_st_daily: {symbol: "BEIJ-B.ST", name: "BEIJER REF CLASS B", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_besi_as_daily: {symbol: "BESI.AS", name: "BE SEMICONDUCTOR INDUSTRIES NV", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bez_l_daily: {symbol: "BEZ.L", name: "BEAZLEY PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_bft_wa_daily: {symbol: "BFT.WA", name: "BENEFIT SYSTEMS SA", category: "Industrials", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_bg_vi_daily: {symbol: "BG.VI", name: "BAWAG GROUP AG", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bgeo_l_daily: {symbol: "BGEO.L", name: "LION FINANCE GROUP PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_bgn_mi_daily: {symbol: "BGN.MI", name: "BANCA GENERALI", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bim_pa_daily: {symbol: "BIM.PA", name: "BIOMERIEUX SA", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_birg_ir_daily: {symbol: "BIRG.IR", name: "BANK OF IRELAND GROUP PLC", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bkg_l_daily: {symbol: "BKG.L", name: "BERKELEY GROUP HOLDINGS (THE) PLC", category: "Consumer Cyclical", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_bkt_mc_daily: {symbol: "BKT.MC", name: "BANKINTER SA", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bkw_sw_daily: {symbol: "BKW.SW", name: "BKW N AG", category: "Utilities", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_blnd_l_daily: {symbol: "BLND.L", name: "BRITISH LAND REIT PLC", category: "Real Estate", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_bme_l_daily: {symbol: "BME.L", name: "B&M EUROPEAN VALUE RETAIL PLC", category: "Consumer Cyclical", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_bmed_mi_daily: {symbol: "BMED.MI", name: "BANCA MEDIOLANUM", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bmps_mi_daily: {symbol: "BMPS.MI", name: "BANCA MONTE DEI PASCHI DI SIENA SP", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bmw_de_daily: {symbol: "BMW.DE", name: "BMW AG", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bn_pa_daily: {symbol: "BN.PA", name: "DANONE SA", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bnp_pa_daily: {symbol: "BNP.PA", name: "BNP PARIBAS SA", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bnr_de_daily: {symbol: "BNR.DE", name: "BRENNTAG", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bnzl_l_daily: {symbol: "BNZL.L", name: "BUNZL", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_bol_pa_daily: {symbol: "BOL.PA", name: "BOLLORE", category: "Energy", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bol_st_daily: {symbol: "BOL.ST", name: "BOLIDEN", category: "Basic Materials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_bp_l_daily: {symbol: "BP.L", name: "BP PLC", category: "Energy", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_bpe_mi_daily: {symbol: "BPE.MI", name: "BPER BANCA", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bpt_l_daily: {symbol: "BPT.L", name: "BRIDGEPOINT GROUP PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_brby_l_daily: {symbol: "BRBY.L", name: "BURBERRY GROUP PLC", category: "Consumer Cyclical", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_bt_a_l_daily: {symbol: "BT-A.L", name: "BT GROUP PLC", category: "Communication Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_btrw_l_daily: {symbol: "BTRW.L", name: "BARRATT REDROW PLC", category: "Consumer Cyclical", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_bucn_sw_daily: {symbol: "BUCN.SW", name: "BUCHER INDUSTRIES AG", category: "Industrials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_bvi_pa_daily: {symbol: "BVI.PA", name: "BUREAU VERITAS SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_bwy_l_daily: {symbol: "BWY.L", name: "BELLWAY PLC", category: "Consumer Cyclical", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_byg_l_daily: {symbol: "BYG.L", name: "BIG YELLOW GROUP PLC", category: "Real Estate", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_bzu_mi_daily: {symbol: "BZU.MI", name: "BUZZI", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ca_pa_daily: {symbol: "CA.PA", name: "CARREFOUR SA", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_cabk_mc_daily: {symbol: "CABK.MC", name: "CAIXABANK SA", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_camx_st_daily: {symbol: "CAMX.ST", name: "CAMURUS", category: "Healthcare", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_cap_pa_daily: {symbol: "CAP.PA", name: "CAPGEMINI", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_carl_b_co_daily: {symbol: "CARL-B.CO", name: "CARLSBERG AS CL B", category: "Consumer Defensive", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_cast_st_daily: {symbol: "CAST.ST", name: "CASTELLUM", category: "Real Estate", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_cbk_de_daily: {symbol: "CBK.DE", name: "COMMERZBANK AG", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ccc_l_daily: {symbol: "CCC.L", name: "COMPUTACENTER PLC", category: "Technology", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_cch_l_daily: {symbol: "CCH.L", name: "COCA COLA HBC AG", category: "Consumer Defensive", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_cdi_pa_daily: {symbol: "CDI.PA", name: "CHRISTIAN DIOR", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_cdr_wa_daily: {symbol: "CDR.WA", name: "CD PROJEKT SA", category: "Communication Services", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_cfr_sw_daily: {symbol: "CFR.SW", name: "COMPAGNIE FINANCIERE RICHEMONT SA", category: "Consumer Cyclical", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_clnx_mc_daily: {symbol: "CLNX.MC", name: "CELLNEX TELECOM", category: "Communication Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_cmbn_sw_daily: {symbol: "CMBN.SW", name: "CEMBRA MONEY BANK AG", category: "Financial Services", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_cna_l_daily: {symbol: "CNA.L", name: "CENTRICA PLC", category: "Utilities", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_colo_b_co_daily: {symbol: "COLO-B.CO", name: "COLOPLAST B", category: "Healthcare", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_con_de_daily: {symbol: "CON.DE", name: "CONTINENTAL AG", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_cotn_sw_daily: {symbol: "COTN.SW", name: "COMET HOLDING AG", category: "Technology", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_cov_pa_daily: {symbol: "COV.PA", name: "COVIVIO SA", category: "Real Estate", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_cpg_l_daily: {symbol: "CPG.L", name: "COMPASS GROUP PLC", category: "Consumer Cyclical", currency: "USD", quote_basis: "USD", family: "stock"}
+  px_cpr_mi_daily: {symbol: "CPR.MI", name: "DAVIDE CAMPARI MILANO NV", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_crda_l_daily: {symbol: "CRDA.L", name: "CRODA INTERNATIONAL PLC", category: "Basic Materials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_cs_pa_daily: {symbol: "CS.PA", name: "AXA SA", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_csg_as_daily: {symbol: "CSG.AS", name: "CSG CLASS A NV", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ctec_l_daily: {symbol: "CTEC.L", name: "CONVATEC GROUP PLC", category: "Healthcare", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_cvc_as_daily: {symbol: "CVC.AS", name: "CVC CAPITAL PARTNERS PLC", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_cwk_l_daily: {symbol: "CWK.L", name: "CRANSWICK PLC", category: "Consumer Defensive", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_danske_co_daily: {symbol: "DANSKE.CO", name: "DANSKE BANK", category: "Financial Services", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_db1_de_daily: {symbol: "DB1.DE", name: "DEUTSCHE BOERSE AG", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_dbk_de_daily: {symbol: "DBK.DE", name: "DEUTSCHE BANK AG", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_dcc_l_daily: {symbol: "DCC.L", name: "DCC PLC", category: "Energy", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_demant_co_daily: {symbol: "DEMANT.CO", name: "DEMANT", category: "Healthcare", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_dg_pa_daily: {symbol: "DG.PA", name: "VINCI SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_dge_l_daily: {symbol: "DGE.L", name: "DIAGEO PLC", category: "Consumer Defensive", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_dher_de_daily: {symbol: "DHER.DE", name: "DELIVERY HERO", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_dhl_de_daily: {symbol: "DHL.DE", name: "DEUTSCHE POST AG", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_die_br_daily: {symbol: "DIE.BR", name: "DIETEREN (D) SA", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_dim_pa_daily: {symbol: "DIM.PA", name: "SARTORIUS STEDIM BIOTECH SA", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_dksh_sw_daily: {symbol: "DKSH.SW", name: "DKSH HOLDING AG", category: "Industrials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_dlg_mi_daily: {symbol: "DLG.MI", name: "DELONGHI", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_dln_l_daily: {symbol: "DLN.L", name: "DERWENT LONDON REIT PLC", category: "Real Estate", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_dnb_ol_daily: {symbol: "DNB.OL", name: "DNB BANK", category: "Financial Services", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_dnp_wa_daily: {symbol: "DNP.WA", name: "DINO POLSKA SA", category: "Consumer Defensive", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_dplm_l_daily: {symbol: "DPLM.L", name: "DIPLOMA PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_drx_l_daily: {symbol: "DRX.L", name: "DRAX GROUP PLC", category: "Utilities", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_dsfir_as_daily: {symbol: "DSFIR.AS", name: "DSM FIRMENICH AG", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_dsv_co_daily: {symbol: "DSV.CO", name: "DSV", category: "Industrials", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_dsy_pa_daily: {symbol: "DSY.PA", name: "DASSAULT SYSTEMES", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_dte_de_daily: {symbol: "DTE.DE", name: "DEUTSCHE TELEKOM N AG", category: "Communication Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_dtg_de_daily: {symbol: "DTG.DE", name: "DAIMLER TRUCK HOLDING E AG", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ebp_wa_daily: {symbol: "EBP.WA", name: "ERSTE BANK POLSKA SA", category: "Financial Services", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_ebs_vi_daily: {symbol: "EBS.VI", name: "ERSTE GROUP BANK AG", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_eden_pa_daily: {symbol: "EDEN.PA", name: "EDENRED", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_edp_ls_daily: {symbol: "EDP.LS", name: "EDP ENERGIAS DE PORTUGAL SA", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_edpr_ls_daily: {symbol: "EDPR.LS", name: "EDP RENEWABLES SA", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_el_pa_daily: {symbol: "EL.PA", name: "ESSILORLUXOTTICA SA", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ele_mc_daily: {symbol: "ELE.MC", name: "ENDESA SA", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_eli_br_daily: {symbol: "ELI.BR", name: "ELIA GROUP SA", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_elis_pa_daily: {symbol: "ELIS.PA", name: "ELIS SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_elisa_he_daily: {symbol: "ELISA.HE", name: "ELISA", category: "Communication Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_emg_l_daily: {symbol: "EMG.L", name: "MAN GROUP PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_emsn_sw_daily: {symbol: "EMSN.SW", name: "EMS-CHEMIE HOLDING AG", category: "Basic Materials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_en_pa_daily: {symbol: "EN.PA", name: "BOUYGUES SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_enel_mi_daily: {symbol: "ENEL.MI", name: "ENEL", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_eng_mc_daily: {symbol: "ENG.MC", name: "ENAGAS SA", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_engi_pa_daily: {symbol: "ENGI.PA", name: "ENGIE SA", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_eni_mi_daily: {symbol: "ENI.MI", name: "ENI", category: "Energy", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_enr_de_daily: {symbol: "ENR.DE", name: "SIEMENS ENERGY N AG", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ent_l_daily: {symbol: "ENT.L", name: "ENTAIN PLC", category: "Consumer Cyclical", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_enx_pa_daily: {symbol: "ENX.PA", name: "EURONEXT NV", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_eoan_de_daily: {symbol: "EOAN.DE", name: "E.ON N", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_epi_a_st_daily: {symbol: "EPI-A.ST", name: "EPIROC CLASS A", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_eqnr_ol_daily: {symbol: "EQNR.OL", name: "EQUINOR", category: "Energy", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_eqt_st_daily: {symbol: "EQT.ST", name: "EQT", category: "Financial Services", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_erf_pa_daily: {symbol: "ERF.PA", name: "EUROFINS SCIENTIFIC", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_eric_b_st_daily: {symbol: "ERIC-B.ST", name: "ERICSSON B", category: "Technology", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_essity_b_st_daily: {symbol: "ESSITY-B.ST", name: "ESSITY CLASS B", category: "Consumer Defensive", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_evd_de_daily: {symbol: "EVD.DE", name: "CTS EVENTIM AG", category: "Communication Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_evk_de_daily: {symbol: "EVK.DE", name: "EVONIK INDUSTRIES AG", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_evo_st_daily: {symbol: "EVO.ST", name: "EVOLUTION", category: "Consumer Cyclical", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_exo_as_daily: {symbol: "EXO.AS", name: "EXOR NV", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_expn_l_daily: {symbol: "EXPN.L", name: "EXPERIAN PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_ezj_l_daily: {symbol: "EZJ.L", name: "EASYJET PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_fbk_mi_daily: {symbol: "FBK.MI", name: "FINECOBANK BANCA FINECO", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_fdju_pa_daily: {symbol: "FDJU.PA", name: "FDJ UNITED", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_fer_mc_daily: {symbol: "FER.MC", name: "FERROVIAL NV", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_fgr_pa_daily: {symbol: "FGR.PA", name: "EIFFAGE SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_fhzn_sw_daily: {symbol: "FHZN.SW", name: "FLUGHAFEN ZUERICH AG", category: "Industrials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_fls_co_daily: {symbol: "FLS.CO", name: "FLSMIDTH AND CO CLASS B", category: "Industrials", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_fme_de_daily: {symbol: "FME.DE", name: "FRESENIUS MEDICAL CARE AG", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_fntn_de_daily: {symbol: "FNTN.DE", name: "FREENET AG", category: "Communication Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_fortum_he_daily: {symbol: "FORTUM.HE", name: "FORTUM", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_fpe3_de_daily: {symbol: "FPE3.DE", name: "FUCHS PREF", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_fr_pa_daily: {symbol: "FR.PA", name: "VALEO", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_fra_de_daily: {symbol: "FRA.DE", name: "FRAPORT FRANKFURT AIRPORT SERVICES", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_fre_de_daily: {symbol: "FRE.DE", name: "FRESENIUS SE AND CO KGAA", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_fres_l_daily: {symbol: "FRES.L", name: "FRESNILLO PLC", category: "Basic Materials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_fro_ol_daily: {symbol: "FRO.OL", name: "FRONTLINE PLC", category: "Energy", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_ftk_de_daily: {symbol: "FTK.DE", name: "FLATEXDEGIRO N", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_g_mi_daily: {symbol: "G.MI", name: "ASSICURAZIONI GENERALI", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_g1a_de_daily: {symbol: "G1A.DE", name: "GEA GROUP AG", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_g24_de_daily: {symbol: "G24.DE", name: "SCOUT24 N", category: "Communication Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_gald_sw_daily: {symbol: "GALD.SW", name: "GALDERMA GROUP N AG", category: "Healthcare", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_gale_sw_daily: {symbol: "GALE.SW", name: "GALENICA AG", category: "Healthcare", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_galp_ls_daily: {symbol: "GALP.LS", name: "GALP ENERGIA SGPS SA CLASS B", category: "Energy", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_gaw_l_daily: {symbol: "GAW.L", name: "GAMES WORKSHOP GROUP PLC", category: "Consumer Cyclical", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_gbf_de_daily: {symbol: "GBF.DE", name: "BILFINGER", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_gblb_br_daily: {symbol: "GBLB.BR", name: "GROUPE BRUXELLES LAMBERT NV", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_gebn_sw_daily: {symbol: "GEBN.SW", name: "GEBERIT AG", category: "Industrials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_get_pa_daily: {symbol: "GET.PA", name: "GETLINK", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_geti_b_st_daily: {symbol: "GETI-B.ST", name: "GETINGE B", category: "Healthcare", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_gf_sw_daily: {symbol: "GF.SW", name: "GEORG FISCHER AG", category: "Industrials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_gfc_pa_daily: {symbol: "GFC.PA", name: "GECINA SA", category: "Real Estate", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_givn_sw_daily: {symbol: "GIVN.SW", name: "GIVAUDAN SA", category: "Basic Materials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_gjf_ol_daily: {symbol: "GJF.OL", name: "GJENSIDIGE FORSIKRING", category: "Financial Services", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_gl9_ir_daily: {symbol: "GL9.IR", name: "GLANBIA PLC", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_gle_pa_daily: {symbol: "GLE.PA", name: "SOCIETE GENERALE SA", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_glen_l_daily: {symbol: "GLEN.L", name: "GLENCORE PLC", category: "Basic Materials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_gmab_co_daily: {symbol: "GMAB.CO", name: "GENMAB", category: "Healthcare", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_grf_mc_daily: {symbol: "GRF.MC", name: "GRIFOLS SA CLASS A", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_gsk_l_daily: {symbol: "GSK.L", name: "GLAXOSMITHKLINE", category: "Healthcare", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_gtt_pa_daily: {symbol: "GTT.PA", name: "GAZTRANSPORT & TECHNIGAZ SA", category: "Energy", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_hag_de_daily: {symbol: "HAG.DE", name: "HENSOLDT AG", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_hban_sw_daily: {symbol: "HBAN.SW", name: "HELVETIA BALOISE HOLDING N AG", category: "Financial Services", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_hei_de_daily: {symbol: "HEI.DE", name: "HEIDELBERG MATERIALS AG", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_heia_as_daily: {symbol: "HEIA.AS", name: "HEINEKEN NV", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_heio_as_daily: {symbol: "HEIO.AS", name: "HEINEKEN HOLDING NV", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_hen3_de_daily: {symbol: "HEN3.DE", name: "HENKEL & KGAA PREF AG", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_her_mi_daily: {symbol: "HER.MI", name: "HERA", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_hexa_b_st_daily: {symbol: "HEXA-B.ST", name: "HEXAGON CLASS B", category: "Technology", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_hiab_he_daily: {symbol: "HIAB.HE", name: "HIAB CORPORATION CLASS B", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_hik_l_daily: {symbol: "HIK.L", name: "HIKMA PHARMACEUTICALS PLC", category: "Healthcare", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_hlma_l_daily: {symbol: "HLMA.L", name: "HALMA PLC", category: "Technology", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_hln_l_daily: {symbol: "HLN.L", name: "HALEON PLC", category: "Healthcare", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_hm_b_st_daily: {symbol: "HM-B.ST", name: "HENNES & MAURITZ", category: "Consumer Cyclical", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_hnr1_de_daily: {symbol: "HNR1.DE", name: "HANNOVER RUECK", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ho_pa_daily: {symbol: "HO.PA", name: "THALES SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_hoc_l_daily: {symbol: "HOC.L", name: "HOCHSCHILD MINING PLC", category: "Basic Materials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_holm_b_st_daily: {symbol: "HOLM-B.ST", name: "HOLMEN CLASS B", category: "Basic Materials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_holn_sw_daily: {symbol: "HOLN.SW", name: "HOLCIM LTD AG", category: "Basic Materials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_hot_de_daily: {symbol: "HOT.DE", name: "HOCHTIEF AG", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_hsba_l_daily: {symbol: "HSBA.L", name: "HSBC HOLDINGS PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_hsx_l_daily: {symbol: "HSX.L", name: "HISCOX LTD", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_hubn_sw_daily: {symbol: "HUBN.SW", name: "HUBER & SUHNER AG", category: "Industrials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_huh1v_he_daily: {symbol: "HUH1V.HE", name: "HUHTAMAKI", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_hwdn_l_daily: {symbol: "HWDN.L", name: "HOWDEN JOINERY GROUP PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_iag_l_daily: {symbol: "IAG.L", name: "INTERNATIONAL AIRLINES GROUP SA", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_ibe_mc_daily: {symbol: "IBE.MC", name: "IBERDROLA SA", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_icg_l_daily: {symbol: "ICG.L", name: "ICG PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_idr_mc_daily: {symbol: "IDR.MC", name: "INDRA SISTEMAS SA", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ifcn_sw_daily: {symbol: "IFCN.SW", name: "INFICON HOLDING AG", category: "Technology", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_ifx_de_daily: {symbol: "IFX.DE", name: "INFINEON TECHNOLOGIES AG", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ig_mi_daily: {symbol: "IG.MI", name: "ITALGAS", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_igg_l_daily: {symbol: "IGG.L", name: "IG GROUP HOLDINGS PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_ihg_l_daily: {symbol: "IHG.L", name: "INTERCONTINENTAL HOTELS GROUP PLC", category: "Consumer Cyclical", currency: "USD", quote_basis: "USD", family: "stock"}
+  px_iii_l_daily: {symbol: "III.L", name: "3I GROUP PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_imb_l_daily: {symbol: "IMB.L", name: "IMPERIAL BRANDS PLC", category: "Consumer Defensive", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_imcd_as_daily: {symbol: "IMCD.AS", name: "IMCD NV", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_imi_l_daily: {symbol: "IMI.L", name: "IMI PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_inch_l_daily: {symbol: "INCH.L", name: "INCHCAPE PLC", category: "Consumer Cyclical", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_indt_st_daily: {symbol: "INDT.ST", name: "INDUTRADE", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_indu_c_st_daily: {symbol: "INDU-C.ST", name: "INDUSTRIVARDEN SERIES", category: "Financial Services", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_inf_l_daily: {symbol: "INF.L", name: "INFORMA PLC", category: "Communication Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_ing_wa_daily: {symbol: "ING.WA", name: "ING BANK SLASKI SA", category: "Financial Services", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_inga_as_daily: {symbol: "INGA.AS", name: "ING GROEP NV", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_inpst_as_daily: {symbol: "INPST.AS", name: "INPOST SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_inve_b_st_daily: {symbol: "INVE-B.ST", name: "INVESTOR CLASS B", category: "Financial Services", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_invp_l_daily: {symbol: "INVP.L", name: "INVESTEC PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_inw_mi_daily: {symbol: "INW.MI", name: "INFRASTRUTTURE WIRELESS ITALIANE", category: "Communication Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ip_mi_daily: {symbol: "IP.MI", name: "INTERPUMP GROUP", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ipn_pa_daily: {symbol: "IPN.PA", name: "IPSEN SA", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_isp_mi_daily: {symbol: "ISP.MI", name: "INTESA SANPAOLO", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_iss_co_daily: {symbol: "ISS.CO", name: "ISS A S", category: "Industrials", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_itrk_l_daily: {symbol: "ITRK.L", name: "INTERTEK GROUP PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_itv_l_daily: {symbol: "ITV.L", name: "ITV PLC", category: "Communication Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_itx_mc_daily: {symbol: "ITX.MC", name: "INDUSTRIA DE DISENO TEXTIL SA", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ivg_mi_daily: {symbol: "IVG.MI", name: "IVECO GROUP NV", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_jd_l_daily: {symbol: "JD.L", name: "JD SPORTS FASHION PLC", category: "Consumer Cyclical", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_jmat_l_daily: {symbol: "JMAT.L", name: "JOHNSON MATTHEY PLC", category: "Basic Materials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_jmt_ls_daily: {symbol: "JMT.LS", name: "JERONIMO MARTINS SA", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_jysk_co_daily: {symbol: "JYSK.CO", name: "JYSKE BANK", category: "Financial Services", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_kbc_br_daily: {symbol: "KBC.BR", name: "KBC GROEP", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_kbca_br_daily: {symbol: "KBCA.BR", name: "KBC ANCORA NV", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_kbx_de_daily: {symbol: "KBX.DE", name: "KNORR BREMSE AG", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_kcr_he_daily: {symbol: "KCR.HE", name: "KONECRANES", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_kemira_he_daily: {symbol: "KEMIRA.HE", name: "KEMIRA", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ker_pa_daily: {symbol: "KER.PA", name: "KERING SA", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_keskob_he_daily: {symbol: "KESKOB.HE", name: "KESKO CLASS B", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_kgf_l_daily: {symbol: "KGF.L", name: "KINGFISHER PLC", category: "Consumer Cyclical", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_kgh_wa_daily: {symbol: "KGH.WA", name: "KGHM POLSKA MIEDZ SA", category: "Basic Materials", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_kgx_de_daily: {symbol: "KGX.DE", name: "KION GROUP AG", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_knebv_he_daily: {symbol: "KNEBV.HE", name: "KONE", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_knin_sw_daily: {symbol: "KNIN.SW", name: "KUEHNE UND NAGEL INTERNATIONAL AG", category: "Industrials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_kog_ol_daily: {symbol: "KOG.OL", name: "KONGSBERG GRUPPEN", category: "Industrials", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_kpn_as_daily: {symbol: "KPN.AS", name: "KONINKLIJKE KPN NV", category: "Communication Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_krx_ir_daily: {symbol: "KRX.IR", name: "KINGSPAN GROUP PLC", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_krz_ir_daily: {symbol: "KRZ.IR", name: "KERRY GROUP PLC", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_kty_wa_daily: {symbol: "KTY.WA", name: "GRUPA KETY SA", category: "Basic Materials", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_lagr_b_st_daily: {symbol: "LAGR-B.ST", name: "LAGERCRANTZ GROUP CLASS B", category: "Technology", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_land_l_daily: {symbol: "LAND.L", name: "LAND SECURITIES GROUP REIT PLC", category: "Real Estate", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_lato_b_st_daily: {symbol: "LATO-B.ST", name: "LATOUR INVESTMENT CLASS B", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_ldo_mi_daily: {symbol: "LDO.MI", name: "LEONARDO FINMECCANICA SPA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_leg_de_daily: {symbol: "LEG.DE", name: "LEG IMMOBILIEN N", category: "Real Estate", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_lgen_l_daily: {symbol: "LGEN.L", name: "LEGAL AND GENERAL GROUP PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_lha_de_daily: {symbol: "LHA.DE", name: "DEUTSCHE LUFTHANSA AG", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_li_pa_daily: {symbol: "LI.PA", name: "KLEPIERRE REIT SA", category: "Real Estate", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_lifco_b_st_daily: {symbol: "LIFCO-B.ST", name: "LIFCO CLASS B", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_light_as_daily: {symbol: "LIGHT.AS", name: "SIGNIFY NV", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_lisp_sw_daily: {symbol: "LISP.SW", name: "CHOCOLADEFABRIKEN LINDT & SPRUENGL", category: "Consumer Defensive", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_lloy_l_daily: {symbol: "LLOY.L", name: "LLOYDS BANKING GROUP PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_lmp_l_daily: {symbol: "LMP.L", name: "LONDONMETRIC PROPERTY REIT PLC", category: "Real Estate", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_logn_sw_daily: {symbol: "LOGN.SW", name: "LOGITECH INTERNATIONAL SA", category: "Technology", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_lonn_sw_daily: {symbol: "LONN.SW", name: "LONZA GROUP AG", category: "Healthcare", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_loomis_st_daily: {symbol: "LOOMIS.ST", name: "LOOMIS CLASS B", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_lotb_br_daily: {symbol: "LOTB.BR", name: "LOTUS BAKERIES NV", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_lpp_wa_daily: {symbol: "LPP.WA", name: "LPP SA", category: "Consumer Cyclical", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_lr_pa_daily: {symbol: "LR.PA", name: "LEGRAND SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_lseg_l_daily: {symbol: "LSEG.L", name: "LONDON STOCK EXCHANGE GROUP PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_ltmc_mi_daily: {symbol: "LTMC.MI", name: "LOTTOMATICA GROUP", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_lund_b_st_daily: {symbol: "LUND-B.ST", name: "LUNDBERGFORETAGEN CLASS B", category: "Financial Services", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_maersk_b_co_daily: {symbol: "MAERSK-B.CO", name: "A P MOLLER MAERSK B", category: "Industrials", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_manta_he_daily: {symbol: "MANTA.HE", name: "MANDATUM", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_map_mc_daily: {symbol: "MAP.MC", name: "MAPFRE SA", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_mbg_de_daily: {symbol: "MBG.DE", name: "MERCEDES-BENZ GROUP N AG", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_mbk_wa_daily: {symbol: "MBK.WA", name: "MBANK SA", category: "Financial Services", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_mc_pa_daily: {symbol: "MC.PA", name: "LVMH", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_metso_he_daily: {symbol: "METSO.HE", name: "METSO CORPORATION", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_mf_pa_daily: {symbol: "MF.PA", name: "WENDEL", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_micc_as_daily: {symbol: "MICC.AS", name: "MAGNUM ICE CREAM NV", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_mil_wa_daily: {symbol: "MIL.WA", name: "BANK MILLENNIUM SA", category: "Financial Services", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_mks_l_daily: {symbol: "MKS.L", name: "MARKS AND SPENCER GROUP PLC", category: "Consumer Defensive", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_ml_pa_daily: {symbol: "ML.PA", name: "MICHELIN", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_mndi_l_daily: {symbol: "MNDI.L", name: "MONDI PLC", category: "Basic Materials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_mng_l_daily: {symbol: "MNG.L", name: "M&G PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_mobn_sw_daily: {symbol: "MOBN.SW", name: "MOBIMO HOLDING AG", category: "Real Estate", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_monc_mi_daily: {symbol: "MONC.MI", name: "MONCLER", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_mowi_ol_daily: {symbol: "MOWI.OL", name: "MOWI", category: "Consumer Defensive", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_mrk_de_daily: {symbol: "MRK.DE", name: "MERCK", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_mrl_mc_daily: {symbol: "MRL.MC", name: "MERLIN PROPERTIES REIT SA", category: "Real Estate", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_mro_l_daily: {symbol: "MRO.L", name: "MELROSE INDUSTRIES PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_mt_as_daily: {symbol: "MT.AS", name: "ARCELORMITTAL SA", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_mto_l_daily: {symbol: "MTO.L", name: "MITIE GROUP PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_mtx_de_daily: {symbol: "MTX.DE", name: "MTU AERO ENGINES HOLDING AG", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_muv2_de_daily: {symbol: "MUV2.DE", name: "MUENCHENER RUECKVERSICHERUNGS-GESE", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_mycr_st_daily: {symbol: "MYCR.ST", name: "MYCRONIC", category: "Technology", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_nda_fi_he_daily: {symbol: "NDA-FI.HE", name: "NORDEA BANK", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_nda_de_daily: {symbol: "NDA.DE", name: "AURUBIS AG", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ndx1_de_daily: {symbol: "NDX1.DE", name: "NORDEX", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_nem_de_daily: {symbol: "NEM.DE", name: "NEMETSCHEK", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_nesn_sw_daily: {symbol: "NESN.SW", name: "NESTLE SA", category: "Consumer Defensive", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_neste_he_daily: {symbol: "NESTE.HE", name: "NESTE", category: "Energy", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_nex_pa_daily: {symbol: "NEX.PA", name: "NEXANS SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_nexi_mi_daily: {symbol: "NEXI.MI", name: "NEXI", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ng_l_daily: {symbol: "NG.L", name: "NATIONAL GRID PLC", category: "Utilities", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_nhy_ol_daily: {symbol: "NHY.OL", name: "NORSK HYDRO", category: "Basic Materials", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_nibe_b_st_daily: {symbol: "NIBE-B.ST", name: "NIBE INDUSTRIER CLASS B", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_nkt_co_daily: {symbol: "NKT.CO", name: "NKT", category: "Industrials", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_nn_as_daily: {symbol: "NN.AS", name: "NN GROUP NV", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_nod_ol_daily: {symbol: "NOD.OL", name: "NORDIC SEMICONDUCTOR", category: "Technology", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_nokia_he_daily: {symbol: "NOKIA.HE", name: "NOKIA", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_novn_sw_daily: {symbol: "NOVN.SW", name: "NOVARTIS AG", category: "Healthcare", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_novo_b_co_daily: {symbol: "NOVO-B.CO", name: "NOVO NORDISK CLASS B", category: "Healthcare", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_nsis_b_co_daily: {symbol: "NSIS-B.CO", name: "NOVOZYMES B", category: "Basic Materials", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_ntgy_mc_daily: {symbol: "NTGY.MC", name: "NATURGY ENERGY GROUP SA", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_nwg_l_daily: {symbol: "NWG.L", name: "NATWEST GROUP PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_nxt_l_daily: {symbol: "NXT.L", name: "NEXT PLC", category: "Consumer Cyclical", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_omv_vi_daily: {symbol: "OMV.VI", name: "OMV AG", category: "Energy", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_or_pa_daily: {symbol: "OR.PA", name: "LOREAL SA", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ora_pa_daily: {symbol: "ORA.PA", name: "ORANGE SA", category: "Communication Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ork_ol_daily: {symbol: "ORK.OL", name: "ORKLA", category: "Consumer Defensive", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_ornbv_he_daily: {symbol: "ORNBV.HE", name: "ORION CLASS B", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_orsted_co_daily: {symbol: "ORSTED.CO", name: "ORSTED A/S", category: "Utilities", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_p911_de_daily: {symbol: "P911.DE", name: "DR ING HC F PORSCHE PRF AG", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_paf_l_daily: {symbol: "PAF.L", name: "PAN AFRICAN RESOURCES PLC", category: "Basic Materials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_pah3_de_daily: {symbol: "PAH3.DE", name: "PORSCHE AUTOMOBIL HOLDING PREF", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_peo_wa_daily: {symbol: "PEO.WA", name: "BANK PEKAO SA", category: "Financial Services", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_pghn_sw_daily: {symbol: "PGHN.SW", name: "PARTNERS GROUP HOLDING AG", category: "Financial Services", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_phia_as_daily: {symbol: "PHIA.AS", name: "KONINKLIJKE PHILIPS NV", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_php_l_daily: {symbol: "PHP.L", name: "PRIMARY HEALTH PROPERTIES REIT PLC", category: "Real Estate", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_pirc_mi_daily: {symbol: "PIRC.MI", name: "PIRELLI & C", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_pkn_wa_daily: {symbol: "PKN.WA", name: "ORLEN SA", category: "Energy", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_pko_wa_daily: {symbol: "PKO.WA", name: "POWSZECHNA KASA OSZCZEDNOSCI BANK", category: "Financial Services", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_plus_l_daily: {symbol: "PLUS.L", name: "PLUS500 LTD", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_pndora_co_daily: {symbol: "PNDORA.CO", name: "PANDORA", category: "Consumer Cyclical", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_pnn_l_daily: {symbol: "PNN.L", name: "PENNON GROUP PLC", category: "Utilities", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_pru_l_daily: {symbol: "PRU.L", name: "PRUDENTIAL PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_prx_as_daily: {symbol: "PRX.AS", name: "PROSUS NV CLASS N", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_pry_mi_daily: {symbol: "PRY.MI", name: "PRYSMIAN", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_psn_l_daily: {symbol: "PSN.L", name: "PERSIMMON PLC", category: "Consumer Cyclical", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_pson_l_daily: {symbol: "PSON.L", name: "PEARSON PLC", category: "Consumer Cyclical", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_pspn_sw_daily: {symbol: "PSPN.SW", name: "PSP SWISS PROPERTY AG", category: "Real Estate", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_pst_mi_daily: {symbol: "PST.MI", name: "POSTE ITALIANE", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_pub_pa_daily: {symbol: "PUB.PA", name: "PUBLICIS GROUPE SA", category: "Communication Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_puig_mc_daily: {symbol: "PUIG.MC", name: "PUIG BRANDS SA CLASS B", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_pum_de_daily: {symbol: "PUM.DE", name: "PUMA", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_pzu_wa_daily: {symbol: "PZU.WA", name: "PZU SA", category: "Financial Services", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_qia_de_daily: {symbol: "QIA.DE", name: "QIAGEN NV", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_qlt_l_daily: {symbol: "QLT.L", name: "QUILTER PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_qq_l_daily: {symbol: "QQ.L", name: "QINETIQ GROUP PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_r3nk_de_daily: {symbol: "R3NK.DE", name: "RENK GROUP AG", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_raa_de_daily: {symbol: "RAA.DE", name: "RATIONAL AG", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_race_mi_daily: {symbol: "RACE.MI", name: "FERRARI NV", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_rand_as_daily: {symbol: "RAND.AS", name: "RANDSTAD HOLDING", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_rbi_vi_daily: {symbol: "RBI.VI", name: "RAIFFEISEN BANK INTERNATIONAL AG", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_rbrew_co_daily: {symbol: "RBREW.CO", name: "ROYAL UNIBREW", category: "Consumer Defensive", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_rec_mi_daily: {symbol: "REC.MI", name: "RECORDATI INDUSTRIA CHIMICA E FARM", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_red_mc_daily: {symbol: "RED.MC", name: "REDEIA CORPORACION SA", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_rel_l_daily: {symbol: "REL.L", name: "RELX PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_rep_mc_daily: {symbol: "REP.MC", name: "REPSOL SA", category: "Energy", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_rey_mi_daily: {symbol: "REY.MI", name: "REPLY", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_rhm_de_daily: {symbol: "RHM.DE", name: "RHEINMETALL AG", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ri_pa_daily: {symbol: "RI.PA", name: "PERNOD RICARD SA", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_rilba_co_daily: {symbol: "RILBA.CO", name: "RINGKJOBING LANDBOBANK", category: "Financial Services", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_rio_l_daily: {symbol: "RIO.L", name: "RIO TINTO PLC", category: "Basic Materials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_rkt_l_daily: {symbol: "RKT.L", name: "RECKITT BENCKISER GROUP PLC", category: "Consumer Defensive", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_rms_pa_daily: {symbol: "RMS.PA", name: "HERMES INTERNATIONAL", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_rmv_l_daily: {symbol: "RMV.L", name: "RIGHTMOVE PLC", category: "Communication Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_rno_pa_daily: {symbol: "RNO.PA", name: "RENAULT SA", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_rock_b_co_daily: {symbol: "ROCK-B.CO", name: "ROCKWOOL CLASS B", category: "Industrials", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_rog_sw_daily: {symbol: "ROG.SW", name: "ROCHE PS PAR AG", category: "Healthcare", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_ror_l_daily: {symbol: "ROR.L", name: "ROTORK PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_rr_l_daily: {symbol: "RR.L", name: "ROLLS-ROYCE HOLDINGS PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_rs1_l_daily: {symbol: "RS1.L", name: "RS GROUP PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_rto_l_daily: {symbol: "RTO.L", name: "RENTOKIL INITIAL PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_rui_pa_daily: {symbol: "RUI.PA", name: "RUBIS", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_rwe_de_daily: {symbol: "RWE.DE", name: "RWE AG", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_rxl_pa_daily: {symbol: "RXL.PA", name: "REXEL SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_rya_ir_daily: {symbol: "RYA.IR", name: "RYANAIR HOLDINGS PLC", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_saab_b_st_daily: {symbol: "SAAB-B.ST", name: "SAAB CLASS B", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_sab_mc_daily: {symbol: "SAB.MC", name: "BANCO DE SABADELL", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_saf_pa_daily: {symbol: "SAF.PA", name: "SAFRAN SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_saga_b_st_daily: {symbol: "SAGA-B.ST", name: "SAGAX CLASS B", category: "Real Estate", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_salm_ol_daily: {symbol: "SALM.OL", name: "SALMAR", category: "Consumer Defensive", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_sampo_he_daily: {symbol: "SAMPO.HE", name: "SAMPO CLASS A", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_san_mc_daily: {symbol: "SAN.MC", name: "BANCO SANTANDER SA", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_san_pa_daily: {symbol: "SAN.PA", name: "SANOFI SA", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_sand_st_daily: {symbol: "SAND.ST", name: "SANDVIK", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_sap_de_daily: {symbol: "SAP.DE", name: "SAP", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_save_st_daily: {symbol: "SAVE.ST", name: "NORDNET", category: "Financial Services", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_sb1no_ol_daily: {symbol: "SB1NO.OL", name: "SPAREBANK SR-NORGE", category: "Financial Services", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_sbmo_as_daily: {symbol: "SBMO.AS", name: "SBM OFFSHORE NV", category: "Energy", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_sbnor_ol_daily: {symbol: "SBNOR.OL", name: "SPAREBANKEN NORGE", category: "Financial Services", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_sbry_l_daily: {symbol: "SBRY.L", name: "SAINSBURY(J) PLC", category: "Consumer Defensive", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_sca_b_st_daily: {symbol: "SCA-B.ST", name: "SVENSKA CELLULOSA B", category: "Basic Materials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_schp_sw_daily: {symbol: "SCHP.SW", name: "SCHINDLER HOLDING PAR AG", category: "Industrials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_scmn_sw_daily: {symbol: "SCMN.SW", name: "SWISSCOM AG", category: "Communication Services", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_scr_pa_daily: {symbol: "SCR.PA", name: "SCOR", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_scyr_mc_daily: {symbol: "SCYR.MC", name: "SACYR SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_sdf_de_daily: {symbol: "SDF.DE", name: "K+S N AG", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_sdlf_l_daily: {symbol: "SDLF.L", name: "STANDARD LIFE PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_sdr_l_daily: {symbol: "SDR.L", name: "SCHRODERS PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_sdz_sw_daily: {symbol: "SDZ.SW", name: "SANDOZ GROUP AG", category: "Healthcare", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_seb_a_st_daily: {symbol: "SEB-A.ST", name: "SKANDINAVISKA ENSKILDA BANKEN", category: "Financial Services", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_sect_b_st_daily: {symbol: "SECT-B.ST", name: "SECTRA CLASS B", category: "Healthcare", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_secu_b_st_daily: {symbol: "SECU-B.ST", name: "SECURITAS B", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_sesg_pa_daily: {symbol: "SESG.PA", name: "SES SA FDR", category: "Communication Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_sfsn_sw_daily: {symbol: "SFSN.SW", name: "SFS GROUP AG", category: "Industrials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_sfzn_sw_daily: {symbol: "SFZN.SW", name: "SIEGFRIED HOLDING AG", category: "Healthcare", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_sge_l_daily: {symbol: "SGE.L", name: "THE SAGE GROUP PLC", category: "Technology", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_sgo_pa_daily: {symbol: "SGO.PA", name: "COMPAGNIE DE SAINT GOBAIN SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_sgro_l_daily: {symbol: "SGRO.L", name: "SEGRO REIT PLC", category: "Real Estate", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_sgsn_sw_daily: {symbol: "SGSN.SW", name: "SGS SA", category: "Industrials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_shb_a_st_daily: {symbol: "SHB-A.ST", name: "SVENSKA HANDELSBANKEN-A SHS", category: "Financial Services", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_shc_l_daily: {symbol: "SHC.L", name: "SHAFTESBURY CAPITAL PLC", category: "Real Estate", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_shell_as_daily: {symbol: "SHELL.AS", name: "SHELL PLC", category: "Energy", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_shl_de_daily: {symbol: "SHL.DE", name: "SIEMENS HEALTHINEERS AG", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_sie_de_daily: {symbol: "SIE.DE", name: "SIEMENS N AG", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_sign_sw_daily: {symbol: "SIGN.SW", name: "SIG GROUP N AG", category: "Basic Materials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_sika_sw_daily: {symbol: "SIKA.SW", name: "SIKA AG", category: "Basic Materials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_ska_b_st_daily: {symbol: "SKA-B.ST", name: "SKANSKA B", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_skf_b_st_daily: {symbol: "SKF-B.ST", name: "SKF B", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_slhn_sw_daily: {symbol: "SLHN.SW", name: "SWISS LIFE HOLDING AG", category: "Financial Services", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_smin_l_daily: {symbol: "SMIN.L", name: "SMITHS GROUP PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_sn_l_daily: {symbol: "SN.L", name: "SMITH AND NEPHEW PLC", category: "Healthcare", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_sobi_st_daily: {symbol: "SOBI.ST", name: "SWEDISH ORPHAN BIOVITRUM", category: "Healthcare", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_sof_br_daily: {symbol: "SOF.BR", name: "SOFINA SA", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_soi_pa_daily: {symbol: "SOI.PA", name: "SOITEC SA", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_soon_sw_daily: {symbol: "SOON.SW", name: "SONOVA HOLDING AG", category: "Healthcare", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_sop_pa_daily: {symbol: "SOP.PA", name: "SOPRA STERIA GROUP", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_spie_pa_daily: {symbol: "SPIE.PA", name: "SPIE SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_spm_mi_daily: {symbol: "SPM.MI", name: "SAIPEM", category: "Energy", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_spsn_sw_daily: {symbol: "SPSN.SW", name: "SWISS PRIME SITE AG", category: "Real Estate", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_spx_l_daily: {symbol: "SPX.L", name: "SPIRAX GROUP PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_sqn_sw_daily: {symbol: "SQN.SW", name: "SWISSQUOTE GROUP HOLDING SA", category: "Financial Services", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_sren_sw_daily: {symbol: "SREN.SW", name: "SWISS RE AG", category: "Financial Services", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_srg_mi_daily: {symbol: "SRG.MI", name: "SNAM", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_srp_l_daily: {symbol: "SRP.L", name: "SERCO GROUP PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_srt3_de_daily: {symbol: "SRT3.DE", name: "SARTORIUS PREF AG", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ssab_b_st_daily: {symbol: "SSAB-B.ST", name: "SSAB CLASS B", category: "Basic Materials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_sse_l_daily: {symbol: "SSE.L", name: "SSE PLC", category: "Utilities", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_stan_l_daily: {symbol: "STAN.L", name: "STANDARD CHARTERED PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_stb_ol_daily: {symbol: "STB.OL", name: "STOREBRAND", category: "Financial Services", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_sterv_he_daily: {symbol: "STERV.HE", name: "STORA ENSO CLASS R", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_stj_l_daily: {symbol: "STJ.L", name: "ST JAMESS PLACE PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_stlam_mi_daily: {symbol: "STLAM.MI", name: "STELLANTIS NV", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_stmmi_mi_daily: {symbol: "STMMI.MI", name: "STMICROELECTRONICS NV", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_stmn_sw_daily: {symbol: "STMN.SW", name: "STRAUMANN HOLDING AG", category: "Healthcare", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_su_pa_daily: {symbol: "SU.PA", name: "SCHNEIDER ELECTRIC", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_subc_ol_daily: {symbol: "SUBC.OL", name: "SUBSEA SA", category: "Energy", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_sun_sw_daily: {symbol: "SUN.SW", name: "SULZER AG LTD", category: "Industrials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_sunb_l_daily: {symbol: "SUNB.L", name: "SUNBELT RENTALS HOLDINGS INC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_sunn_sw_daily: {symbol: "SUNN.SW", name: "SUNRISE N CLASS A LTD", category: "Communication Services", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_svt_l_daily: {symbol: "SVT.L", name: "SEVERN TRENT PLC", category: "Utilities", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_sw_pa_daily: {symbol: "SW.PA", name: "SODEXO SA", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_swec_b_st_daily: {symbol: "SWEC-B.ST", name: "SWECO CLASS B", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_swed_a_st_daily: {symbol: "SWED-A.ST", name: "SWEDBANK", category: "Financial Services", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_sy1_de_daily: {symbol: "SY1.DE", name: "SYMRISE AG", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_syens_br_daily: {symbol: "SYENS.BR", name: "SYENSQO NV", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_tbcg_l_daily: {symbol: "TBCG.L", name: "TBC BANK GROUP PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_tcap_l_daily: {symbol: "TCAP.L", name: "TP ICAP GROUP PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_te_pa_daily: {symbol: "TE.PA", name: "TECHNIP ENERGIES NV", category: "Energy", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_tef_mc_daily: {symbol: "TEF.MC", name: "TELEFONICA SA", category: "Communication Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_teg_de_daily: {symbol: "TEG.DE", name: "TAG IMMOBILIEN AG", category: "Real Estate", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_tel_ol_daily: {symbol: "TEL.OL", name: "TELENOR", category: "Communication Services", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_tel2_b_st_daily: {symbol: "TEL2-B.ST", name: "TELE2 B", category: "Communication Services", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_telia_st_daily: {symbol: "TELIA.ST", name: "TELIA COMPANY", category: "Communication Services", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_temn_sw_daily: {symbol: "TEMN.SW", name: "TEMENOS AG", category: "Technology", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_ten_mi_daily: {symbol: "TEN.MI", name: "TENARIS SA", category: "Energy", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_tep_pa_daily: {symbol: "TEP.PA", name: "TELEPERFORMANCE", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_tgs_ol_daily: {symbol: "TGS.OL", name: "TGS NOPEC GEOPHYSICAL", category: "Energy", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_thule_st_daily: {symbol: "THULE.ST", name: "THULE GROUP", category: "Consumer Cyclical", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_tit_mi_daily: {symbol: "TIT.MI", name: "TELECOM ITALIA", category: "Communication Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_tka_de_daily: {symbol: "TKA.DE", name: "THYSSENKRUPP AG", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_tlx_de_daily: {symbol: "TLX.DE", name: "TALANX AG", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_tom_ol_daily: {symbol: "TOM.OL", name: "TOMRA SYSTEMS", category: "Industrials", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_tpe_wa_daily: {symbol: "TPE.WA", name: "TAURON POLSKA ENERGIA SA", category: "Utilities", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_tpro_mi_daily: {symbol: "TPRO.MI", name: "TECHNOPROBE SPA", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_trel_b_st_daily: {symbol: "TREL-B.ST", name: "TRELLEBORG B", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_trn_mi_daily: {symbol: "TRN.MI", name: "TERNA RETE ELETTRICA NAZIONALE", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_tryg_co_daily: {symbol: "TRYG.CO", name: "TRYG", category: "Financial Services", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_tsco_l_daily: {symbol: "TSCO.L", name: "TESCO PLC", category: "Consumer Defensive", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_tte_pa_daily: {symbol: "TTE.PA", name: "TOTALENERGIES", category: "Energy", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_tub_br_daily: {symbol: "TUB.BR", name: "FINANCIERE DE TUBIZE SA", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_tui1_de_daily: {symbol: "TUI1.DE", name: "TUI N AG", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_tw_l_daily: {symbol: "TW.L", name: "TAYLOR WIMPEY PLC", category: "Consumer Cyclical", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_ubsg_sw_daily: {symbol: "UBSG.SW", name: "UBS GROUP AG", category: "Financial Services", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_ucb_br_daily: {symbol: "UCB.BR", name: "UCB SA", category: "Healthcare", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_ucg_mi_daily: {symbol: "UCG.MI", name: "UNICREDIT", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_uhr_sw_daily: {symbol: "UHR.SW", name: "THE SWATCH GROUP AG", category: "Consumer Cyclical", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_ulvr_l_daily: {symbol: "ULVR.L", name: "UNILEVER PLC", category: "Consumer Defensive", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_umg_as_daily: {symbol: "UMG.AS", name: "UNIVERSAL MUSIC GROUP NV", category: "Communication Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_umi_br_daily: {symbol: "UMI.BR", name: "UMICORE SA", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_uni_mc_daily: {symbol: "UNI.MC", name: "UNICAJA BANCO SA", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_uni_mi_daily: {symbol: "UNI.MI", name: "UNIPOL ASSICURAZIONI SPA", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_upm_he_daily: {symbol: "UPM.HE", name: "UPM-KYMMENE", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_urw_pa_daily: {symbol: "URW.PA", name: "UNIBAIL RODAMCO WE STAPLED UNITS", category: "Real Estate", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_utg_l_daily: {symbol: "UTG.L", name: "UNITE GROUP PLC", category: "Real Estate", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_uu_l_daily: {symbol: "UU.L", name: "UNITED UTILITIES GROUP PLC", category: "Utilities", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_vacn_sw_daily: {symbol: "VACN.SW", name: "VAT GROUP AG", category: "Industrials", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_valmt_he_daily: {symbol: "VALMT.HE", name: "VALMET CORP", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_var_ol_daily: {symbol: "VAR.OL", name: "VAR ENERGI", category: "Energy", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_vatn_sw_daily: {symbol: "VATN.SW", name: "VALIANT HOLDING AG", category: "Financial Services", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_vend_ol_daily: {symbol: "VEND.OL", name: "VEND MARKETPLACES ASA", category: "Communication Services", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_ver_vi_daily: {symbol: "VER.VI", name: "VERBUND AG", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_vid_mc_daily: {symbol: "VID.MC", name: "VIDRALA SA", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_vie_pa_daily: {symbol: "VIE.PA", name: "VEOLIA ENVIRON. SA", category: "Utilities", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_vis_mc_daily: {symbol: "VIS.MC", name: "VISCOFAN SA", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_vk_pa_daily: {symbol: "VK.PA", name: "VALLOUREC SA", category: "Energy", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_vna_de_daily: {symbol: "VNA.DE", name: "VONOVIA SE", category: "Real Estate", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_vod_l_daily: {symbol: "VOD.L", name: "VODAFONE GROUP PLC", category: "Communication Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_voe_vi_daily: {symbol: "VOE.VI", name: "VOESTALPINE AG", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_volv_b_st_daily: {symbol: "VOLV-B.ST", name: "VOLVO CLASS B", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_vow3_de_daily: {symbol: "VOW3.DE", name: "VOLKSWAGEN NON-VOTING PREF AG", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_vpk_as_daily: {symbol: "VPK.AS", name: "KONINKLIJKE VOPAK NV", category: "Energy", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_vws_co_daily: {symbol: "VWS.CO", name: "VESTAS WIND SYSTEMS", category: "Industrials", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_vzn_sw_daily: {symbol: "VZN.SW", name: "VZ HOLDING AG", category: "Financial Services", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  px_wall_b_st_daily: {symbol: "WALL-B.ST", name: "WALLENSTAM CLASS B", category: "Real Estate", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_wdp_br_daily: {symbol: "WDP.BR", name: "WAREHOUSES DE PAUW NV", category: "Real Estate", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_weir_l_daily: {symbol: "WEIR.L", name: "WEIR GROUP PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_wie_vi_daily: {symbol: "WIE.VI", name: "WIENERBERGER AG", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_wihl_st_daily: {symbol: "WIHL.ST", name: "WIHLBORGS FASTIGHETER", category: "Real Estate", currency: "SEK", quote_basis: "SEK", family: "stock"}
+  px_wise_l_daily: {symbol: "WISE.L", name: "WISE PLC CLASS A", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_wkl_as_daily: {symbol: "WKL.AS", name: "WOLTERS KLUWER NV", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_wpp_l_daily: {symbol: "WPP.L", name: "WPP PLC", category: "Communication Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_wrt1v_he_daily: {symbol: "WRT1V.HE", name: "WARTSILA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_wtb_l_daily: {symbol: "WTB.L", name: "WHITBREAD PLC", category: "Consumer Cyclical", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_yar_ol_daily: {symbol: "YAR.OL", name: "YARA INTERNATIONAL", category: "Basic Materials", currency: "NOK", quote_basis: "NOK", family: "stock"}
+  px_zab_wa_daily: {symbol: "ZAB.WA", name: "ZABKA GROUP SOCIETE ANONYME SA", category: "Consumer Defensive", currency: "PLN", quote_basis: "PLN", family: "stock"}
+  px_zal_de_daily: {symbol: "ZAL.DE", name: "ZALANDO", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  px_zeal_co_daily: {symbol: "ZEAL.CO", name: "ZEALAND PHARMA", category: "Healthcare", currency: "DKK", quote_basis: "DKK", family: "stock"}
+  px_zeg_l_daily: {symbol: "ZEG.L", name: "ZEGONA COMMUNICATIONS PLC", category: "Communication Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  px_zurn_sw_daily: {symbol: "ZURN.SW", name: "ZURICH INSURANCE GROUP AG", category: "Financial Services", currency: "CHF", quote_basis: "CHF", family: "stock"}
