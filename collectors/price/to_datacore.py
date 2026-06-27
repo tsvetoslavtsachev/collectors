@@ -60,7 +60,12 @@ DEFAULT_VALUE_TOL = 1e-6
 def _resolve_root(root) -> str | None:
     if root is not None:
         return str(root)
-    return os.environ.get("DATACORE_ROOT")
+    # Treat an EMPTY DATACORE_ROOT ("" -- set-but-blank) as UNSET, so it falls to the P1
+    # cardinal guard (root=None + blank env -> REFUSED) instead of resolving to the CWD.
+    # assert_safe_root("") would see the cwd, and from an unrelated dir that is not the real
+    # base it would NOT refuse -> a stray write to <cwd>/archive/. `or None` closes that gap
+    # (P7a adversarial-gate hygiene; inherited wiring, not a P7a regression).
+    return os.environ.get("DATACORE_ROOT") or None
 
 
 def load_catalog(root) -> dict | None:

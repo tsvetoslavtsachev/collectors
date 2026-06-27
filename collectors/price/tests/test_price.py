@@ -133,6 +133,22 @@ def offline(g: Gate, tmp: Path) -> None:
                              for code in (ln.split("#", 1)[0] for ln in src_lines))
     g.check("g2d price source never ASSIGNS DATACORE_ALLOW_REAL (reads-to-refuse are fine)",
             not assigns_allow_real)
+    # g2e empty-string DATACORE_ROOT ("" set-but-blank) treated as UNSET -> REFUSED (hygiene):
+    # _resolve_root returns None for "", falling to the cardinal guard instead of the CWD.
+    saved2 = os.environ.get("DATACORE_ROOT")
+    os.environ["DATACORE_ROOT"] = ""
+    empty_refused = False
+    try:
+        to_datacore.push({"px_spy_daily": {"ok": True, "records": [_bar("2025-05-05", 1.0)]}},
+                         root=None, recorded_on=_REC)
+    except SystemExit:
+        empty_refused = True
+    finally:
+        if saved2 is not None:
+            os.environ["DATACORE_ROOT"] = saved2
+        else:
+            os.environ.pop("DATACORE_ROOT", None)
+    g.check("g2e empty-string DATACORE_ROOT treated as unset -> REFUSED", empty_refused)
 
     # g3 split-restatement (bitemporal) -----------------------------------------
     # finalize a bar, then re-append the same as_of with a changed close at a LATER

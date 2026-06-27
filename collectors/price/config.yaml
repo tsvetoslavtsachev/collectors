@@ -54,6 +54,12 @@ settings:
   round_dp: 6                    # price rounding (matches the VRM collector); volume stays int
   source: "yfinance"
   archive_namespace: "px_"       # register_catalog upserts ONLY this namespace
+  # CI PERF BUDGET (P7a gate note, for the P8 stock daily CI): archive.append re-reads each
+  # series' FULL on-disk history per call -- linear in accumulated bars, NOT O(N^2), no cliff.
+  # A full-universe daily run is ~linear in series count. Gate EXTRAPOLATION (UNMEASURED,
+  # [DOGADKA]): ~33s @ 635 series, ~62s @ ~1200 (with STOXX). Size the P8 CI timeout for the
+  # end state; consider lazy-loading only the year buffers a batch touches. MEASURE before
+  # relying on these figures -- order-of-magnitude estimate, not a benchmark.
 
 # ---- the ETF universe: 131 ETF (ETF-rr) + idx_dxy = 132 daily series ----
 price:
