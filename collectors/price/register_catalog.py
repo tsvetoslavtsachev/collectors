@@ -36,9 +36,46 @@ _RECORD_FIELDS = (
 
 
 def entry(m: dict) -> dict:
-    """Catalog entry for one px_*_daily series. ``backtest_valid: true`` because
-    ETFs survive (program Decision c -- the survivorship-clean track); the stock
-    family in P7 will carry ``backtest_valid: false`` instead."""
+    """Catalog entry for one px_*_daily series, routed by ``family`` (P7a).
+
+    ETF (default): ``backtest_valid: true`` -- ETFs survive (program Decision c, the
+    survivorship-clean track). STOCK: ``backtest_valid: false`` +
+    ``survivorship: "current-members-only"`` -- yfinance gives only CURRENT members,
+    so a long-horizon backtest on this series is survivorship-biased. The flag is a
+    MACHINE-READABLE control (program S3c/R3): the B2/D3 backtest harness HARD-REFUSES
+    a flagged series for long-horizon use (an explicit, logged override is required) --
+    NOT a passive text caveat. TA on ~6y of current members (50/200-DMA, RSI, MACD) is
+    honest now; honest long-horizon stocks wait on P11 (paid point-in-time source)."""
+    family = m.get("family", "etf")
+    # FAIL-CLOSED (adversarial gate MAJOR 1): a missing family defaults to "etf" (the ETF
+    # entries legitimately omit it), but an EXPLICIT unknown/miscased value ('Stock', 'stk',
+    # '') must NOT silently fall through to the ETF branch -- that is the one direction a stock
+    # can lose its survivorship flag (-> backtest_valid:true) and pass every gate. Refuse it.
+    if family not in ("etf", "stock"):
+        raise ValueError(
+            f"unknown family {family!r} for {m.get('symbol')!r} -- expected 'etf' or 'stock'. "
+            f"Refusing to fail OPEN to the ETF branch (which would drop the survivorship flag).")
+    if family == "stock":
+        return {
+            "description": f"{m['name']} ({m['symbol']}) daily price bar -- "
+                           f"split-adjusted OHLCV + fully-adjusted close + split/dividend "
+                           f"factors. SP500 member ({m['category']}), "
+                           f"CURRENT-MEMBERS-ONLY (survivorship-flagged: backtest_valid=false). "
+                           f"Written by collectors/price through datacore.archive "
+                           f"(append-only, year-partitioned, bitemporal).",
+            "source": "yfinance",
+            "basis": "value = split-adjusted close; value_tr = fully-adjusted (Adj Close)",
+            "frequency": "daily",
+            "window": "open",
+            "unit": "price",
+            "schema_version": 1,
+            "backtest_valid": False,
+            "survivorship": "current-members-only",
+            "family": "stock",
+            "symbol": m["symbol"],
+            "category": m["category"],
+            "record_fields": _RECORD_FIELDS,
+        }
     return {
         "description": f"{m['name']} ({m['symbol']}) daily price bar -- "
                        f"split-adjusted OHLCV + fully-adjusted close + split/dividend "

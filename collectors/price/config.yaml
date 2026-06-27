@@ -14,7 +14,12 @@
 # prices arrive in P4 after sign-off).
 
 settings:
-  history_period_prices: "max"   # full-history daily pull (yfinance period=max); P4 backfill
+  history_period_prices: "max"   # full-history daily pull (yfinance period=max); P4 backfill -- ETF family
+  history_period_stock: "6y"     # STOCK family TA floor (P7a): ~6y covers 50/200-DMA + RSI + MACD with
+                                 # huge margin (50-DMA needs ~50 trading days). Stocks are survivorship-
+                                 # flagged (backtest_valid:false) so a longer pull is NOT backtest-honest
+                                 # anyway (program S3c) -- 6y is the binding TA depth, not a compromise.
+                                 # Applied per-family when no explicit --period is given (fetch_prices).
   daily_period: "1mo"            # SHORT routine-daily window (P5 `run --daily`): the new bar +
                                  # re-finalize of the prior provisional tip + the last few
                                  # restatements -- and it BOUNDS the value_tr dividend cascade
@@ -29,8 +34,18 @@ settings:
                                  # dividend-adjusted Adj Close (value_tr) that was current when it
                                  # last fell in-window. So the stored value_tr is NOT identical to
                                  # a fresh full pull -- it drifts ~the dividend yield/year at the
-                                 # window boundary. The split-adjusted `close`/`value` (what TA --
-                                 # 200-DMA/RSI/MACD -- uses) is unaffected. A consumer needing an
+                                 # window boundary. CORRECTION (P7a adversarial gate): the split-
+                                 # adjusted `close`/`value` (what TA -- 50/200-DMA, RSI, MACD -- uses)
+                                 # is unaffected by DIVIDENDS but NOT by SPLITS. A stock split rewrites
+                                 # EVERY prior close by the split ratio; a short daily window never re-
+                                 # touches pre-window bars (archive.append restates only as_ofs in the
+                                 # incoming batch), so the stored pre-window `close` strands at the OLD
+                                 # scale -- a ~Nx cliff (e.g. NVDA 10:1) in exactly the series TA reads.
+                                 # ETFs effectively never split, so this was dormant; the STOCK family
+                                 # (P7a) makes it live. P8 (stock daily CI) MUST design a split-aware
+                                 # re-heal (split_factor-tip-change -> per-symbol `run --period max`, or
+                                 # a scheduled monthly full stock re-pull) BEFORE turning stock CI on.
+                                 # A consumer needing an
                                  # EXACT total-return series must recompute value_tr from the stored
                                  # `close` + `dividend` (reconstructible to ~0.03%), or a periodic
                                  # (e.g. monthly) `run --period max` can re-heal value_tr across
@@ -174,3 +189,511 @@ price:
   px_fxy_daily:    {symbol: "FXY", name: "Invesco CurrencyShares Yen", category: "Currency"}
   px_fxf_daily:    {symbol: "FXF", name: "Invesco CurrencyShares CHF", category: "Currency"}
   px_dxy_daily:    {symbol: "DX-Y.NYB", name: "US Dollar Index", category: "Currency Index"}
+
+  # ---- SP500 stock family (current members; snapshot from
+  # SP500-rotationradar/data/sector_map.json, updated 2026-04-25T23:33:28; generated 2026-06-27 P7a) ----
+  # survivorship: current-members-only -> backtest_valid:false (machine flag).
+  # TA-scope ~6y (settings.history_period_stock). Real backfill = P8.
+  px_a_daily: {symbol: "A", name: "Agilent Technologies", category: "Health Care", family: "stock"}
+  px_aapl_daily: {symbol: "AAPL", name: "Apple Inc.", category: "Information Technology", family: "stock"}
+  px_abbv_daily: {symbol: "ABBV", name: "AbbVie", category: "Health Care", family: "stock"}
+  px_abnb_daily: {symbol: "ABNB", name: "Airbnb", category: "Consumer Discretionary", family: "stock"}
+  px_abt_daily: {symbol: "ABT", name: "Abbott Laboratories", category: "Health Care", family: "stock"}
+  px_acgl_daily: {symbol: "ACGL", name: "Arch Capital Group", category: "Financials", family: "stock"}
+  px_acn_daily: {symbol: "ACN", name: "Accenture", category: "Information Technology", family: "stock"}
+  px_adbe_daily: {symbol: "ADBE", name: "Adobe Inc.", category: "Information Technology", family: "stock"}
+  px_adi_daily: {symbol: "ADI", name: "Analog Devices", category: "Information Technology", family: "stock"}
+  px_adm_daily: {symbol: "ADM", name: "Archer Daniels Midland", category: "Consumer Staples", family: "stock"}
+  px_adp_daily: {symbol: "ADP", name: "Automatic Data Processing", category: "Industrials", family: "stock"}
+  px_adsk_daily: {symbol: "ADSK", name: "Autodesk", category: "Information Technology", family: "stock"}
+  px_aee_daily: {symbol: "AEE", name: "Ameren", category: "Utilities", family: "stock"}
+  px_aep_daily: {symbol: "AEP", name: "American Electric Power", category: "Utilities", family: "stock"}
+  px_aes_daily: {symbol: "AES", name: "AES Corporation", category: "Utilities", family: "stock"}
+  px_afl_daily: {symbol: "AFL", name: "Aflac", category: "Financials", family: "stock"}
+  px_aig_daily: {symbol: "AIG", name: "American International Group", category: "Financials", family: "stock"}
+  px_aiz_daily: {symbol: "AIZ", name: "Assurant", category: "Financials", family: "stock"}
+  px_ajg_daily: {symbol: "AJG", name: "Arthur J. Gallagher & Co.", category: "Financials", family: "stock"}
+  px_akam_daily: {symbol: "AKAM", name: "Akamai Technologies", category: "Information Technology", family: "stock"}
+  px_alb_daily: {symbol: "ALB", name: "Albemarle Corporation", category: "Materials", family: "stock"}
+  px_algn_daily: {symbol: "ALGN", name: "Align Technology", category: "Health Care", family: "stock"}
+  px_all_daily: {symbol: "ALL", name: "Allstate", category: "Financials", family: "stock"}
+  px_alle_daily: {symbol: "ALLE", name: "Allegion", category: "Industrials", family: "stock"}
+  px_amat_daily: {symbol: "AMAT", name: "Applied Materials", category: "Information Technology", family: "stock"}
+  px_amcr_daily: {symbol: "AMCR", name: "Amcor", category: "Materials", family: "stock"}
+  px_amd_daily: {symbol: "AMD", name: "Advanced Micro Devices", category: "Information Technology", family: "stock"}
+  px_ame_daily: {symbol: "AME", name: "Ametek", category: "Industrials", family: "stock"}
+  px_amgn_daily: {symbol: "AMGN", name: "Amgen", category: "Health Care", family: "stock"}
+  px_amp_daily: {symbol: "AMP", name: "Ameriprise Financial", category: "Financials", family: "stock"}
+  px_amt_daily: {symbol: "AMT", name: "American Tower", category: "Real Estate", family: "stock"}
+  px_amzn_daily: {symbol: "AMZN", name: "Amazon", category: "Consumer Discretionary", family: "stock"}
+  px_anet_daily: {symbol: "ANET", name: "Arista Networks", category: "Information Technology", family: "stock"}
+  px_aon_daily: {symbol: "AON", name: "Aon plc", category: "Financials", family: "stock"}
+  px_aos_daily: {symbol: "AOS", name: "A. O. Smith", category: "Industrials", family: "stock"}
+  px_apa_daily: {symbol: "APA", name: "APA Corporation", category: "Energy", family: "stock"}
+  px_apd_daily: {symbol: "APD", name: "Air Products", category: "Materials", family: "stock"}
+  px_aph_daily: {symbol: "APH", name: "Amphenol", category: "Information Technology", family: "stock"}
+  px_apo_daily: {symbol: "APO", name: "Apollo Global Management", category: "Financials", family: "stock"}
+  px_app_daily: {symbol: "APP", name: "AppLovin", category: "Information Technology", family: "stock"}
+  px_aptv_daily: {symbol: "APTV", name: "Aptiv", category: "Consumer Discretionary", family: "stock"}
+  px_are_daily: {symbol: "ARE", name: "Alexandria Real Estate Equities", category: "Real Estate", family: "stock"}
+  px_ares_daily: {symbol: "ARES", name: "Ares Management", category: "Financials", family: "stock"}
+  px_ato_daily: {symbol: "ATO", name: "Atmos Energy", category: "Utilities", family: "stock"}
+  px_avb_daily: {symbol: "AVB", name: "AvalonBay Communities", category: "Real Estate", family: "stock"}
+  px_avgo_daily: {symbol: "AVGO", name: "Broadcom", category: "Information Technology", family: "stock"}
+  px_avy_daily: {symbol: "AVY", name: "Avery Dennison", category: "Materials", family: "stock"}
+  px_awk_daily: {symbol: "AWK", name: "American Water Works", category: "Utilities", family: "stock"}
+  px_axon_daily: {symbol: "AXON", name: "Axon Enterprise", category: "Industrials", family: "stock"}
+  px_axp_daily: {symbol: "AXP", name: "American Express", category: "Financials", family: "stock"}
+  px_azo_daily: {symbol: "AZO", name: "AutoZone", category: "Consumer Discretionary", family: "stock"}
+  px_ba_daily: {symbol: "BA", name: "Boeing", category: "Industrials", family: "stock"}
+  px_bac_daily: {symbol: "BAC", name: "Bank of America", category: "Financials", family: "stock"}
+  px_ball_daily: {symbol: "BALL", name: "Ball Corporation", category: "Materials", family: "stock"}
+  px_bax_daily: {symbol: "BAX", name: "Baxter International", category: "Health Care", family: "stock"}
+  px_bby_daily: {symbol: "BBY", name: "Best Buy", category: "Consumer Discretionary", family: "stock"}
+  px_bdx_daily: {symbol: "BDX", name: "Becton Dickinson", category: "Health Care", family: "stock"}
+  px_ben_daily: {symbol: "BEN", name: "Franklin Resources", category: "Financials", family: "stock"}
+  px_bf_b_daily: {symbol: "BF-B", name: "Brown–Forman", category: "Consumer Staples", family: "stock"}
+  px_bg_daily: {symbol: "BG", name: "Bunge Global", category: "Consumer Staples", family: "stock"}
+  px_biib_daily: {symbol: "BIIB", name: "Biogen", category: "Health Care", family: "stock"}
+  px_bk_daily: {symbol: "BK", name: "BNY Mellon", category: "Financials", family: "stock"}
+  px_bkng_daily: {symbol: "BKNG", name: "Booking Holdings", category: "Consumer Discretionary", family: "stock"}
+  px_bkr_daily: {symbol: "BKR", name: "Baker Hughes", category: "Energy", family: "stock"}
+  px_bldr_daily: {symbol: "BLDR", name: "Builders FirstSource", category: "Industrials", family: "stock"}
+  px_blk_daily: {symbol: "BLK", name: "BlackRock", category: "Financials", family: "stock"}
+  px_bmy_daily: {symbol: "BMY", name: "Bristol Myers Squibb", category: "Health Care", family: "stock"}
+  px_br_daily: {symbol: "BR", name: "Broadridge Financial Solutions", category: "Industrials", family: "stock"}
+  px_brk_b_daily: {symbol: "BRK-B", name: "Berkshire Hathaway", category: "Financials", family: "stock"}
+  px_bro_daily: {symbol: "BRO", name: "Brown & Brown", category: "Financials", family: "stock"}
+  px_bsx_daily: {symbol: "BSX", name: "Boston Scientific", category: "Health Care", family: "stock"}
+  px_bx_daily: {symbol: "BX", name: "Blackstone Inc.", category: "Financials", family: "stock"}
+  px_bxp_daily: {symbol: "BXP", name: "BXP, Inc.", category: "Real Estate", family: "stock"}
+  px_c_daily: {symbol: "C", name: "Citigroup", category: "Financials", family: "stock"}
+  px_cag_daily: {symbol: "CAG", name: "Conagra Brands", category: "Consumer Staples", family: "stock"}
+  px_cah_daily: {symbol: "CAH", name: "Cardinal Health", category: "Health Care", family: "stock"}
+  px_carr_daily: {symbol: "CARR", name: "Carrier Global", category: "Industrials", family: "stock"}
+  px_casy_daily: {symbol: "CASY", name: "Casey's", category: "Consumer Staples", family: "stock"}
+  px_cat_daily: {symbol: "CAT", name: "Caterpillar Inc.", category: "Industrials", family: "stock"}
+  px_cb_daily: {symbol: "CB", name: "Chubb Limited", category: "Financials", family: "stock"}
+  px_cboe_daily: {symbol: "CBOE", name: "Cboe Global Markets", category: "Financials", family: "stock"}
+  px_cbre_daily: {symbol: "CBRE", name: "CBRE Group", category: "Real Estate", family: "stock"}
+  px_cci_daily: {symbol: "CCI", name: "Crown Castle", category: "Real Estate", family: "stock"}
+  px_ccl_daily: {symbol: "CCL", name: "Carnival", category: "Consumer Discretionary", family: "stock"}
+  px_cdns_daily: {symbol: "CDNS", name: "Cadence Design Systems", category: "Information Technology", family: "stock"}
+  px_cdw_daily: {symbol: "CDW", name: "CDW Corporation", category: "Information Technology", family: "stock"}
+  px_ceg_daily: {symbol: "CEG", name: "Constellation Energy", category: "Utilities", family: "stock"}
+  px_cf_daily: {symbol: "CF", name: "CF Industries", category: "Materials", family: "stock"}
+  px_cfg_daily: {symbol: "CFG", name: "Citizens Financial Group", category: "Financials", family: "stock"}
+  px_chd_daily: {symbol: "CHD", name: "Church & Dwight", category: "Consumer Staples", family: "stock"}
+  px_chrw_daily: {symbol: "CHRW", name: "C.H. Robinson", category: "Industrials", family: "stock"}
+  px_chtr_daily: {symbol: "CHTR", name: "Charter Communications", category: "Communication Services", family: "stock"}
+  px_ci_daily: {symbol: "CI", name: "Cigna", category: "Health Care", family: "stock"}
+  px_cien_daily: {symbol: "CIEN", name: "Ciena", category: "Information Technology", family: "stock"}
+  px_cinf_daily: {symbol: "CINF", name: "Cincinnati Financial", category: "Financials", family: "stock"}
+  px_cl_daily: {symbol: "CL", name: "Colgate-Palmolive", category: "Consumer Staples", family: "stock"}
+  px_clx_daily: {symbol: "CLX", name: "Clorox", category: "Consumer Staples", family: "stock"}
+  px_cmcsa_daily: {symbol: "CMCSA", name: "Comcast", category: "Communication Services", family: "stock"}
+  px_cme_daily: {symbol: "CME", name: "CME Group", category: "Financials", family: "stock"}
+  px_cmg_daily: {symbol: "CMG", name: "Chipotle Mexican Grill", category: "Consumer Discretionary", family: "stock"}
+  px_cmi_daily: {symbol: "CMI", name: "Cummins", category: "Industrials", family: "stock"}
+  px_cms_daily: {symbol: "CMS", name: "CMS Energy", category: "Utilities", family: "stock"}
+  px_cnc_daily: {symbol: "CNC", name: "Centene Corporation", category: "Health Care", family: "stock"}
+  px_cnp_daily: {symbol: "CNP", name: "CenterPoint Energy", category: "Utilities", family: "stock"}
+  px_cof_daily: {symbol: "COF", name: "Capital One", category: "Financials", family: "stock"}
+  px_cohr_daily: {symbol: "COHR", name: "Coherent Corp.", category: "Information Technology", family: "stock"}
+  px_coin_daily: {symbol: "COIN", name: "Coinbase", category: "Financials", family: "stock"}
+  px_coo_daily: {symbol: "COO", name: "Cooper Companies (The)", category: "Health Care", family: "stock"}
+  px_cop_daily: {symbol: "COP", name: "ConocoPhillips", category: "Energy", family: "stock"}
+  px_cor_daily: {symbol: "COR", name: "Cencora", category: "Health Care", family: "stock"}
+  px_cost_daily: {symbol: "COST", name: "Costco", category: "Consumer Staples", family: "stock"}
+  px_cpay_daily: {symbol: "CPAY", name: "Corpay", category: "Financials", family: "stock"}
+  px_cpb_daily: {symbol: "CPB", name: "Campbell's Company (The)", category: "Consumer Staples", family: "stock"}
+  px_cprt_daily: {symbol: "CPRT", name: "Copart", category: "Industrials", family: "stock"}
+  px_cpt_daily: {symbol: "CPT", name: "Camden Property Trust", category: "Real Estate", family: "stock"}
+  px_crh_daily: {symbol: "CRH", name: "CRH plc", category: "Materials", family: "stock"}
+  px_crl_daily: {symbol: "CRL", name: "Charles River Laboratories", category: "Health Care", family: "stock"}
+  px_crm_daily: {symbol: "CRM", name: "Salesforce", category: "Information Technology", family: "stock"}
+  px_crwd_daily: {symbol: "CRWD", name: "CrowdStrike", category: "Information Technology", family: "stock"}
+  px_csco_daily: {symbol: "CSCO", name: "Cisco", category: "Information Technology", family: "stock"}
+  px_csgp_daily: {symbol: "CSGP", name: "CoStar Group", category: "Real Estate", family: "stock"}
+  px_csx_daily: {symbol: "CSX", name: "CSX Corporation", category: "Industrials", family: "stock"}
+  px_ctas_daily: {symbol: "CTAS", name: "Cintas", category: "Industrials", family: "stock"}
+  px_ctra_daily: {symbol: "CTRA", name: "Coterra", category: "Energy", family: "stock"}
+  px_ctsh_daily: {symbol: "CTSH", name: "Cognizant", category: "Information Technology", family: "stock"}
+  px_ctva_daily: {symbol: "CTVA", name: "Corteva", category: "Materials", family: "stock"}
+  px_cvna_daily: {symbol: "CVNA", name: "Carvana", category: "Consumer Discretionary", family: "stock"}
+  px_cvs_daily: {symbol: "CVS", name: "CVS Health", category: "Health Care", family: "stock"}
+  px_cvx_daily: {symbol: "CVX", name: "Chevron Corporation", category: "Energy", family: "stock"}
+  px_d_daily: {symbol: "D", name: "Dominion Energy", category: "Utilities", family: "stock"}
+  px_dal_daily: {symbol: "DAL", name: "Delta Air Lines", category: "Industrials", family: "stock"}
+  px_dash_daily: {symbol: "DASH", name: "DoorDash", category: "Consumer Discretionary", family: "stock"}
+  px_dd_daily: {symbol: "DD", name: "DuPont", category: "Materials", family: "stock"}
+  px_ddog_daily: {symbol: "DDOG", name: "Datadog", category: "Information Technology", family: "stock"}
+  px_de_daily: {symbol: "DE", name: "Deere & Company", category: "Industrials", family: "stock"}
+  px_deck_daily: {symbol: "DECK", name: "Deckers Brands", category: "Consumer Discretionary", family: "stock"}
+  px_dell_daily: {symbol: "DELL", name: "Dell Technologies", category: "Information Technology", family: "stock"}
+  px_dg_daily: {symbol: "DG", name: "Dollar General", category: "Consumer Staples", family: "stock"}
+  px_dgx_daily: {symbol: "DGX", name: "Quest Diagnostics", category: "Health Care", family: "stock"}
+  px_dhi_daily: {symbol: "DHI", name: "D. R. Horton", category: "Consumer Discretionary", family: "stock"}
+  px_dhr_daily: {symbol: "DHR", name: "Danaher Corporation", category: "Health Care", family: "stock"}
+  px_dis_daily: {symbol: "DIS", name: "Walt Disney Company (The)", category: "Communication Services", family: "stock"}
+  px_dlr_daily: {symbol: "DLR", name: "Digital Realty", category: "Real Estate", family: "stock"}
+  px_dltr_daily: {symbol: "DLTR", name: "Dollar Tree", category: "Consumer Staples", family: "stock"}
+  px_doc_daily: {symbol: "DOC", name: "Healthpeak Properties", category: "Real Estate", family: "stock"}
+  px_dov_daily: {symbol: "DOV", name: "Dover Corporation", category: "Industrials", family: "stock"}
+  px_dow_daily: {symbol: "DOW", name: "Dow Inc.", category: "Materials", family: "stock"}
+  px_dpz_daily: {symbol: "DPZ", name: "Domino's", category: "Consumer Discretionary", family: "stock"}
+  px_dri_daily: {symbol: "DRI", name: "Darden Restaurants", category: "Consumer Discretionary", family: "stock"}
+  px_dte_daily: {symbol: "DTE", name: "DTE Energy", category: "Utilities", family: "stock"}
+  px_duk_daily: {symbol: "DUK", name: "Duke Energy", category: "Utilities", family: "stock"}
+  px_dva_daily: {symbol: "DVA", name: "DaVita", category: "Health Care", family: "stock"}
+  px_dvn_daily: {symbol: "DVN", name: "Devon Energy", category: "Energy", family: "stock"}
+  px_dxcm_daily: {symbol: "DXCM", name: "Dexcom", category: "Health Care", family: "stock"}
+  px_ea_daily: {symbol: "EA", name: "Electronic Arts", category: "Communication Services", family: "stock"}
+  px_ebay_daily: {symbol: "EBAY", name: "eBay Inc.", category: "Consumer Discretionary", family: "stock"}
+  px_ecl_daily: {symbol: "ECL", name: "Ecolab", category: "Materials", family: "stock"}
+  px_ed_daily: {symbol: "ED", name: "Consolidated Edison", category: "Utilities", family: "stock"}
+  px_efx_daily: {symbol: "EFX", name: "Equifax", category: "Industrials", family: "stock"}
+  px_eg_daily: {symbol: "EG", name: "Everest Group", category: "Financials", family: "stock"}
+  px_eix_daily: {symbol: "EIX", name: "Edison International", category: "Utilities", family: "stock"}
+  px_el_daily: {symbol: "EL", name: "Estée Lauder Companies (The)", category: "Consumer Staples", family: "stock"}
+  px_elv_daily: {symbol: "ELV", name: "Elevance Health", category: "Health Care", family: "stock"}
+  px_eme_daily: {symbol: "EME", name: "Emcor", category: "Industrials", family: "stock"}
+  px_emr_daily: {symbol: "EMR", name: "Emerson Electric", category: "Industrials", family: "stock"}
+  px_eog_daily: {symbol: "EOG", name: "EOG Resources", category: "Energy", family: "stock"}
+  px_epam_daily: {symbol: "EPAM", name: "EPAM Systems", category: "Information Technology", family: "stock"}
+  px_eqix_daily: {symbol: "EQIX", name: "Equinix", category: "Real Estate", family: "stock"}
+  px_eqr_daily: {symbol: "EQR", name: "Equity Residential", category: "Real Estate", family: "stock"}
+  px_eqt_daily: {symbol: "EQT", name: "EQT Corporation", category: "Energy", family: "stock"}
+  px_erie_daily: {symbol: "ERIE", name: "Erie Indemnity", category: "Financials", family: "stock"}
+  px_es_daily: {symbol: "ES", name: "Eversource Energy", category: "Utilities", family: "stock"}
+  px_ess_daily: {symbol: "ESS", name: "Essex Property Trust", category: "Real Estate", family: "stock"}
+  px_etn_daily: {symbol: "ETN", name: "Eaton Corporation", category: "Industrials", family: "stock"}
+  px_etr_daily: {symbol: "ETR", name: "Entergy", category: "Utilities", family: "stock"}
+  px_evrg_daily: {symbol: "EVRG", name: "Evergy", category: "Utilities", family: "stock"}
+  px_ew_daily: {symbol: "EW", name: "Edwards Lifesciences", category: "Health Care", family: "stock"}
+  px_exc_daily: {symbol: "EXC", name: "Exelon", category: "Utilities", family: "stock"}
+  px_exe_daily: {symbol: "EXE", name: "Expand Energy", category: "Energy", family: "stock"}
+  px_expd_daily: {symbol: "EXPD", name: "Expeditors International", category: "Industrials", family: "stock"}
+  px_expe_daily: {symbol: "EXPE", name: "Expedia Group", category: "Consumer Discretionary", family: "stock"}
+  px_exr_daily: {symbol: "EXR", name: "Extra Space Storage", category: "Real Estate", family: "stock"}
+  px_f_daily: {symbol: "F", name: "Ford Motor Company", category: "Consumer Discretionary", family: "stock"}
+  px_fang_daily: {symbol: "FANG", name: "Diamondback Energy", category: "Energy", family: "stock"}
+  px_fast_daily: {symbol: "FAST", name: "Fastenal", category: "Industrials", family: "stock"}
+  px_fcx_daily: {symbol: "FCX", name: "Freeport-McMoRan", category: "Materials", family: "stock"}
+  px_fds_daily: {symbol: "FDS", name: "FactSet", category: "Financials", family: "stock"}
+  px_fdx_daily: {symbol: "FDX", name: "FedEx", category: "Industrials", family: "stock"}
+  px_fe_daily: {symbol: "FE", name: "FirstEnergy", category: "Utilities", family: "stock"}
+  px_ffiv_daily: {symbol: "FFIV", name: "F5, Inc.", category: "Information Technology", family: "stock"}
+  px_fico_daily: {symbol: "FICO", name: "Fair Isaac", category: "Information Technology", family: "stock"}
+  px_fis_daily: {symbol: "FIS", name: "Fidelity National Information Services", category: "Financials", family: "stock"}
+  px_fisv_daily: {symbol: "FISV", name: "Fiserv", category: "Financials", family: "stock"}
+  px_fitb_daily: {symbol: "FITB", name: "Fifth Third Bancorp", category: "Financials", family: "stock"}
+  px_fix_daily: {symbol: "FIX", name: "Comfort Systems USA", category: "Industrials", family: "stock"}
+  px_fox_daily: {symbol: "FOX", name: "Fox Corporation (Class B)", category: "Communication Services", family: "stock"}
+  px_foxa_daily: {symbol: "FOXA", name: "Fox Corporation (Class A)", category: "Communication Services", family: "stock"}
+  px_frt_daily: {symbol: "FRT", name: "Federal Realty Investment Trust", category: "Real Estate", family: "stock"}
+  px_fslr_daily: {symbol: "FSLR", name: "First Solar", category: "Information Technology", family: "stock"}
+  px_ftnt_daily: {symbol: "FTNT", name: "Fortinet", category: "Information Technology", family: "stock"}
+  px_ftv_daily: {symbol: "FTV", name: "Fortive", category: "Industrials", family: "stock"}
+  px_gd_daily: {symbol: "GD", name: "General Dynamics", category: "Industrials", family: "stock"}
+  px_gddy_daily: {symbol: "GDDY", name: "GoDaddy", category: "Information Technology", family: "stock"}
+  px_ge_daily: {symbol: "GE", name: "GE Aerospace", category: "Industrials", family: "stock"}
+  px_gehc_daily: {symbol: "GEHC", name: "GE HealthCare", category: "Health Care", family: "stock"}
+  px_gen_daily: {symbol: "GEN", name: "Gen Digital", category: "Information Technology", family: "stock"}
+  px_gev_daily: {symbol: "GEV", name: "GE Vernova", category: "Industrials", family: "stock"}
+  px_gild_daily: {symbol: "GILD", name: "Gilead Sciences", category: "Health Care", family: "stock"}
+  px_gis_daily: {symbol: "GIS", name: "General Mills", category: "Consumer Staples", family: "stock"}
+  px_gl_daily: {symbol: "GL", name: "Globe Life", category: "Financials", family: "stock"}
+  px_glw_daily: {symbol: "GLW", name: "Corning Inc.", category: "Information Technology", family: "stock"}
+  px_gm_daily: {symbol: "GM", name: "General Motors", category: "Consumer Discretionary", family: "stock"}
+  px_gnrc_daily: {symbol: "GNRC", name: "Generac", category: "Industrials", family: "stock"}
+  px_goog_daily: {symbol: "GOOG", name: "Alphabet Inc. (Class C)", category: "Communication Services", family: "stock"}
+  px_googl_daily: {symbol: "GOOGL", name: "Alphabet Inc. (Class A)", category: "Communication Services", family: "stock"}
+  px_gpc_daily: {symbol: "GPC", name: "Genuine Parts Company", category: "Consumer Discretionary", family: "stock"}
+  px_gpn_daily: {symbol: "GPN", name: "Global Payments", category: "Financials", family: "stock"}
+  px_grmn_daily: {symbol: "GRMN", name: "Garmin", category: "Consumer Discretionary", family: "stock"}
+  px_gs_daily: {symbol: "GS", name: "Goldman Sachs", category: "Financials", family: "stock"}
+  px_gww_daily: {symbol: "GWW", name: "W. W. Grainger", category: "Industrials", family: "stock"}
+  px_hal_daily: {symbol: "HAL", name: "Halliburton", category: "Energy", family: "stock"}
+  px_has_daily: {symbol: "HAS", name: "Hasbro", category: "Consumer Discretionary", family: "stock"}
+  px_hban_daily: {symbol: "HBAN", name: "Huntington Bancshares", category: "Financials", family: "stock"}
+  px_hca_daily: {symbol: "HCA", name: "HCA Healthcare", category: "Health Care", family: "stock"}
+  px_hd_daily: {symbol: "HD", name: "Home Depot (The)", category: "Consumer Discretionary", family: "stock"}
+  px_hig_daily: {symbol: "HIG", name: "Hartford (The)", category: "Financials", family: "stock"}
+  px_hii_daily: {symbol: "HII", name: "Huntington Ingalls Industries", category: "Industrials", family: "stock"}
+  px_hlt_daily: {symbol: "HLT", name: "Hilton Worldwide", category: "Consumer Discretionary", family: "stock"}
+  px_hon_daily: {symbol: "HON", name: "Honeywell", category: "Industrials", family: "stock"}
+  px_hood_daily: {symbol: "HOOD", name: "Robinhood Markets", category: "Financials", family: "stock"}
+  px_hpe_daily: {symbol: "HPE", name: "Hewlett Packard Enterprise", category: "Information Technology", family: "stock"}
+  px_hpq_daily: {symbol: "HPQ", name: "HP Inc.", category: "Information Technology", family: "stock"}
+  px_hrl_daily: {symbol: "HRL", name: "Hormel Foods", category: "Consumer Staples", family: "stock"}
+  px_hsic_daily: {symbol: "HSIC", name: "Henry Schein", category: "Health Care", family: "stock"}
+  px_hst_daily: {symbol: "HST", name: "Host Hotels & Resorts", category: "Real Estate", family: "stock"}
+  px_hsy_daily: {symbol: "HSY", name: "Hershey Company (The)", category: "Consumer Staples", family: "stock"}
+  px_hubb_daily: {symbol: "HUBB", name: "Hubbell Incorporated", category: "Industrials", family: "stock"}
+  px_hum_daily: {symbol: "HUM", name: "Humana", category: "Health Care", family: "stock"}
+  px_hwm_daily: {symbol: "HWM", name: "Howmet Aerospace", category: "Industrials", family: "stock"}
+  px_ibkr_daily: {symbol: "IBKR", name: "Interactive Brokers", category: "Financials", family: "stock"}
+  px_ibm_daily: {symbol: "IBM", name: "IBM", category: "Information Technology", family: "stock"}
+  px_ice_daily: {symbol: "ICE", name: "Intercontinental Exchange", category: "Financials", family: "stock"}
+  px_idxx_daily: {symbol: "IDXX", name: "Idexx Laboratories", category: "Health Care", family: "stock"}
+  px_iex_daily: {symbol: "IEX", name: "IDEX Corporation", category: "Industrials", family: "stock"}
+  px_iff_daily: {symbol: "IFF", name: "International Flavors & Fragrances", category: "Materials", family: "stock"}
+  px_incy_daily: {symbol: "INCY", name: "Incyte", category: "Health Care", family: "stock"}
+  px_intc_daily: {symbol: "INTC", name: "Intel", category: "Information Technology", family: "stock"}
+  px_intu_daily: {symbol: "INTU", name: "Intuit", category: "Information Technology", family: "stock"}
+  px_invh_daily: {symbol: "INVH", name: "Invitation Homes", category: "Real Estate", family: "stock"}
+  px_ip_daily: {symbol: "IP", name: "International Paper", category: "Materials", family: "stock"}
+  px_iqv_daily: {symbol: "IQV", name: "IQVIA", category: "Health Care", family: "stock"}
+  px_ir_daily: {symbol: "IR", name: "Ingersoll Rand", category: "Industrials", family: "stock"}
+  px_irm_daily: {symbol: "IRM", name: "Iron Mountain", category: "Real Estate", family: "stock"}
+  px_isrg_daily: {symbol: "ISRG", name: "Intuitive Surgical", category: "Health Care", family: "stock"}
+  px_it_daily: {symbol: "IT", name: "Gartner", category: "Information Technology", family: "stock"}
+  px_itw_daily: {symbol: "ITW", name: "Illinois Tool Works", category: "Industrials", family: "stock"}
+  px_ivz_daily: {symbol: "IVZ", name: "Invesco", category: "Financials", family: "stock"}
+  px_j_daily: {symbol: "J", name: "Jacobs Solutions", category: "Industrials", family: "stock"}
+  px_jbht_daily: {symbol: "JBHT", name: "J.B. Hunt", category: "Industrials", family: "stock"}
+  px_jbl_daily: {symbol: "JBL", name: "Jabil", category: "Information Technology", family: "stock"}
+  px_jci_daily: {symbol: "JCI", name: "Johnson Controls", category: "Industrials", family: "stock"}
+  px_jkhy_daily: {symbol: "JKHY", name: "Jack Henry & Associates", category: "Financials", family: "stock"}
+  px_jnj_daily: {symbol: "JNJ", name: "Johnson & Johnson", category: "Health Care", family: "stock"}
+  px_jpm_daily: {symbol: "JPM", name: "JPMorgan Chase", category: "Financials", family: "stock"}
+  px_kdp_daily: {symbol: "KDP", name: "Keurig Dr Pepper", category: "Consumer Staples", family: "stock"}
+  px_key_daily: {symbol: "KEY", name: "KeyCorp", category: "Financials", family: "stock"}
+  px_keys_daily: {symbol: "KEYS", name: "Keysight Technologies", category: "Information Technology", family: "stock"}
+  px_khc_daily: {symbol: "KHC", name: "Kraft Heinz", category: "Consumer Staples", family: "stock"}
+  px_kim_daily: {symbol: "KIM", name: "Kimco Realty", category: "Real Estate", family: "stock"}
+  px_kkr_daily: {symbol: "KKR", name: "KKR & Co.", category: "Financials", family: "stock"}
+  px_klac_daily: {symbol: "KLAC", name: "KLA Corporation", category: "Information Technology", family: "stock"}
+  px_kmb_daily: {symbol: "KMB", name: "Kimberly-Clark", category: "Consumer Staples", family: "stock"}
+  px_kmi_daily: {symbol: "KMI", name: "Kinder Morgan", category: "Energy", family: "stock"}
+  px_ko_daily: {symbol: "KO", name: "Coca-Cola Company (The)", category: "Consumer Staples", family: "stock"}
+  px_kr_daily: {symbol: "KR", name: "Kroger", category: "Consumer Staples", family: "stock"}
+  px_kvue_daily: {symbol: "KVUE", name: "Kenvue", category: "Consumer Staples", family: "stock"}
+  px_l_daily: {symbol: "L", name: "Loews Corporation", category: "Financials", family: "stock"}
+  px_ldos_daily: {symbol: "LDOS", name: "Leidos", category: "Industrials", family: "stock"}
+  px_len_daily: {symbol: "LEN", name: "Lennar", category: "Consumer Discretionary", family: "stock"}
+  px_lh_daily: {symbol: "LH", name: "Labcorp", category: "Health Care", family: "stock"}
+  px_lhx_daily: {symbol: "LHX", name: "L3Harris", category: "Industrials", family: "stock"}
+  px_lii_daily: {symbol: "LII", name: "Lennox International", category: "Industrials", family: "stock"}
+  px_lin_daily: {symbol: "LIN", name: "Linde plc", category: "Materials", family: "stock"}
+  px_lite_daily: {symbol: "LITE", name: "Lumentum", category: "Information Technology", family: "stock"}
+  px_lly_daily: {symbol: "LLY", name: "Lilly (Eli)", category: "Health Care", family: "stock"}
+  px_lmt_daily: {symbol: "LMT", name: "Lockheed Martin", category: "Industrials", family: "stock"}
+  px_lnt_daily: {symbol: "LNT", name: "Alliant Energy", category: "Utilities", family: "stock"}
+  px_low_daily: {symbol: "LOW", name: "Lowe's", category: "Consumer Discretionary", family: "stock"}
+  px_lrcx_daily: {symbol: "LRCX", name: "Lam Research", category: "Information Technology", family: "stock"}
+  px_lulu_daily: {symbol: "LULU", name: "Lululemon Athletica", category: "Consumer Discretionary", family: "stock"}
+  px_luv_daily: {symbol: "LUV", name: "Southwest Airlines", category: "Industrials", family: "stock"}
+  px_lvs_daily: {symbol: "LVS", name: "Las Vegas Sands", category: "Consumer Discretionary", family: "stock"}
+  px_lyb_daily: {symbol: "LYB", name: "LyondellBasell", category: "Materials", family: "stock"}
+  px_lyv_daily: {symbol: "LYV", name: "Live Nation Entertainment", category: "Communication Services", family: "stock"}
+  px_ma_daily: {symbol: "MA", name: "Mastercard", category: "Financials", family: "stock"}
+  px_maa_daily: {symbol: "MAA", name: "Mid-America Apartment Communities", category: "Real Estate", family: "stock"}
+  px_mar_daily: {symbol: "MAR", name: "Marriott International", category: "Consumer Discretionary", family: "stock"}
+  px_mas_daily: {symbol: "MAS", name: "Masco", category: "Industrials", family: "stock"}
+  px_mcd_daily: {symbol: "MCD", name: "McDonald's", category: "Consumer Discretionary", family: "stock"}
+  px_mchp_daily: {symbol: "MCHP", name: "Microchip Technology", category: "Information Technology", family: "stock"}
+  px_mck_daily: {symbol: "MCK", name: "McKesson Corporation", category: "Health Care", family: "stock"}
+  px_mco_daily: {symbol: "MCO", name: "Moody's Corporation", category: "Financials", family: "stock"}
+  px_mdlz_daily: {symbol: "MDLZ", name: "Mondelez International", category: "Consumer Staples", family: "stock"}
+  px_mdt_daily: {symbol: "MDT", name: "Medtronic", category: "Health Care", family: "stock"}
+  px_met_daily: {symbol: "MET", name: "MetLife", category: "Financials", family: "stock"}
+  px_meta_daily: {symbol: "META", name: "Meta Platforms", category: "Communication Services", family: "stock"}
+  px_mgm_daily: {symbol: "MGM", name: "MGM Resorts", category: "Consumer Discretionary", family: "stock"}
+  px_mkc_daily: {symbol: "MKC", name: "McCormick & Company", category: "Consumer Staples", family: "stock"}
+  px_mlm_daily: {symbol: "MLM", name: "Martin Marietta Materials", category: "Materials", family: "stock"}
+  px_mmm_daily: {symbol: "MMM", name: "3M", category: "Industrials", family: "stock"}
+  px_mnst_daily: {symbol: "MNST", name: "Monster Beverage", category: "Consumer Staples", family: "stock"}
+  px_mo_daily: {symbol: "MO", name: "Altria", category: "Consumer Staples", family: "stock"}
+  px_mos_daily: {symbol: "MOS", name: "Mosaic Company (The)", category: "Materials", family: "stock"}
+  px_mpc_daily: {symbol: "MPC", name: "Marathon Petroleum", category: "Energy", family: "stock"}
+  px_mpwr_daily: {symbol: "MPWR", name: "Monolithic Power Systems", category: "Information Technology", family: "stock"}
+  px_mrk_daily: {symbol: "MRK", name: "Merck & Co.", category: "Health Care", family: "stock"}
+  px_mrna_daily: {symbol: "MRNA", name: "Moderna", category: "Health Care", family: "stock"}
+  px_mrsh_daily: {symbol: "MRSH", name: "Marsh McLennan", category: "Financials", family: "stock"}
+  px_ms_daily: {symbol: "MS", name: "Morgan Stanley", category: "Financials", family: "stock"}
+  px_msci_daily: {symbol: "MSCI", name: "MSCI Inc.", category: "Financials", family: "stock"}
+  px_msft_daily: {symbol: "MSFT", name: "Microsoft", category: "Information Technology", family: "stock"}
+  px_msi_daily: {symbol: "MSI", name: "Motorola Solutions", category: "Information Technology", family: "stock"}
+  px_mtb_daily: {symbol: "MTB", name: "M&T Bank", category: "Financials", family: "stock"}
+  px_mtd_daily: {symbol: "MTD", name: "Mettler Toledo", category: "Health Care", family: "stock"}
+  px_mu_daily: {symbol: "MU", name: "Micron Technology", category: "Information Technology", family: "stock"}
+  px_nclh_daily: {symbol: "NCLH", name: "Norwegian Cruise Line Holdings", category: "Consumer Discretionary", family: "stock"}
+  px_ndaq_daily: {symbol: "NDAQ", name: "Nasdaq, Inc.", category: "Financials", family: "stock"}
+  px_ndsn_daily: {symbol: "NDSN", name: "Nordson Corporation", category: "Industrials", family: "stock"}
+  px_nee_daily: {symbol: "NEE", name: "NextEra Energy", category: "Utilities", family: "stock"}
+  px_nem_daily: {symbol: "NEM", name: "Newmont", category: "Materials", family: "stock"}
+  px_nflx_daily: {symbol: "NFLX", name: "Netflix", category: "Communication Services", family: "stock"}
+  px_ni_daily: {symbol: "NI", name: "NiSource", category: "Utilities", family: "stock"}
+  px_nke_daily: {symbol: "NKE", name: "Nike, Inc.", category: "Consumer Discretionary", family: "stock"}
+  px_noc_daily: {symbol: "NOC", name: "Northrop Grumman", category: "Industrials", family: "stock"}
+  px_now_daily: {symbol: "NOW", name: "ServiceNow", category: "Information Technology", family: "stock"}
+  px_nrg_daily: {symbol: "NRG", name: "NRG Energy", category: "Utilities", family: "stock"}
+  px_nsc_daily: {symbol: "NSC", name: "Norfolk Southern", category: "Industrials", family: "stock"}
+  px_ntap_daily: {symbol: "NTAP", name: "NetApp", category: "Information Technology", family: "stock"}
+  px_ntrs_daily: {symbol: "NTRS", name: "Northern Trust", category: "Financials", family: "stock"}
+  px_nue_daily: {symbol: "NUE", name: "Nucor", category: "Materials", family: "stock"}
+  px_nvda_daily: {symbol: "NVDA", name: "Nvidia", category: "Information Technology", family: "stock"}
+  px_nvr_daily: {symbol: "NVR", name: "NVR, Inc.", category: "Consumer Discretionary", family: "stock"}
+  px_nws_daily: {symbol: "NWS", name: "News Corp (Class B)", category: "Communication Services", family: "stock"}
+  px_nwsa_daily: {symbol: "NWSA", name: "News Corp (Class A)", category: "Communication Services", family: "stock"}
+  px_nxpi_daily: {symbol: "NXPI", name: "NXP Semiconductors", category: "Information Technology", family: "stock"}
+  px_o_daily: {symbol: "O", name: "Realty Income", category: "Real Estate", family: "stock"}
+  px_odfl_daily: {symbol: "ODFL", name: "Old Dominion", category: "Industrials", family: "stock"}
+  px_oke_daily: {symbol: "OKE", name: "Oneok", category: "Energy", family: "stock"}
+  px_omc_daily: {symbol: "OMC", name: "Omnicom Group", category: "Communication Services", family: "stock"}
+  px_on_daily: {symbol: "ON", name: "ON Semiconductor", category: "Information Technology", family: "stock"}
+  px_orcl_daily: {symbol: "ORCL", name: "Oracle Corporation", category: "Information Technology", family: "stock"}
+  px_orly_daily: {symbol: "ORLY", name: "O’Reilly Automotive", category: "Consumer Discretionary", family: "stock"}
+  px_otis_daily: {symbol: "OTIS", name: "Otis Worldwide", category: "Industrials", family: "stock"}
+  px_oxy_daily: {symbol: "OXY", name: "Occidental Petroleum", category: "Energy", family: "stock"}
+  px_panw_daily: {symbol: "PANW", name: "Palo Alto Networks", category: "Information Technology", family: "stock"}
+  px_payx_daily: {symbol: "PAYX", name: "Paychex", category: "Industrials", family: "stock"}
+  px_pcar_daily: {symbol: "PCAR", name: "Paccar", category: "Industrials", family: "stock"}
+  px_pcg_daily: {symbol: "PCG", name: "PG&E Corporation", category: "Utilities", family: "stock"}
+  px_peg_daily: {symbol: "PEG", name: "Public Service Enterprise Group", category: "Utilities", family: "stock"}
+  px_pep_daily: {symbol: "PEP", name: "PepsiCo", category: "Consumer Staples", family: "stock"}
+  px_pfe_daily: {symbol: "PFE", name: "Pfizer", category: "Health Care", family: "stock"}
+  px_pfg_daily: {symbol: "PFG", name: "Principal Financial Group", category: "Financials", family: "stock"}
+  px_pg_daily: {symbol: "PG", name: "Procter & Gamble", category: "Consumer Staples", family: "stock"}
+  px_pgr_daily: {symbol: "PGR", name: "Progressive Corporation", category: "Financials", family: "stock"}
+  px_ph_daily: {symbol: "PH", name: "Parker Hannifin", category: "Industrials", family: "stock"}
+  px_phm_daily: {symbol: "PHM", name: "PulteGroup", category: "Consumer Discretionary", family: "stock"}
+  px_pkg_daily: {symbol: "PKG", name: "Packaging Corporation of America", category: "Materials", family: "stock"}
+  px_pld_daily: {symbol: "PLD", name: "Prologis", category: "Real Estate", family: "stock"}
+  px_pltr_daily: {symbol: "PLTR", name: "Palantir Technologies", category: "Information Technology", family: "stock"}
+  px_pm_daily: {symbol: "PM", name: "Philip Morris International", category: "Consumer Staples", family: "stock"}
+  px_pnc_daily: {symbol: "PNC", name: "PNC Financial Services", category: "Financials", family: "stock"}
+  px_pnr_daily: {symbol: "PNR", name: "Pentair", category: "Industrials", family: "stock"}
+  px_pnw_daily: {symbol: "PNW", name: "Pinnacle West Capital", category: "Utilities", family: "stock"}
+  px_podd_daily: {symbol: "PODD", name: "Insulet Corporation", category: "Health Care", family: "stock"}
+  px_pool_daily: {symbol: "POOL", name: "Pool Corporation", category: "Consumer Discretionary", family: "stock"}
+  px_ppg_daily: {symbol: "PPG", name: "PPG Industries", category: "Materials", family: "stock"}
+  px_ppl_daily: {symbol: "PPL", name: "PPL Corporation", category: "Utilities", family: "stock"}
+  px_pru_daily: {symbol: "PRU", name: "Prudential Financial", category: "Financials", family: "stock"}
+  px_psa_daily: {symbol: "PSA", name: "Public Storage", category: "Real Estate", family: "stock"}
+  px_psky_daily: {symbol: "PSKY", name: "Paramount Skydance Corporation", category: "Communication Services", family: "stock"}
+  px_psx_daily: {symbol: "PSX", name: "Phillips 66", category: "Energy", family: "stock"}
+  px_ptc_daily: {symbol: "PTC", name: "PTC Inc.", category: "Information Technology", family: "stock"}
+  px_pwr_daily: {symbol: "PWR", name: "Quanta Services", category: "Industrials", family: "stock"}
+  px_pypl_daily: {symbol: "PYPL", name: "PayPal", category: "Financials", family: "stock"}
+  px_q_daily: {symbol: "Q", name: "Qnity Electronics", category: "Information Technology", family: "stock"}
+  px_qcom_daily: {symbol: "QCOM", name: "Qualcomm", category: "Information Technology", family: "stock"}
+  px_rcl_daily: {symbol: "RCL", name: "Royal Caribbean Group", category: "Consumer Discretionary", family: "stock"}
+  px_reg_daily: {symbol: "REG", name: "Regency Centers", category: "Real Estate", family: "stock"}
+  px_regn_daily: {symbol: "REGN", name: "Regeneron Pharmaceuticals", category: "Health Care", family: "stock"}
+  px_rf_daily: {symbol: "RF", name: "Regions Financial Corporation", category: "Financials", family: "stock"}
+  px_rjf_daily: {symbol: "RJF", name: "Raymond James Financial", category: "Financials", family: "stock"}
+  px_rl_daily: {symbol: "RL", name: "Ralph Lauren Corporation", category: "Consumer Discretionary", family: "stock"}
+  px_rmd_daily: {symbol: "RMD", name: "ResMed", category: "Health Care", family: "stock"}
+  px_rok_daily: {symbol: "ROK", name: "Rockwell Automation", category: "Industrials", family: "stock"}
+  px_rol_daily: {symbol: "ROL", name: "Rollins, Inc.", category: "Industrials", family: "stock"}
+  px_rop_daily: {symbol: "ROP", name: "Roper Technologies", category: "Information Technology", family: "stock"}
+  px_rost_daily: {symbol: "ROST", name: "Ross Stores", category: "Consumer Discretionary", family: "stock"}
+  px_rsg_daily: {symbol: "RSG", name: "Republic Services", category: "Industrials", family: "stock"}
+  px_rtx_daily: {symbol: "RTX", name: "RTX Corporation", category: "Industrials", family: "stock"}
+  px_rvty_daily: {symbol: "RVTY", name: "Revvity", category: "Health Care", family: "stock"}
+  px_sats_daily: {symbol: "SATS", name: "EchoStar", category: "Communication Services", family: "stock"}
+  px_sbac_daily: {symbol: "SBAC", name: "SBA Communications", category: "Real Estate", family: "stock"}
+  px_sbux_daily: {symbol: "SBUX", name: "Starbucks", category: "Consumer Discretionary", family: "stock"}
+  px_schw_daily: {symbol: "SCHW", name: "Charles Schwab Corporation", category: "Financials", family: "stock"}
+  px_shw_daily: {symbol: "SHW", name: "Sherwin-Williams", category: "Materials", family: "stock"}
+  px_sjm_daily: {symbol: "SJM", name: "J.M. Smucker Company (The)", category: "Consumer Staples", family: "stock"}
+  px_slb_daily: {symbol: "SLB", name: "Schlumberger", category: "Energy", family: "stock"}
+  px_smci_daily: {symbol: "SMCI", name: "Supermicro", category: "Information Technology", family: "stock"}
+  px_sna_daily: {symbol: "SNA", name: "Snap-on", category: "Industrials", family: "stock"}
+  px_sndk_daily: {symbol: "SNDK", name: "Sandisk", category: "Information Technology", family: "stock"}
+  px_snps_daily: {symbol: "SNPS", name: "Synopsys", category: "Information Technology", family: "stock"}
+  px_so_daily: {symbol: "SO", name: "Southern Company", category: "Utilities", family: "stock"}
+  px_solv_daily: {symbol: "SOLV", name: "Solventum", category: "Health Care", family: "stock"}
+  px_spg_daily: {symbol: "SPG", name: "Simon Property Group", category: "Real Estate", family: "stock"}
+  px_spgi_daily: {symbol: "SPGI", name: "S&P Global", category: "Financials", family: "stock"}
+  px_sre_daily: {symbol: "SRE", name: "Sempra", category: "Utilities", family: "stock"}
+  px_ste_daily: {symbol: "STE", name: "Steris", category: "Health Care", family: "stock"}
+  px_stld_daily: {symbol: "STLD", name: "Steel Dynamics", category: "Materials", family: "stock"}
+  px_stt_daily: {symbol: "STT", name: "State Street Corporation", category: "Financials", family: "stock"}
+  px_stx_daily: {symbol: "STX", name: "Seagate Technology", category: "Information Technology", family: "stock"}
+  px_stz_daily: {symbol: "STZ", name: "Constellation Brands", category: "Consumer Staples", family: "stock"}
+  px_sw_daily: {symbol: "SW", name: "Smurfit Westrock", category: "Materials", family: "stock"}
+  px_swk_daily: {symbol: "SWK", name: "Stanley Black & Decker", category: "Industrials", family: "stock"}
+  px_swks_daily: {symbol: "SWKS", name: "Skyworks Solutions", category: "Information Technology", family: "stock"}
+  px_syf_daily: {symbol: "SYF", name: "Synchrony Financial", category: "Financials", family: "stock"}
+  px_syk_daily: {symbol: "SYK", name: "Stryker Corporation", category: "Health Care", family: "stock"}
+  px_syy_daily: {symbol: "SYY", name: "Sysco", category: "Consumer Staples", family: "stock"}
+  px_t_daily: {symbol: "T", name: "AT&T", category: "Communication Services", family: "stock"}
+  px_tap_daily: {symbol: "TAP", name: "Molson Coors Beverage Company", category: "Consumer Staples", family: "stock"}
+  px_tdg_daily: {symbol: "TDG", name: "TransDigm Group", category: "Industrials", family: "stock"}
+  px_tdy_daily: {symbol: "TDY", name: "Teledyne Technologies", category: "Information Technology", family: "stock"}
+  px_tech_daily: {symbol: "TECH", name: "Bio-Techne", category: "Health Care", family: "stock"}
+  px_tel_daily: {symbol: "TEL", name: "TE Connectivity", category: "Information Technology", family: "stock"}
+  px_ter_daily: {symbol: "TER", name: "Teradyne", category: "Information Technology", family: "stock"}
+  px_tfc_daily: {symbol: "TFC", name: "Truist Financial", category: "Financials", family: "stock"}
+  px_tgt_daily: {symbol: "TGT", name: "Target Corporation", category: "Consumer Staples", family: "stock"}
+  px_tjx_daily: {symbol: "TJX", name: "TJX Companies", category: "Consumer Discretionary", family: "stock"}
+  px_tko_daily: {symbol: "TKO", name: "TKO Group Holdings", category: "Communication Services", family: "stock"}
+  px_tmo_daily: {symbol: "TMO", name: "Thermo Fisher Scientific", category: "Health Care", family: "stock"}
+  px_tmus_daily: {symbol: "TMUS", name: "T-Mobile US", category: "Communication Services", family: "stock"}
+  px_tpl_daily: {symbol: "TPL", name: "Texas Pacific Land Corporation", category: "Energy", family: "stock"}
+  px_tpr_daily: {symbol: "TPR", name: "Tapestry, Inc.", category: "Consumer Discretionary", family: "stock"}
+  px_trgp_daily: {symbol: "TRGP", name: "Targa Resources", category: "Energy", family: "stock"}
+  px_trmb_daily: {symbol: "TRMB", name: "Trimble Inc.", category: "Information Technology", family: "stock"}
+  px_trow_daily: {symbol: "TROW", name: "T. Rowe Price", category: "Financials", family: "stock"}
+  px_trv_daily: {symbol: "TRV", name: "Travelers Companies (The)", category: "Financials", family: "stock"}
+  px_tsco_daily: {symbol: "TSCO", name: "Tractor Supply", category: "Consumer Discretionary", family: "stock"}
+  px_tsla_daily: {symbol: "TSLA", name: "Tesla, Inc.", category: "Consumer Discretionary", family: "stock"}
+  px_tsn_daily: {symbol: "TSN", name: "Tyson Foods", category: "Consumer Staples", family: "stock"}
+  px_tt_daily: {symbol: "TT", name: "Trane Technologies", category: "Industrials", family: "stock"}
+  px_ttd_daily: {symbol: "TTD", name: "Trade Desk (The)", category: "Communication Services", family: "stock"}
+  px_ttwo_daily: {symbol: "TTWO", name: "Take-Two Interactive", category: "Communication Services", family: "stock"}
+  px_txn_daily: {symbol: "TXN", name: "Texas Instruments", category: "Information Technology", family: "stock"}
+  px_txt_daily: {symbol: "TXT", name: "Textron", category: "Industrials", family: "stock"}
+  px_tyl_daily: {symbol: "TYL", name: "Tyler Technologies", category: "Information Technology", family: "stock"}
+  px_ual_daily: {symbol: "UAL", name: "United Airlines Holdings", category: "Industrials", family: "stock"}
+  px_uber_daily: {symbol: "UBER", name: "Uber", category: "Industrials", family: "stock"}
+  px_udr_daily: {symbol: "UDR", name: "UDR, Inc.", category: "Real Estate", family: "stock"}
+  px_uhs_daily: {symbol: "UHS", name: "Universal Health Services", category: "Health Care", family: "stock"}
+  px_ulta_daily: {symbol: "ULTA", name: "Ulta Beauty", category: "Consumer Discretionary", family: "stock"}
+  px_unh_daily: {symbol: "UNH", name: "UnitedHealth Group", category: "Health Care", family: "stock"}
+  px_unp_daily: {symbol: "UNP", name: "Union Pacific Corporation", category: "Industrials", family: "stock"}
+  px_ups_daily: {symbol: "UPS", name: "United Parcel Service", category: "Industrials", family: "stock"}
+  px_uri_daily: {symbol: "URI", name: "United Rentals", category: "Industrials", family: "stock"}
+  px_usb_daily: {symbol: "USB", name: "U.S. Bancorp", category: "Financials", family: "stock"}
+  px_v_daily: {symbol: "V", name: "Visa Inc.", category: "Financials", family: "stock"}
+  px_vici_daily: {symbol: "VICI", name: "Vici Properties", category: "Real Estate", family: "stock"}
+  px_vlo_daily: {symbol: "VLO", name: "Valero Energy", category: "Energy", family: "stock"}
+  px_vlto_daily: {symbol: "VLTO", name: "Veralto", category: "Industrials", family: "stock"}
+  px_vmc_daily: {symbol: "VMC", name: "Vulcan Materials Company", category: "Materials", family: "stock"}
+  px_vrsk_daily: {symbol: "VRSK", name: "Verisk Analytics", category: "Industrials", family: "stock"}
+  px_vrsn_daily: {symbol: "VRSN", name: "Verisign", category: "Information Technology", family: "stock"}
+  px_vrt_daily: {symbol: "VRT", name: "Vertiv", category: "Industrials", family: "stock"}
+  px_vrtx_daily: {symbol: "VRTX", name: "Vertex Pharmaceuticals", category: "Health Care", family: "stock"}
+  px_vst_daily: {symbol: "VST", name: "Vistra Corp.", category: "Utilities", family: "stock"}
+  px_vtr_daily: {symbol: "VTR", name: "Ventas", category: "Real Estate", family: "stock"}
+  px_vtrs_daily: {symbol: "VTRS", name: "Viatris", category: "Health Care", family: "stock"}
+  px_vz_daily: {symbol: "VZ", name: "Verizon", category: "Communication Services", family: "stock"}
+  px_wab_daily: {symbol: "WAB", name: "Wabtec", category: "Industrials", family: "stock"}
+  px_wat_daily: {symbol: "WAT", name: "Waters Corporation", category: "Health Care", family: "stock"}
+  px_wbd_daily: {symbol: "WBD", name: "Warner Bros. Discovery", category: "Communication Services", family: "stock"}
+  px_wday_daily: {symbol: "WDAY", name: "Workday, Inc.", category: "Information Technology", family: "stock"}
+  px_wdc_daily: {symbol: "WDC", name: "Western Digital", category: "Information Technology", family: "stock"}
+  px_wec_daily: {symbol: "WEC", name: "WEC Energy Group", category: "Utilities", family: "stock"}
+  px_well_daily: {symbol: "WELL", name: "Welltower", category: "Real Estate", family: "stock"}
+  px_wfc_daily: {symbol: "WFC", name: "Wells Fargo", category: "Financials", family: "stock"}
+  px_wm_daily: {symbol: "WM", name: "Waste Management", category: "Industrials", family: "stock"}
+  px_wmb_daily: {symbol: "WMB", name: "Williams Companies", category: "Energy", family: "stock"}
+  px_wmt_daily: {symbol: "WMT", name: "Walmart", category: "Consumer Staples", family: "stock"}
+  px_wrb_daily: {symbol: "WRB", name: "W. R. Berkley Corporation", category: "Financials", family: "stock"}
+  px_wsm_daily: {symbol: "WSM", name: "Williams-Sonoma, Inc.", category: "Consumer Discretionary", family: "stock"}
+  px_wst_daily: {symbol: "WST", name: "West Pharmaceutical Services", category: "Health Care", family: "stock"}
+  px_wtw_daily: {symbol: "WTW", name: "Willis Towers Watson", category: "Financials", family: "stock"}
+  px_wy_daily: {symbol: "WY", name: "Weyerhaeuser", category: "Real Estate", family: "stock"}
+  px_wynn_daily: {symbol: "WYNN", name: "Wynn Resorts", category: "Consumer Discretionary", family: "stock"}
+  px_xel_daily: {symbol: "XEL", name: "Xcel Energy", category: "Utilities", family: "stock"}
+  px_xom_daily: {symbol: "XOM", name: "ExxonMobil", category: "Energy", family: "stock"}
+  px_xyl_daily: {symbol: "XYL", name: "Xylem Inc.", category: "Industrials", family: "stock"}
+  px_xyz_daily: {symbol: "XYZ", name: "Block, Inc.", category: "Financials", family: "stock"}
+  px_yum_daily: {symbol: "YUM", name: "Yum! Brands", category: "Consumer Discretionary", family: "stock"}
+  px_zbh_daily: {symbol: "ZBH", name: "Zimmer Biomet", category: "Health Care", family: "stock"}
+  px_zbra_daily: {symbol: "ZBRA", name: "Zebra Technologies", category: "Information Technology", family: "stock"}
+  px_zts_daily: {symbol: "ZTS", name: "Zoetis", category: "Health Care", family: "stock"}

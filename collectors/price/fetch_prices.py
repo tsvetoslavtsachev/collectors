@@ -166,7 +166,12 @@ def fetch_prices(cfg: dict, *, period: str | None = None,
     a subset of series_ids (live spot-check on a handful of ETFs).
     """
     s = cfg["settings"]
-    per = period or s.get("history_period_prices", "max")
+    # PER-FAMILY default depth (P7a): an explicit ``period`` (--period / --daily / --spot)
+    # overrides everything; otherwise each family gets its own default -- ETF "max"
+    # (inception, survivorship-clean) vs STOCK "6y" (TA floor; longer is not backtest-honest
+    # for survivorship-flagged current-members-only series, program S3c). P8 inherits this.
+    etf_per = s.get("history_period_prices", "max")
+    stock_per = s.get("history_period_stock", "6y")
     rdp = int(s.get("round_dp", 6))
     src = s.get("source", "yfinance")
 
@@ -174,6 +179,7 @@ def fetch_prices(cfg: dict, *, period: str | None = None,
     for sid, m in cfg["price"].items():
         if only is not None and sid not in only:
             continue
+        per = period or (stock_per if m.get("family", "etf") == "stock" else etf_per)
         try:
             recs = fetch_one(m["symbol"], period=per, round_dp=rdp, source=src)
             out[sid] = {"ok": True, "records": recs}

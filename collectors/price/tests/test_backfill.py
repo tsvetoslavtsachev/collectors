@@ -110,8 +110,9 @@ def offline(g: Gate) -> None:
                             fetch=counting_fetch, log=lambda *a: None)
     n_series = len(CFG["price"])
     expected_batches = (n_series + 24) // 25
-    g.check("b2a one fetch call per batch (132 series / 25)",
-            calls["n"] == expected_batches, "calls=%d expected=%d" % (calls["n"], expected_batches))
+    g.check("b2a one fetch call per batch (CFG series / 25, P7a: ETF+stock union)",
+            calls["n"] == expected_batches,
+            "series=%d calls=%d expected=%d" % (n_series, calls["n"], expected_batches))
     g.check("b2b every configured series written",
             sum(1 for r in res.values() if r.get("ok")) == n_series,
             "ok=%d/%d" % (sum(1 for r in res.values() if r.get('ok')), n_series))
@@ -232,7 +233,7 @@ def offline(g: Gate) -> None:
 
     # b10/b11 -- the ultracode-reproduced blockers: a TRUNCATED baselined ETF and an
     # INCOMPLETE seed must HARD-FAIL (the old gate passed both green). SPY reaches 1993
-    # (v1a ok) but XLF is truncated to 2024 (26y lost) and 130/132 series are missing.
+    # (v1a ok) but XLF is truncated to 2024 (26y lost) and all-but-two series are missing.
     trunc = _seed_temp_root()
     catt = to_datacore.load_catalog(trunc)
     archive.append("px_spy_daily", [_bar("1993-01-29", 43.0),

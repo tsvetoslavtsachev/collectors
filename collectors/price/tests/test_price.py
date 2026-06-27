@@ -36,6 +36,7 @@ from collectors.price import fetch_prices, to_datacore, mockdata, register_catal
 _REC = "2026-06-25"           # fixed recorded_on -> deterministic
 PRICE_DIR = Path(register_catalog.__file__).resolve().parent
 CFG = yaml.safe_load((PRICE_DIR / "config.yaml").read_text(encoding="utf-8"))
+N_PX = len(CFG["price"])      # all configured px_* series (ETF + stock); P7a grew this 132 -> 635
 
 
 # --------------------------------------------------------------------------- harness
@@ -80,9 +81,10 @@ def offline(g: Gate, tmp: Path) -> None:
 
     # g1 identity ----------------------------------------------------------------
     g.check("g1a px_spy_daily registered in temp catalog", "px_spy_daily" in cat["series"])
-    g.check("g1b all 132 series registered",
-            sum(1 for s in cat["series"] if s.startswith("px_") and s != "px_probe_daily") == 132,
-            "registered=%d" % sum(1 for s in cat["series"] if s.startswith("px_") and s != "px_probe_daily"))
+    g.check("g1b all configured px_* series registered (CFG-derived count)",
+            sum(1 for s in cat["series"] if s.startswith("px_") and s != "px_probe_daily") == N_PX,
+            "registered=%d expected=%d" % (
+                sum(1 for s in cat["series"] if s.startswith("px_") and s != "px_probe_daily"), N_PX))
     unreg_refused = False
     try:
         archive.append("px_notreal_daily", [_bar("2025-01-02", 1.0)], root=tmp, catalog=cat,
@@ -212,12 +214,16 @@ def offline(g: Gate, tmp: Path) -> None:
     dead = [r for r in pushed if not r.get("ok")]
     g.check("g6a exactly ONE catalog load for the whole run", calls["load"] == 1,
             "loads=%d" % calls["load"])
-    # 131 appends, not 132: the dead px_spy_daily is skipped BEFORE append (correct).
+    # N_PX-1 appends, not N_PX: the dead px_spy_daily is skipped BEFORE append (correct).
+    # Also the perf gate at scale -- a full ~635-series push does ONE catalog load (g6a),
+    # not N re-parses (program R6); proves catalog-once holds for the SP500 stock family.
     g.check("g6b every append received the cached catalog dict (not None)",
-            len(calls["catalogs"]) == 131 and all(isinstance(c, dict) for c in calls["catalogs"]),
-            "appends=%d (expected 131 -- dead symbol never reaches append)" % len(calls["catalogs"]))
-    g.check("g6c dead symbol skipped, run continues (131 written, 1 skipped)",
-            len(wrote) == 131 and len(dead) == 1 and dead[0]["series_id"] == "px_spy_daily")
+            len(calls["catalogs"]) == N_PX - 1 and all(isinstance(c, dict) for c in calls["catalogs"]),
+            "appends=%d (expected %d -- dead symbol never reaches append)" % (
+                len(calls["catalogs"]), N_PX - 1))
+    g.check("g6c dead symbol skipped, run continues (N_PX-1 written, 1 skipped)",
+            len(wrote) == N_PX - 1 and len(dead) == 1 and dead[0]["series_id"] == "px_spy_daily",
+            "wrote=%d dead=%d" % (len(wrote), len(dead)))
     shutil.rmtree(fresh, ignore_errors=True)
 
     # g7 zero-dep / untouched ----------------------------------------------------
