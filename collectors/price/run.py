@@ -47,6 +47,20 @@ def _sids_for_symbols(cfg: dict, symbols: list[str]) -> list[str]:
     return [s for s in out if s]
 
 
+def _family_sids(cfg: dict, families: list[str]) -> list[str]:
+    """series_ids whose family is in ``families`` (an ETF entry omits ``family`` ->
+    defaults to 'etf'). This is the P8a daily FAMILY-SCOPE guard (program Капан 1): the
+    SHORT-window ``--daily`` run appends only families that are split-heal-ready, so the
+    moment stocks are registered in the catalog they do NOT silently start appending
+    through the daily path (a short window strands pre-split bars at the old scale -- a
+    ~Nx TA cliff, e.g. NVDA 10:1). Stocks join the daily run only via an explicit
+    ``--family stock`` (or being added to settings.daily_families) once P8b's split-heal
+    lands. A FULL manual pull (no ``--daily``) is unscoped -- it re-pulls every bar, so it
+    carries no cliff risk."""
+    fams = set(families)
+    return [sid for sid, m in cfg["price"].items() if m.get("family", "etf") in fams]
+
+
 def main() -> int:
     cfg = yaml.safe_load((HERE / "config.yaml").read_text(encoding="utf-8"))
     args = sys.argv[1:]
@@ -62,15 +76,29 @@ def main() -> int:
         # --daily is the routine P5 CI entry: a SHORT settings.daily_period window that
         # appends the new bar, freezes the prior provisional tip, and BOUNDS the value_tr
         # dividend cascade to the window (a "max" daily pull would restate ALL history).
+        # SCOPE precedence (P8a): --spot (explicit symbols) > --family (explicit family) >
+        # --daily (settings.daily_families guard, default ETF-only) > full universe.
         period = _arg(args, "--period")
         spot = _arg(args, "--spot")
+        fam = _arg(args, "--family")
+        daily = "--daily" in args
         if spot:
             only = _sids_for_symbols(cfg, spot.split(","))
             period = period or cfg["settings"].get("spot_check_period")
-        elif "--daily" in args:
+            scope = "spot " + spot
+        elif fam:
+            only = _family_sids(cfg, [fam])              # explicit family scope (P8a pilot / P8b heal)
+            if daily:
+                period = period or cfg["settings"].get("daily_period", "1mo")
+            scope = f"family={fam}" + (" daily" if daily else "")
+        elif daily:
             period = period or cfg["settings"].get("daily_period", "1mo")
+            fams = cfg["settings"].get("daily_families", ["etf"])  # Капан-1 guard: ready families only
+            only = _family_sids(cfg, fams)
+            scope = "daily (families=%s)" % ",".join(fams)
+        else:
+            scope = "full universe"                       # unscoped manual pull -- no cliff risk
         raw = fetch_prices(cfg, period=period, only=only)
-        scope = "spot " + spot if spot else ("daily" if "--daily" in args else "full universe")
         mode = f"live ({scope}{', period=' + period if period else ''})"
 
     value_tol = float(cfg["settings"].get("value_tol", to_datacore.DEFAULT_VALUE_TOL))

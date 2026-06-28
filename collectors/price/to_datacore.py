@@ -134,6 +134,19 @@ def push(raw: dict, *, root=None, catalog=None,
         if not recs:
             results.append({"series_id": sid, "ok": False, "skip_reason": "no records"})
             continue
+        # P8a per-bar identity stamp: a STOCK bar is born carrying its resolved stable_id
+        # (the SEC-NNNNNN chain ROOT, NOT the raw per-epoch internal_id), read ONCE from
+        # the already-loaded catalog entry. register_catalog resolved that value from the
+        # identity map at register time (entry() -> identity.stable_id), so the catalog IS
+        # the single source -- reading it here keeps the bar stamp == the catalog stamp
+        # with zero re-resolve and zero drift. Permissive by design: an ETF entry (no
+        # stable_id) or a not-yet-seeded stock (P7a-era / unstamped) -> no stamp -> the
+        # record is byte-unchanged (ETF byte-identity; backward-compatible). Forward
+        # fail-closed on a stock that SHOULD have an id is P8b. Non-mutating ({**r}) so the
+        # caller's records (e.g. promote's archive.read output) are never aliased.
+        sid_stable = (cat or {}).get("series", {}).get(sid, {}).get("stable_id")
+        if sid_stable:
+            recs = [{**r, "stable_id": sid_stable} for r in recs]
         try:
             summary = archive.append(sid, recs, root=arch_root, catalog=cat,
                                      value_tol=value_tol, recorded_on=recorded_on)
