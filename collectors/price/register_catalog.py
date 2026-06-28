@@ -35,8 +35,16 @@ _RECORD_FIELDS = (
 )
 
 
-def entry(m: dict) -> dict:
+def entry(m: dict, identity_map: dict | None = None) -> dict:
     """Catalog entry for one px_*_daily series, routed by ``family`` (P7a).
+
+    P7b (Option A): the STOCK branch stamps an ADDITIVE ``stable_id`` (the internal
+    SEC-NNNNNN identity, resolved from ``identity_map`` -> the chain root, so a
+    renamed company's tickers share one id) plus the optional ``isin`` /
+    ``share_class_figi`` / ``continuation_of`` / ``review_flag`` carried on the
+    active epoch. ``identity_map`` is OPTIONAL: when None/empty (a P7a-era caller, or
+    a stock with no minted epoch) the stock entry is unchanged, and the ETF branch
+    is NEVER touched -> the ETF/P7a catalog stays byte-identical (verify gate 3).
 
     ETF (default): ``backtest_valid: true`` -- ETFs survive (program Decision c, the
     survivorship-clean track). STOCK: ``backtest_valid: false`` +
@@ -89,6 +97,18 @@ def entry(m: dict) -> dict:
             if out["quote_basis"] != cur:
                 out["description"] += (f" Quoted in {out['quote_basis']} "
                                        f"(={cur} minor units; /100 -> {cur}).")
+        # P7b: additive stable identity (side field; series_id stays px_<ticker>).
+        if identity_map:
+            from collectors.price import identity as _identity
+            ex = _identity.exch_code(m["symbol"])
+            sid_val = _identity.stable_id(identity_map, m["symbol"], ex)
+            if sid_val:
+                out["stable_id"] = sid_val
+                ep = _identity.active_epoch(identity_map, m["symbol"], ex)
+                if ep:
+                    for k in ("isin", "share_class_figi", "continuation_of", "review_flag"):
+                        if ep.get(k):
+                            out[k] = ep[k]
         return out
     return {
         "description": f"{m['name']} ({m['symbol']}) daily price bar -- "
@@ -109,17 +129,26 @@ def entry(m: dict) -> dict:
     }
 
 
-def register(cfg: dict, root: Path) -> tuple[list, list]:
+def register(cfg: dict, root: Path, identity_map: dict | None = None) -> tuple[list, list]:
     """Upsert the px_* namespace into <root>/catalog/catalog.json. Returns
     (added, updated) series-id lists. Refuses an unsafe (real data-core) root.
 
     UPSERT-ONLY (additive): a px_* entry DROPPED from config.yaml (a delisted ETF, or a
     rename's old id) is NOT pruned here -- it lingers as an orphan identity with no
     writer. Pruning is a deliberate manual catalog edit, intentionally out of scope; a
-    rename therefore leaves both old and new ids until the old is removed by hand."""
-    # Reuse the P1 cardinal-rule guard: refuse the real data-core base / unset env.
-    from datacore.archive import assert_safe_root
-    assert_safe_root(root)
+    rename therefore leaves both old and new ids until the old is removed by hand.
+
+    P7b: ``identity_map`` (the stock_identity map) is read from
+    <root>/catalog/stock_identity.json when not passed; an absent map -> empty ->
+    stock entries gain NO stable_id (backward-compatible with the P7a flow)."""
+    # Cardinal-rule guard: refuse the real data-core base / unset env (P1) AND the
+    # live price-archive (content-based -- assert_safe_root alone does NOT cover the
+    # sibling price-archive). DATACORE_ALLOW_REAL=1 overrides for the P8 real register.
+    from collectors.price import identity as _identity
+    _identity.assert_temp_archive(root)
+
+    if identity_map is None:
+        identity_map = _identity.load(root)   # empty map if absent -> no stamps
 
     ns = cfg["settings"].get("archive_namespace", "px_")
     path = root / "catalog" / "catalog.json"
@@ -131,7 +160,7 @@ def register(cfg: dict, root: Path) -> tuple[list, list]:
         if not sid.startswith(ns):        # px_* namespace only -- never touch others
             continue
         (updated if sid in series else added).append(sid)
-        series[sid] = entry(m)            # upsert
+        series[sid] = entry(m, identity_map)   # upsert (stock branch stamps stable_id)
 
     path.write_text(json.dumps(cat, ensure_ascii=False, indent=2) + "\n",
                     encoding="utf-8")
