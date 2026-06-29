@@ -377,27 +377,48 @@ def unstamped_stocks(cfg: dict, m: dict) -> list:
 # --------------------------------------------------------------------------- #
 # Seed (decision b: sorted seed -> SEC-NNNNNN, ONCE; re-run appends only)
 # --------------------------------------------------------------------------- #
-def stock_universe(cfg: dict) -> list:
+def stock_universe(cfg: dict, *, include_multi_ccy: bool = True) -> list:
     """[(series_id, market_dict)] for the STOCK family, sorted by series_id.
 
     Sorted -> the SEC-NNNNNN assignment is deterministic regardless of config
     ordering (P7a snapshot discipline). ETFs are excluded (decision h: ETFs survive,
-    no splice/survivorship risk -> no stable_id in the scaffold)."""
+    no splice/survivorship risk -> no stable_id in the scaffold).
+
+    ``include_multi_ccy`` (default True == the full P7b scaffold, 503 SP500 + 609
+    STOXX) gates the multi-currency (STOXX600) members -- those carry a per-series
+    ``currency`` key, SP500 does not. Set False to drop them. The cardinal phasing is
+    that STOXX identity belongs to P8c; ``seed`` uses this to keep a REAL
+    (DATACORE_ALLOW_REAL) seed SP500-only so a P8b-style real SP500 register can never
+    sweep STOXX identity into the live map ahead of P8c. A TEMP root keeps the full
+    scaffold."""
     return sorted(((sid, m) for sid, m in cfg["price"].items()
-                   if m.get("family") == "stock"), key=lambda kv: kv[0])
+                   if m.get("family") == "stock"
+                   and (include_multi_ccy or not m.get("currency"))),
+                  key=lambda kv: kv[0])
 
 
-def seed(cfg: dict, root, date: str, *, source_tag: str = "seed") -> tuple:
+def seed(cfg: dict, root, date: str, *, source_tag: str = "seed",
+         include_multi_ccy: bool | None = None) -> tuple:
     """Mint one active epoch per CURRENT stock series, in sorted-series_id order,
     APPEND-ONLY against any existing map (a re-run mints only genuinely-new
     tickers, never renumbers). Writes <root>/catalog/stock_identity.json.
 
     Returns (map, minted_count). Idempotent: a second seed mints 0.
+
+    ``include_multi_ccy`` gates the multi-currency (STOXX600) members. Default None
+    means AUTO by cardinal phasing: a TEMP root seeds the full P7b scaffold (1112);
+    a REAL root (the DATACORE_ALLOW_REAL override P8 uses for the gated register)
+    seeds SP500-only, so a P8b-style real SP500 register can never sweep STOXX
+    identity into the live map ahead of P8c -- the identity-leak this guards. P8c opts
+    in EXPLICITLY with include_multi_ccy=True. An explicit value always wins.
     """
+    import os
     assert_temp_archive(root)                            # cardinal: temp root only (LENS 5)
+    if include_multi_ccy is None:                        # AUTO: real -> SP500-only, temp -> full scaffold
+        include_multi_ccy = os.environ.get("DATACORE_ALLOW_REAL") != "1"
     m = load(root)
     minted = 0
-    for _sid, mk in stock_universe(cfg):
+    for _sid, mk in stock_universe(cfg, include_multi_ccy=include_multi_ccy):
         sym = mk["symbol"]
         ex = exch_code(sym)
         if active_epoch(m, sym, ex) is None:
@@ -405,6 +426,10 @@ def seed(cfg: dict, root, date: str, *, source_tag: str = "seed") -> tuple:
         mint_or_resolve(m, sym, ex, date, name=mk.get("name", ""),
                         source_note=f"{source_tag}:{mk.get('category', '')}")
     save(m, root)
+    if not include_multi_ccy:                            # fail-loud: STOXX deliberately withheld (P8c)
+        withheld = len(stock_universe(cfg)) - len(stock_universe(cfg, include_multi_ccy=False))
+        print(f"identity.seed: withheld {withheld} multi-currency (STOXX600) member(s) -> "
+              f"SP500-only real seed; STOXX identity is P8c (pass include_multi_ccy=True to opt in)")
     return m, minted
 
 

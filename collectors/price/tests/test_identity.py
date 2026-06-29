@@ -16,6 +16,9 @@ Offline gates (default run) -- no network:
   t7 splice-refuse   -- a recycled ticker on the REAL map mints a 2nd id, flagged.
   t8 rename-continuity-- a FIGI-confirmed rename on the real map -> ONE stable_id;
                        a different company / FIGI-offline -> fresh id / flag (no merge).
+  t12 real phasing   -- a REAL seed (DATACORE_ALLOW_REAL) is SP500-only -> 0 STOXX
+                       identity leaks ahead of P8c; an explicit include_multi_ccy=True
+                       opts the 609 STOXX back in (the P8c switch).
 
 Live gate (--live, network):
   t9 OpenFIGI probe  -- shareClassFIGI resolves for >=1 of META/AAPL/NVDA/SAP/HSBA
@@ -192,6 +195,29 @@ def offline(g: Gate, tmp: Path) -> None:
     identity.close_epoch(mg, "AAPL", "2099-01-01")   # simulate a delisted-but-still-configured stock
     g.check("t10b unstamped_stocks DETECTS a closed-but-configured stock (no silent omit, LENS 3)",
             "px_aapl_daily" in identity.unstamped_stocks(CFG, mg))
+
+    # t12 cardinal phasing: a REAL seed (DATACORE_ALLOW_REAL) is SP500-only -> 0 STOXX identity
+    # leaks into the live map ahead of P8c (the audit-found leak guard). A TEMP seed stays 1112
+    # (t1 above); the multi-currency STOXX600 members come in ONLY with an explicit P8c opt-in.
+    sp500_n = len([s for s, mk in CFG["price"].items()
+                   if mk.get("family") == "stock" and not mk.get("currency")])
+    real_tmp, optin_tmp = _temp_root(), _temp_root()
+    os.environ["DATACORE_ALLOW_REAL"] = "1"          # simulate the gated real-register run
+    try:
+        mr_real, minted_real = identity.seed(CFG, real_tmp, SEED_DATE)              # AUTO -> SP500-only
+        m_optin, minted_optin = identity.seed(CFG, optin_tmp, SEED_DATE,
+                                              include_multi_ccy=True)               # P8c explicit opt-in
+    finally:
+        os.environ.pop("DATACORE_ALLOW_REAL", None)
+    real_dotted = [e for e in mr_real["epochs"] if "." in e["ticker"]]             # any STOXX (suffixed) leaked?
+    g.check("t12a a REAL seed (ALLOW_REAL) mints SP500-only -- 0 STOXX identity leaked (P8c phasing)",
+            minted_real == sp500_n and len(mr_real["epochs"]) == sp500_n and not real_dotted,
+            "minted=%d sp500=%d stoxx_dotted=%d" % (minted_real, sp500_n, len(real_dotted)))
+    g.check("t12b explicit include_multi_ccy=True on a real root opts STOXX back in (the P8c switch)",
+            minted_optin == len(STOCK_SIDS) and len(m_optin["epochs"]) == len(STOCK_SIDS),
+            "minted=%d stock=%d" % (minted_optin, len(STOCK_SIDS)))
+    shutil.rmtree(real_tmp, ignore_errors=True)
+    shutil.rmtree(optin_tmp, ignore_errors=True)
 
 
 def live(g: Gate) -> None:
