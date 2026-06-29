@@ -54,15 +54,17 @@ settings:
   round_dp: 6                    # price rounding (matches the VRM collector); volume stays int
   source: "yfinance"
   archive_namespace: "px_"       # register_catalog upserts ONLY this namespace
-  daily_families: ["etf"]        # P8a FAMILY-SCOPE guard (program Капан 1): `run --daily`
-                                 # (the SHORT-window scheduled path) appends ONLY these
-                                 # families. Stocks are registered but split-heal is P8b, so
-                                 # a short daily window would strand pre-split bars at the old
-                                 # scale (~Nx TA cliff, e.g. NVDA 10:1). Stocks join the daily
-                                 # run only after P8b -- add "stock" here (or run an explicit
-                                 # `--family stock`). A FULL manual pull (no --daily) is
-                                 # unscoped (re-pulls every bar -> no cliff). idx_dxy omits
-                                 # family -> defaults to etf -> stays in the daily run.
+  daily_families: ["etf", "stock"]  # P8a FAMILY-SCOPE guard (program Капан 1): `run --daily`
+                                 # (the SHORT-window scheduled path) appends ONLY these families.
+                                 # P8b LANDED: stock split-heal ships (run.py heals any in-window
+                                 # split before the ~Nx TA cliff can strand pre-split bars, e.g.
+                                 # NVDA 10:1), so US stocks now join the daily run. STOXX stay OUT
+                                 # automatically: _daily_ready_scope drops unregistered families,
+                                 # and STOXX are not registered until P8c (registered+stamped =
+                                 # 132 etf + 502 SP500 = 634; HON quarantined pending re-backfill
+                                 # -> 503/635; 609 STOXX dropped, never fetched).
+                                 # A FULL manual pull (no --daily) is unscoped (re-pulls every bar
+                                 # -> no cliff). idx_dxy omits family -> defaults to etf -> in the run.
   # CI PERF BUDGET (P7a gate note, for the P8 stock daily CI): archive.append re-reads each
   # series' FULL on-disk history per call -- linear in accumulated bars, NOT O(N^2), no cliff.
   # A full-universe daily run is ~linear in series count. Gate EXTRAPOLATION (UNMEASURED,

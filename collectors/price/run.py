@@ -23,6 +23,7 @@ from pathlib import Path
 import yaml
 
 from . import to_datacore
+from . import split_heal
 from .fetch_prices import fetch_prices
 
 HERE = Path(__file__).resolve().parent
@@ -59,6 +60,46 @@ def _family_sids(cfg: dict, families: list[str]) -> list[str]:
     carries no cliff risk."""
     fams = set(families)
     return [sid for sid, m in cfg["price"].items() if m.get("family", "etf") in fams]
+
+
+def _daily_ready_scope(cfg: dict, sids: list[str], *, root=None, log=print) -> list[str]:
+    """P8b: restrict a stock-INCLUSIVE daily run to series that are READY to write --
+    REGISTERED in the archive catalog AND (for stocks) carrying a stable_id.
+
+      * an UNREGISTERED family (e.g. STOXX before P8c registers it) is dropped BEFORE
+        fetch -- never fetched-from-Yahoo-then-skipped (saves a wasted foreign pull/day);
+      * a registered-but-UNSTAMPED stock is refused (F5 fail-closed: never a silent
+        unstamped write -- a delisted-but-still-configured stock whose ticker lost its
+        active identity epoch).
+
+    Both are surfaced LOUDLY (count + sample), never silent. ETF-only daily never calls
+    this (the caller gates on a non-etf family), so the live ETF path stays byte-identical;
+    even if it did, all ETFs are registered and carry no stable_id -> the set is unchanged.
+    """
+    arch_root = to_datacore._resolve_root(root)
+    cat = to_datacore.load_catalog(arch_root)            # root=None -> env (the daily CI sets it)
+    if not (cat and cat.get("series")):
+        # No catalog to classify against (no/blank DATACORE_ROOT). Do NOT silently drop the
+        # whole universe -- leave the scope unchanged; the push cardinal guard fails loud.
+        return sids
+    series = cat["series"]
+    ready, unregistered, unstamped = [], [], []
+    for sid in sids:
+        fam = cfg["price"].get(sid, {}).get("family", "etf")
+        entry = series.get(sid)
+        if entry is None:
+            unregistered.append(sid)
+        elif fam == "stock" and not entry.get("stable_id"):
+            unstamped.append(sid)
+        else:
+            ready.append(sid)
+    if unregistered:
+        log(f"  daily-scope: skipping {len(unregistered)} unregistered series "
+            f"(not yet in the catalog -- e.g. {unregistered[:4]})")
+    if unstamped:
+        log(f"  F5 fail-closed: refusing {len(unstamped)} registered-but-unstamped stock(s) "
+            f"(no stable_id; identity-map gap -- e.g. {unstamped[:4]})")
+    return ready
 
 
 def main() -> int:
@@ -98,11 +139,39 @@ def main() -> int:
             scope = "daily (families=%s)" % ",".join(fams)
         else:
             scope = "full universe"                       # unscoped manual pull -- no cliff risk
+        # P8b: ANY --daily run that pulls a non-ETF family is restricted to series that are
+        # registered + stamped -- this covers BOTH the bare `--daily` (daily_families) and the
+        # explicit `--family X --daily` paths (C5 fix; the latter previously bypassed the
+        # guard). Drops STOXX before P8c registers it, and is the early/loud half of F5 (the
+        # push require_stamp backstop below is the write-time half). A pure ETF-only --daily,
+        # --spot, and a full manual pull are NOT scoped -> the live ETF daily is byte-identical.
+        if daily and only is not None and any(
+                cfg["price"].get(s, {}).get("family", "etf") != "etf" for s in only):
+            only = _daily_ready_scope(cfg, only)
         raw = fetch_prices(cfg, period=period, only=only)
         mode = f"live ({scope}{', period=' + period if period else ''})"
 
     value_tol = float(cfg["settings"].get("value_tol", to_datacore.DEFAULT_VALUE_TOL))
-    pushed = to_datacore.push(raw, value_tol=value_tol)
+    # F5 (P8b): a run that includes the STOCK family enforces the stamp at write time -- a
+    # registered-but-unstamped stock is refused, never silently written. The seed/backfill
+    # driver pushes with the permissive default, so the one-time seed flow is unchanged.
+    require_stamp = (mode != "mock") and any(
+        cfg["price"].get(s, {}).get("family") == "stock"
+        for s in (raw if isinstance(raw, dict) else ()))
+    pushed = to_datacore.push(raw, value_tol=value_tol, require_stamp=require_stamp)
+
+    # P8b SPLIT-HEAL (the blocker). A STOCK whose SHORT daily window shows a split
+    # (split_factor != 1.0) has pre-window bars stranded at the OLD scale -> a coverage-
+    # complete full-depth re-pull restates the whole stored range to the new scale (zero ~Nx
+    # TA cliff). Gated on a STOCK actually being in scope, so the live ETF-only daily runs
+    # ZERO split_heal code (C4); and on a live run (a --mock run's synthetic factors must not
+    # trigger a network pull).
+    if require_stamp:
+        split_sids = split_heal.detect_split_symbols(cfg, raw)
+        if split_sids:
+            print(f"  split-heal: {len(split_sids)} stock(s) split in-window "
+                  f"-> coverage-complete full-depth re-pull: {split_sids}")
+            split_heal.heal(cfg, split_sids, value_tol=value_tol, require_stamp=True)
 
     wrote = [r for r in pushed if r.get("ok")]
     skipped = [r for r in pushed if not r.get("ok")]

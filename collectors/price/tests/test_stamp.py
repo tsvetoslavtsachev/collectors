@@ -185,7 +185,11 @@ def offline(g: Gate) -> None:
             all(CFG["price"][s].get("family", "etf") == "etf" for s in etf_only)
             and all(CFG["price"][s].get("family") == "stock" for s in stock_only))
 
-    # wire-level: run.main with --daily must scope to the daily_families (ETF), not all -----
+    # wire-level: run.main with --daily must scope to settings.daily_families, not the full
+    # universe. P8b flipped daily_families to ["etf","stock"], so a bare --daily now selects the
+    # etf+stock union; the registered-ready filter (which drops unregistered STOXX) is catalog-
+    # gated and a no-op in this catalog-less test -> it is proven with a seeded catalog in
+    # test_split_heal sh12. Derived from config so the assertion tracks the flip, not a constant.
     captured: dict = {}
 
     def fake_fetch(cfg, *, period=None, only=None):
@@ -199,7 +203,8 @@ def offline(g: Gate) -> None:
     saved_argv = sys.argv
     try:
         for argv, want, label in (
-            (["x", "--daily"], set(etf_only), "p8a5c --daily scopes to daily_families (ETF-only)"),
+            (["x", "--daily"], set(run._family_sids(CFG, CFG["settings"]["daily_families"])),
+             "p8a5c --daily scopes to settings.daily_families (etf+stock after P8b)"),
             (["x", "--daily", "--family", "stock"], set(stock_only), "p8a5d --family stock overrides to stocks"),
             (["x"], None, "p8a5e a bare full pull is unscoped (only=None)"),
             (["x", "--spot", "SPY"], {"px_spy_daily"}, "p8a5f --spot still wins (explicit symbols)"),

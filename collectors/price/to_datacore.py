@@ -92,7 +92,8 @@ def load_catalog(root) -> dict | None:
 
 
 def push(raw: dict, *, root=None, catalog=None,
-         value_tol: float = DEFAULT_VALUE_TOL, recorded_on=None) -> list[dict]:
+         value_tol: float = DEFAULT_VALUE_TOL, recorded_on=None,
+         require_stamp: bool = False) -> list[dict]:
     """raw: {series_id: {"ok": bool, "records": [...], "error": str}}.
 
     Writes each ok series into the archive at <root> through P1. Returns a list of
@@ -100,6 +101,13 @@ def push(raw: dict, *, root=None, catalog=None,
     {"ok": False, "skip_reason": reason} on a dead/refused series). ``recorded_on``
     (None -> P1 uses date.today()) is threaded through for deterministic tests/backfill.
     The cardinal-rule SystemExit is intentionally NOT caught.
+
+    ``require_stamp`` (P8b F5 fail-closed): when True, a REGISTERED stock (catalog entry
+    family=="stock") that carries NO stable_id is REFUSED per-series (loud skip_reason),
+    never silently written unstamped -- the forward-path guarantee for a delisted-but-still-
+    configured ticker whose identity epoch lapsed. The default (False) keeps the permissive
+    seed/backfill/P7a-era flow byte-unchanged; the forward callers (run --daily / split-heal /
+    any stock-inclusive run) pass True. ETF entries carry no family -> never affected.
     """
     from datacore import archive  # data-core on PYTHONPATH
 
@@ -144,9 +152,18 @@ def push(raw: dict, *, root=None, catalog=None,
         # record is byte-unchanged (ETF byte-identity; backward-compatible). Forward
         # fail-closed on a stock that SHOULD have an id is P8b. Non-mutating ({**r}) so the
         # caller's records (e.g. promote's archive.read output) are never aliased.
-        sid_stable = (cat or {}).get("series", {}).get(sid, {}).get("stable_id")
+        entry = (cat or {}).get("series", {}).get(sid, {})
+        sid_stable = entry.get("stable_id")
         if sid_stable:
             recs = [{**r, "stable_id": sid_stable} for r in recs]
+        elif require_stamp and entry.get("family") == "stock":
+            # F5 fail-closed (P8b): a registered stock with no stable_id is an identity-map
+            # gap (a delisted-but-still-configured ticker whose epoch lapsed). Refuse it on
+            # the forward path -- never a silent unstamped write -- instead of the permissive
+            # no-stamp pass-through used by the seed/backfill flow.
+            results.append({"series_id": sid, "ok": False,
+                            "skip_reason": "unstamped stock (no stable_id in catalog) -- F5 fail-closed"})
+            continue
         try:
             summary = archive.append(sid, recs, root=arch_root, catalog=cat,
                                      value_tol=value_tol, recorded_on=recorded_on)
