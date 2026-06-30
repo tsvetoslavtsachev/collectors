@@ -14,28 +14,40 @@ with zero downstream change:
   * ``read_base_ohlcv(tickers, ...)``  -> dict{Open,High,Low,Close,Volume}, each a flat
     DataFrame. Drop-in for ``prices.download_ohlcv`` (auto_adjust=True).
 
-TOTAL-RETURN RECONSTRUCTION (why it is bar-for-bar identical to auto_adjust=True). yfinance
-``auto_adjust=True`` multiplies EVERY OHLC field by the same per-day ratio (Adj Close / Close)
-and leaves Volume raw. The archive stores split-adjusted OHLC (``open/high/low/close``), the
-fully-adjusted close (``value_tr`` == Adj Close), real ``volume``, and the split/dividend
-ingredients. So:
+TOTAL-RETURN RECONSTRUCTION (bar-for-bar identical to auto_adjust=True, AND drift-proof -- INIT-22
+RIV-2 capstone). yfinance ``auto_adjust=True`` multiplies EVERY OHLC field by the same per-day ratio
+(Adj Close / Close) and leaves Volume raw. The archive stores split-adjusted OHLC
+(``open/high/low/close``), the fully-adjusted close (``value_tr`` == Adj Close at the bar's FREEZE
+vintage), real ``volume``, and the split/dividend ingredients. So:
 
-    factor   = value_tr / close          # the auto_adjust ratio, per day, per symbol
-    Close    = value_tr                   # == auto_adjust=True Close
-    O/H/L    = open/high/low * factor     # == auto_adjust=True O/H/L
-    Volume   = volume                     # auto_adjust never touches volume
+    factor   = Close / close              # the auto_adjust ratio, per day, per symbol
+    Close    = total-return close          # see _total_return_close -- == auto_adjust=True Close
+    O/H/L    = open/high/low * factor      # == auto_adjust=True O/H/L
+    Volume   = volume                      # auto_adjust never touches volume
 
-BASIS DECISION (Tsvetoslav, 2026-06-26): ``value_tr`` direct -- the field ETF-rr already uses.
-It is bar-for-bar identical to today's fetch. ``value_tr`` carries a BOUNDED staleness for bars
-older than the daily 1mo window (drifts ~the dividend yield/yr; see collectors/price/config.yaml
-+ price-archive/price-daily.yml). The split-adjusted ``close`` is drift-free; a consumer needing
-an EXACT total-return series can recompute from close+dividend, or a periodic local
-``run --period max`` re-heals value_tr across history. P1 ``_NON_VALUE_KEYS`` stays untouched.
-NOTE the two error scales are different: value_tr is RECONSTRUCTIBLE from close+dividend to
-~0.03%, but the RANK drift if the re-heal lapses is the *uncorrected* dividend accumulation --
-it grows ~the yield/yr and is multi-percentile-point for high-yield ETFs (TLT/SCHD/HYG) whose
-12-1 momentum spans a year of un-applied distributions. Hence a re-heal cadence (or a vintage-age
-WARN) is a before-ACTIVATION operational guarantee, not optional housekeeping (INIT-22 RIV-2).
+DRIFT-PROOF BASIS (Tsvetoslav sign-off 2026-06-30; supersedes the 2026-06-26 value_tr-direct basis).
+The stored ``value_tr`` goes STALE: the daily 1mo re-heal window never re-touches a bar older than
+~1 month, so a frozen bar never absorbs dividends paid AFTER it froze and its total-return level
+drifts ~the dividend yield/yr -- VERIFIED 2.5-5.5% on the 12-1 momentum denominator for high-yield
+names (HYG 5.5%, TLT 4.2%, SCHD 3.7%), enough to swap adjacent ranks. So ``Close`` is no longer
+``value_tr`` direct; ``_total_return_close`` REBUILDS it from the split-adjusted ``close`` + the
+FORWARD ``dividend`` stream:
+
+    tr[t] = close[t] * PROD_{ex-date i > t} (1 - div[i]/close[i-1])
+
+which is window-self-contained (depends only on dividends AFTER a bar, each stored on its own fresh
+ex-date bar) -> drift-proof BY CONSTRUCTION and == auto_adjust=True to ~1e-6, with NO re-heal cadence.
+The split-adjusted ``close`` is itself drift-free (split_heal keeps it current); ``close`` and the
+stored ``dividend`` share one split space (verified vs live yfinance on multi-split names). PRICE-ONLY
+EXCEPTION: Yahoo's adjclose for some venues (London ``.L`` names) IGNORES dividends -- value_tr there
+is price-only, does NOT drift, and the dividend formula would inject an adjustment Yahoo never applies
+(silently changing ranks). ``_is_dividend_adjusted`` detects this PER SERIES (a drift-immune probe)
+and keeps value_tr for the price-only class. UNFAITHFUL EXCEPTION: a curated set of continental-EU
+names (``_UNFAITHFUL_SERIES``) where Yahoo's HISTORICAL ex-date factor differs from the textbook
+``1-div/close_prev`` (so recon would regress vs the bar-for-bar-correct value_tr) is pinned to
+value_tr; a fresh-cohort belt (``_belt_diverges``) backstops gross/unpinned cases. P1
+``_NON_VALUE_KEYS`` stays untouched -- this is a READER change only; nothing is rewritten in the
+archive.
 
 P6 MECHANISM = checkout via read PAT (Tsvetoslav, 2026-06-26). The archive data lives in the
 PRIVATE price-archive repo; a consumer's CI checks it out (fine-grained read PAT) and points
@@ -69,6 +81,7 @@ the documented footgun this step exists to make explicit.
 from __future__ import annotations
 
 import os
+from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
@@ -197,45 +210,198 @@ def _period_start(period, end_ts):
 
 
 # --------------------------------------------------------------------------- #
+# Total-return reconstruction (INIT-22 RIV-2 capstone) -- see module docstring
+# --------------------------------------------------------------------------- #
+# Drift-proof, self-calibrating total-return Close. Threshold biased toward the SAFE value_tr
+# fallback (Tsvetoslav sign-off 2026-06-30: 0.7) -- the dangerous mis-class is price-only -> blind
+# reconstruction (would inject dividends Yahoo never applies); the harmless one is the reverse.
+_TR_DISCRIMINATOR_THRESHOLD = 0.7   # score >= -> Yahoo dividend-adjusts (reconstruct); < -> value_tr
+_TR_MIN_DIV_FRACTION = 0.001        # an ex-date's div/close must exceed this to be a clean probe
+_TR_BELT_FRESH_DAYS = 60            # belt: bars recorded within N days of the latest recorded_on are
+                                    # "fresh" (value_tr == live yfinance there) -> recon must match
+_TR_BELT_TOL = 0.02                 # >2% recon-vs-value_tr on the fresh cohort -> broken/unfaithful
+
+# Series where the TEXTBOOK dividend reconstruction is NOT faithful to Yahoo's own historical
+# adjusted close, so the stored value_tr (== live yfinance auto_adjust=True) is kept instead.
+# MECHANISM: Yahoo's per-ex-date back-adjustment factor for these names differs from the textbook
+# (1 - div/close_prev) -- a Yahoo data convention that varies by venue/era. Verified vs live
+# yfinance: recon diverges up to ~8.7% (EQNR.OL) while value_tr matches yfinance to ~0%. The
+# single-ex-date discriminator CANNOT catch them (their MOST-RECENT ex-date matches textbook; the
+# error lives in OLDER ex-dates), so they are pinned here. ALL are continental-European / cross-
+# listed names -> NONE are in the US consumers' universes (ETF-rr, macro-satellite,
+# SP500-rotationradar); only stoxx600 reads them.
+# REGENERATE (collectors/price/tests fixtures or an offline sweep): a series is unfaithful iff
+# recon-vs-live-yfinance > 0.3% AND value_tr-vs-live-yfinance < 0.1% (value_tr is the correct one;
+# this excludes US ETFs whose recon merely HEALS a transiently stale archive tip). 14 names as of
+# 2026-06-30; re-run after large universe additions.
+_UNFAITHFUL_SERIES = frozenset({
+    "px_eqnr_ol_daily", "px_sren_sw_daily", "px_ubsg_sw_daily", "px_eng_mc_daily",
+    "px_shell_as_daily", "px_ten_mi_daily", "px_cpg_l_daily", "px_ihg_l_daily",
+    "px_qia_de_daily", "px_tte_pa_daily", "px_mt_as_daily", "px_grf_mc_daily",
+    "px_stmmi_mi_daily", "px_fntn_de_daily",
+})
+
+
+def _is_dividend_adjusted(close, vtr, div) -> bool:
+    """Drift-immune per-series probe: does Yahoo back-adjust this series for dividends?
+
+    On the MOST-RECENT ex-date i carrying a meaningful dividend, measure how value_tr moved across
+    the ex-date relative to price, and compare to the dividend's own factor:
+
+        measured = (vtr[i-1]/close[i-1]) / (vtr[i]/close[i])   # ~theo if the div was added back
+        theo     = 1 - div[i]/close[i-1]                        # the dividend back-adjust factor
+        score    = (measured - 1) / (theo - 1)                  # ~1.0 div-adjusted, ~0.0 price-only
+
+    DRIFT-IMMUNE: the most-recent ex-date has NO later dividend inside its freeze window, so the
+    adjacent-bar (i-1, i) value_tr ratio isolates exactly this event's factor regardless of how
+    stale the shared future-dividend tail is (the two adjacent bars share a freeze vintage). Verified
+    score 1.000 (dividend-adjusted: US ETFs/stocks, continental EU) vs 0.010 (London price-only),
+    identical fresh and stale.
+
+    Returns False when there is no usable ex-date (a no-dividend series, where the reconstruction
+    equals value_tr anyway, so keeping value_tr loses nothing) -- the safe default.
+    """
+    n = len(close)
+    for i in range(n - 1, 0, -1):
+        d, cp, ci = div[i], close[i - 1], close[i]
+        if not (d and d > 0 and cp and cp > 0 and ci and ci > 0):
+            continue
+        vp, vi = vtr[i - 1], vtr[i]
+        if not (vp and vp > 0 and vi and vi > 0):
+            continue
+        if d / cp < _TR_MIN_DIV_FRACTION:        # too small to discriminate cleanly -> older ex-date
+            continue
+        theo = 1.0 - d / cp
+        if abs(theo - 1.0) < 1e-12:
+            continue
+        measured = (vp / cp) / (vi / ci)
+        score = (measured - 1.0) / (theo - 1.0)
+        return score >= _TR_DISCRIMINATOR_THRESHOLD
+    return False
+
+
+def _belt_diverges(recon, vtr, recorded_on) -> bool:
+    """Best-effort backstop: on the FRESH cohort (bars whose recorded_on is within _TR_BELT_FRESH_DAYS
+    of the latest recorded_on -- where value_tr == live yfinance), the reconstruction must track
+    value_tr. A gap > _TR_BELT_TOL there means broken dividend data or an unfaithful series not yet
+    pinned in _UNFAITHFUL_SERIES -> fall back to value_tr.
+
+    NOT a complete newcomer-catcher: a series whose textbook error lives only in OLD ex-dates looks
+    fine on the fresh cohort (that is exactly why _UNFAITHFUL_SERIES is a curated list refreshed by an
+    offline faithfulness sweep). This catches gross / recent divergence only. The 2% tol is deliberately
+    above the ~0.4% a legitimate drift correction (FAN-style transiently-stale archive tip) shows, so
+    the belt never undoes a real correction. Disabled (False) when recorded_on is unavailable."""
+    if not recorded_on or len(recorded_on) != len(recon):
+        return False
+    parsed = []
+    for ro in recorded_on:
+        try:
+            parsed.append(date.fromisoformat(ro) if ro else None)
+        except (ValueError, TypeError):
+            parsed.append(None)
+    valid = [p for p in parsed if p is not None]
+    if not valid:
+        return False
+    latest = max(valid)
+    for j in range(len(recon)):
+        p = parsed[j]
+        if p is None or (latest - p).days > _TR_BELT_FRESH_DAYS:
+            continue
+        b = vtr[j]
+        if b and b > 0 and abs(recon[j] - b) / abs(b) > _TR_BELT_TOL:
+            return True
+    return False
+
+
+def _total_return_close(close, vtr, div, *, series_id=None, recorded_on=None) -> list:
+    """Drift-proof total-return Close for one series (chronological close/value_tr/dividend lists).
+
+    Three safety layers decide between the dividend reconstruction and the stored value_tr:
+      1. PRICE-ONLY / no usable dividend (Yahoo's adjclose ignores dividends -- London .L) ->
+         keep value_tr (_is_dividend_adjusted is False; no drift exists for a price-only series).
+      2. KNOWN-UNFAITHFUL series (_UNFAITHFUL_SERIES: Yahoo's historical factor != textbook for a
+         curated set of continental-EU names) -> keep value_tr (== live yfinance; recon would be a
+         regression). The single-ex-date discriminator cannot see these, hence the pinned list.
+      3. FRESH-COHORT belt (_belt_diverges): a gross recon-vs-value_tr gap on recently-recorded bars
+         -> keep value_tr (broken data / an unpinned unfaithful newcomer).
+    Otherwise rebuild from close + the FORWARD dividend stream
+        tr[t] = close[t] * PROD_{ex-date i > t} (1 - div[i]/close[i-1])
+    which never reads the stale value_tr level -> drift-proof, == auto_adjust=True to ~1e-6.
+
+    ``series_id`` and ``recorded_on`` are optional so the function stays unit-testable with bare
+    arrays; _read_one always supplies both.
+    """
+    n = len(close)
+    recon = [0.0] * n
+    cum = 1.0
+    for k in range(n - 1, -1, -1):
+        recon[k] = close[k] * cum
+        d = div[k]
+        if d and d > 0 and k - 1 >= 0 and close[k - 1] and close[k - 1] > 0:
+            cum *= (1.0 - d / close[k - 1])
+    if not _is_dividend_adjusted(close, vtr, div):
+        return list(vtr)                          # 1. price-only (London .L) / no usable dividends
+    if series_id in _UNFAITHFUL_SERIES:
+        return list(vtr)                          # 2. Yahoo's factor != textbook for this name
+    if _belt_diverges(recon, vtr, recorded_on):
+        return list(vtr)                          # 3. broken / unfaithful on the fresh cohort
+    return recon
+
+
+# --------------------------------------------------------------------------- #
 # Core read
 # --------------------------------------------------------------------------- #
 def _read_one(archive, series_id, root, as_of_vintage):
     """Read one px_* series from the archive -> a per-field dict of pandas Series indexed by a
-    normalized DatetimeIndex, total-return reconstructed. Empty dict if the series has no bars.
+    normalized DatetimeIndex, total-return reconstructed (INIT-22 RIV-2). Empty dict if the series
+    has no usable bars.
 
-    Returns {"Open":S,"High":S,"Low":S,"Close":S,"Volume":S}. ``Close`` == value_tr;
-    O/H/L scaled by the per-day auto_adjust ratio (value_tr/close); Volume is the raw volume.
-    The ``archive`` module is passed in so the import (and its failure -> fallback) is handled
-    ONCE by the caller, not per series."""
+    Returns {"Open":S,"High":S,"Low":S,"Close":S,"Volume":S}. ``Close`` is the DRIFT-PROOF
+    total-return close (``_total_return_close``: dividend reconstruction for Yahoo-dividend-adjusted
+    series, value_tr passthrough for the price-only class); O/H/L scaled by the per-day auto_adjust
+    ratio (Close/close); Volume is the raw volume. The ``archive`` module is passed in so the import
+    (and its failure -> fallback) is handled ONCE by the caller, not per series."""
     recs = archive.read(series_id, root=root, as_of_vintage=as_of_vintage)
     if not recs:
         return {}
-    idx, o, h, l, c, v = [], [], [], [], [], []
+    idx, cl, vt, dv, ro, o, h, l, v = [], [], [], [], [], [], [], [], []
     for r in recs:
         close = r.get("close", r.get("value"))
-        vtr = r.get("value_tr", close)
-        if close is None or vtr is None:
+        # Drop a non-positive/absent close (a corrupt/non-price bar): the auto_adjust ratio is
+        # undefined and an emitted O/H/L-vs-Close would be internally inconsistent (matches
+        # fetch_prices). A real price bar is always > 0.
+        if not (isinstance(close, (int, float)) and not isinstance(close, bool) and close > 0):
             continue
-        # Drop a non-positive close (a corrupt/non-price bar): the auto_adjust ratio is undefined
-        # and an emitted O/H/L-vs-Close would be internally inconsistent (matches fetch_prices +
-        # the None branch above). A real price bar is always > 0.
-        if not (isinstance(close, (int, float)) and close > 0):
-            continue
-        factor = vtr / close  # the per-day auto_adjust ratio (Adj Close / Close)
+        vtr = r.get("value_tr")
+        vtr = float(vtr) if isinstance(vtr, (int, float)) and not isinstance(vtr, bool) else float(close)
+        d = r.get("dividend")
         idx.append(r["as_of"])
-        c.append(float(vtr))
-        o.append(float(r["open"]) * factor if r.get("open") is not None else float("nan"))
-        h.append(float(r["high"]) * factor if r.get("high") is not None else float("nan"))
-        l.append(float(r["low"]) * factor if r.get("low") is not None else float("nan"))
+        cl.append(float(close))
+        vt.append(vtr)
+        dv.append(float(d) if isinstance(d, (int, float)) and not isinstance(d, bool) else 0.0)
+        ro.append(r.get("recorded_on"))
+        o.append(float(r["open"]) if r.get("open") is not None else float("nan"))
+        h.append(float(r["high"]) if r.get("high") is not None else float("nan"))
+        l.append(float(r["low"]) if r.get("low") is not None else float("nan"))
         v.append(float(r["volume"]) if r.get("volume") is not None else float("nan"))
     if not idx:
         return {}
+    # archive.read returns records sorted by as_of -> cl/vt/dv/ro are chronological, exactly as the
+    # FORWARD dividend reconstruction, the most-recent-ex-date probe, and the fresh-cohort belt require.
+    tr = _total_return_close(cl, vt, dv, series_id=series_id, recorded_on=ro)
+    c_out, o_out, h_out, l_out = [], [], [], []
+    for k in range(len(idx)):
+        factor = tr[k] / cl[k]            # cl[k] > 0 (filtered) and tr[k] finite -> factor finite
+        c_out.append(tr[k])
+        o_out.append(o[k] * factor if o[k] == o[k] else float("nan"))   # o[k]==o[k] => not NaN
+        h_out.append(h[k] * factor if h[k] == h[k] else float("nan"))
+        l_out.append(l[k] * factor if l[k] == l[k] else float("nan"))
     di = pd.to_datetime(idx).normalize()
     return {
-        "Open": pd.Series(o, index=di),
-        "High": pd.Series(h, index=di),
-        "Low": pd.Series(l, index=di),
-        "Close": pd.Series(c, index=di),
+        "Open": pd.Series(o_out, index=di),
+        "High": pd.Series(h_out, index=di),
+        "Low": pd.Series(l_out, index=di),
+        "Close": pd.Series(c_out, index=di),
         "Volume": pd.Series(v, index=di),
     }
 

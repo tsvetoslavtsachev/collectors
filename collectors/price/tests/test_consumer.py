@@ -21,6 +21,15 @@ The gates:
   c11 EUR untouched -- a non-GBX series is divisor 1.0 (unchanged) even under normalize
   c12 uniform merge -- load_ohlcv_base_first normalizes base + fetch UNIFORMLY (no mixed units);
                        default (no flag) keeps raw pence (backward compat)
+  cR1 RIV-2 reconstruct -- a dividend-adjusted series: Close is REBUILT from close+dividend
+                       (drift-proof), absorbing a recent distribution into stale old bars; O/H/L
+                       scaled by the reconstruction factor; Volume raw
+  cR2 RIV-2 price-only -- a London-style price-only series (value_tr ignores dividends) keeps
+                       value_tr; the dividend formula is NOT applied (no silent rank corruption)
+  cR3 RIV-2 belt -- gross recon-vs-value_tr divergence on the fresh cohort (broken/unfaithful data)
+                       falls back to value_tr rather than emit a corrupt series
+  cR4 RIV-2 unfaithful list -- a series pinned in _UNFAITHFUL_SERIES (Yahoo's historical factor !=
+                       textbook) keeps value_tr even though it classifies dividend-adjusted
 
 Run:
   PYTHONPATH=<data-core>;<collectors> python collectors/price/tests/test_consumer.py
@@ -70,15 +79,20 @@ def _seed_temp_root() -> Path:
 
 
 def _bar(as_of, *, close, value_tr=None, open_=None, high=None, low=None, volume=1000,
-         split_factor=1.0, dividend=0.0):
-    """A px bar with INDEPENDENT close vs value_tr so the reconstruction factor is exercised."""
+         split_factor=1.0, dividend=0.0, recorded_on=None):
+    """A px bar with INDEPENDENT close vs value_tr so the reconstruction factor is exercised.
+    ``recorded_on`` (preserved by archive._prepare) lets a test model a STALE old bar (old vintage)
+    vs a FRESH recent one -- the signal the fresh-cohort belt reads."""
     vtr = close if value_tr is None else value_tr
-    return {"as_of": as_of, "value": close,
-            "open": close if open_ is None else open_,
-            "high": close if high is None else high,
-            "low": close if low is None else low,
-            "close": close, "value_tr": vtr, "volume": volume,
-            "split_factor": split_factor, "dividend": dividend, "source": "test"}
+    rec = {"as_of": as_of, "value": close,
+           "open": close if open_ is None else open_,
+           "high": close if high is None else high,
+           "low": close if low is None else low,
+           "close": close, "value_tr": vtr, "volume": volume,
+           "split_factor": split_factor, "dividend": dividend, "source": "test"}
+    if recorded_on is not None:
+        rec["recorded_on"] = recorded_on
+    return rec
 
 
 def _write(root, sid, bars):
@@ -257,6 +271,85 @@ def main() -> int:
                 abs(oc10["Close"]["HSBA.L"][d25] - 5200.0) < 1e-9
                 and abs(oc10["Close"]["AAL.L"][d25] - 2500.0) < 1e-9,
                 f"HSBA={oc10['Close']['HSBA.L'][d25]} AAL={oc10['Close']['AAL.L'][d25]}")
+
+        # cR1..cR4 INIT-22 RIV-2: drift-proof, self-calibrating total-return reconstruction --------
+        # cR1 DIVIDEND-ADJUSTED series: Close is REBUILT from close+dividend (drift-proof), NOT the
+        # stale value_tr. close=100 throughout; ex-divs at idx1 (4.0) and idx9 (6.0). value_tr is
+        # STALE on the old bars (frozen before the idx9 distribution, so they carry an OLD recorded_on
+        # -> OUTSIDE the fresh-cohort belt) yet FRESH near the recent ex-date and on the tip -- exactly
+        # how the live archive looks. The reader must absorb the recent dividend into EVERY prior bar
+        # (the RIV-2 drift the naive value_tr reader misses):
+        #   recon = [90.24, 94, 94, 94, 94, 94, 94, 94, 94, 100, 100, 100]
+        rdates = [str(d.date()) for d in pd.bdate_range("2026-05-01", periods=12)]
+        rvtr = [100, 100, 100, 100, 100, 94, 94, 94, 94, 100, 100, 100]   # stale old; fresh recent+tip
+        rbars = [_bar(dt, close=100.0, value_tr=float(rvtr[k]), open_=100.0, high=100.0, low=100.0,
+                      dividend=(4.0 if k == 1 else 6.0 if k == 9 else 0.0), volume=1000,
+                      recorded_on=("2025-06-01" if k < 5 else _REC))   # old vintage on the stale bars
+                 for k, dt in enumerate(rdates)]
+        _write(tmp, "px_tlt_daily", rbars)
+        roc, _ = consumer.read_base_ohlcv(["TLT"], root=tmp, period="max")
+        rc = roc["Close"]["TLT"]
+        recon_exp = [90.24, 94, 94, 94, 94, 94, 94, 94, 94, 100, 100, 100]
+        got = [rc[pd.Timestamp(d)] for d in rdates]
+        g.check("cR1 dividend reconstruction == drift-proof total-return (not stale value_tr)",
+                all(abs(got[k] - recon_exp[k]) < 1e-6 for k in range(12)),
+                str([round(x, 4) for x in got]))
+        g.check("cR1b oldest bar absorbs the RECENT dividend (drift-corrected 90.24, not stale 100)",
+                abs(rc[pd.Timestamp(rdates[0])] - 90.24) < 1e-6, str(rc[pd.Timestamp(rdates[0])]))
+        g.check("cR1c O/H/L scaled by the reconstruction factor (100 * 0.9024)",
+                abs(roc["Open"]["TLT"][pd.Timestamp(rdates[0])] - 90.24) < 1e-6
+                and abs(roc["High"]["TLT"][pd.Timestamp(rdates[0])] - 90.24) < 1e-6,
+                str(roc["Open"]["TLT"][pd.Timestamp(rdates[0])]))
+        g.check("cR1d Volume stays raw under reconstruction",
+                roc["Volume"]["TLT"][pd.Timestamp(rdates[0])] == 1000)
+
+        # cR2 PRICE-ONLY series (Yahoo ignores dividends -- the London .L quirk): value_tr == close
+        # and does NOT move on the ex-date, so the discriminator keeps value_tr. Blindly applying the
+        # dividend formula would inject a 5% adjustment Yahoo never applies (recon would be
+        # [95,95,100,100,100]) -- the silent stoxx600 corruption this self-calibration prevents.
+        pdates = [str(d.date()) for d in pd.bdate_range("2026-05-01", periods=5)]
+        pbars = [_bar(dt, close=100.0, value_tr=100.0, dividend=(5.0 if k == 2 else 0.0))
+                 for k, dt in enumerate(pdates)]
+        _write(tmp, "px_azn_l_daily", pbars)
+        poc, _ = consumer.read_base_ohlcv(["AZN.L"], root=tmp, period="max")
+        pc = poc["Close"]["AZN.L"]
+        g.check("cR2 price-only series keeps value_tr (no dividend injection)",
+                all(abs(pc[pd.Timestamp(d)] - 100.0) < 1e-9 for d in pdates), str(list(pc.values)))
+        g.check("cR2b NOT reconstructed (oldest bar stays 100, not 95)",
+                abs(pc[pd.Timestamp(pdates[0])] - 100.0) < 1e-9, str(pc[pd.Timestamp(pdates[0])]))
+
+        # cR3 FRESH-COHORT BELT: a series the discriminator reads as dividend-adjusted (clean ratio at
+        # the recent ex-date idx3) but whose value_tr is GROSSLY inconsistent with the reconstruction
+        # on the fresh cohort (all bars carry the fresh _REC vintage; idx4 value_tr=50 vs recon=100,
+        # idx0 100 vs 94) -> broken/unfaithful data -> fall back to value_tr (> _TR_BELT_TOL=2%).
+        hdates = [str(d.date()) for d in pd.bdate_range("2026-05-01", periods=5)]
+        hvtr = [100, 100, 94, 100, 50]   # idx2/idx3 clean for the probe; gross gaps elsewhere
+        hbars = [_bar(dt, close=100.0, value_tr=float(hvtr[k]), dividend=(6.0 if k == 3 else 0.0))
+                 for k, dt in enumerate(hdates)]
+        _write(tmp, "px_hyg_daily", hbars)
+        hoc, _ = consumer.read_base_ohlcv(["HYG"], root=tmp, period="max")
+        hc = hoc["Close"]["HYG"]
+        g.check("cR3 fresh-cohort belt falls back to value_tr on gross recon-vs-value_tr divergence",
+                all(abs(hc[pd.Timestamp(hdates[k])] - hvtr[k]) < 1e-9 for k in range(5)),
+                str(list(hc.values)))
+
+        # cR4 UNFAITHFUL-LIST override: px_eqnr_ol_daily is pinned in _UNFAITHFUL_SERIES (Yahoo's
+        # historical factor != textbook). SAME bars as cR1 (dividend-adjusted; stale old bars carry an
+        # OLD recorded_on so the belt stays clean) -> were it NOT listed it would reconstruct
+        # (Close[0]=90.24, as cR1 proves on px_tlt_daily); because it IS listed, value_tr is kept.
+        ubars = [_bar(dt, close=100.0, value_tr=float(rvtr[k]),
+                      dividend=(4.0 if k == 1 else 6.0 if k == 9 else 0.0),
+                      recorded_on=("2025-06-01" if k < 5 else _REC))
+                 for k, dt in enumerate(rdates)]
+        _write(tmp, "px_eqnr_ol_daily", ubars)
+        uoc, _ = consumer.read_base_ohlcv(["EQNR.OL"], root=tmp, period="max")
+        uc = uoc["Close"]["EQNR.OL"]
+        g.check("cR4 unfaithful-listed series keeps value_tr (no textbook reconstruction)",
+                all(abs(uc[pd.Timestamp(rdates[k])] - rvtr[k]) < 1e-9 for k in range(12)),
+                str([uc[pd.Timestamp(d)] for d in rdates]))
+        g.check("cR4b contrast: the SAME bars on the NON-listed px_tlt_daily DID reconstruct (90.24)",
+                abs(rc[pd.Timestamp(rdates[0])] - 90.24) < 1e-6, str(rc[pd.Timestamp(rdates[0])]))
+
     finally:
         if old_env is not None:
             os.environ["DATACORE_ROOT"] = old_env
