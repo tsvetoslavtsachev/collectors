@@ -142,6 +142,26 @@ def offline(g: Gate, tmp: Path) -> None:
             len(ETF) == 132 and len(STOCK) == len(SP500_STOCK) + len(STOXX),
             "etf=%d stock=%d sp500=%d stoxx=%d" % (len(ETF), len(STOCK), len(SP500_STOCK), len(STOXX)))
 
+    # t8 (P8c) currency=>family defense-in-depth -- a currency-bearing entry MUST be a stock.
+    # Without family:stock it would fall to the ETF branch (drop currency, stamp backtest_valid:
+    # true) -- a silent multi-currency misfile. 0/609 violate today; the assert keeps it closed.
+    def _raises(m):
+        try:
+            register_catalog.entry(m)
+            return False
+        except ValueError:
+            return True
+    g.check("t8a entry(currency, NO family) RAISES (currency=>family assert)",
+            _raises({"symbol": "HSBA.L", "name": "HSBC", "category": "Financial Services",
+                     "currency": "GBP", "quote_basis": "GBX"}))
+    g.check("t8b entry(currency + family:etf) RAISES (no survivorship-clean misfile)",
+            _raises({"symbol": "X.L", "name": "X", "category": "C",
+                     "currency": "GBP", "quote_basis": "GBX", "family": "etf"}))
+    g.check("t8c entry(currency + family:stock) is still ACCEPTED (the legitimate STOXX path)",
+            register_catalog.entry({"symbol": "HSBA.L", "name": "HSBC",
+                                    "category": "Financial Services", "currency": "GBP",
+                                    "quote_basis": "GBX", "family": "stock"})["quote_basis"] == "GBX")
+
 
 def live(g: Gate, tmp: Path) -> None:
     # t7 foreign-exchange round trip: a suffixed name + a London pence name

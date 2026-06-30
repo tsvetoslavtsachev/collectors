@@ -16,6 +16,11 @@ The gates:
                        rest; merged frame carries BOTH; source_map base/fetch is correct
   c7 all-fallback   -- archive unreachable -> the WHOLE universe routes through the fallback
   c8 dead symbol    -- a symbol the fallback also cannot serve is dropped from source_map
+  c9 clip-to-empty  -- a mapped series clipped out of the window is a fallback candidate, not base
+  c10 GBX normalize -- normalize_currency: GBX (pence) /100 -> GBP on O/H/L/Close, Volume untouched
+  c11 EUR untouched -- a non-GBX series is divisor 1.0 (unchanged) even under normalize
+  c12 uniform merge -- load_ohlcv_base_first normalizes base + fetch UNIFORMLY (no mixed units);
+                       default (no flag) keeps raw pence (backward compat)
 
 Run:
   PYTHONPATH=<data-core>;<collectors> python collectors/price/tests/test_consumer.py
@@ -104,6 +109,7 @@ def _fake_fallback(returned: dict):
 def main() -> int:
     g = Gate()
     consumer.symbol_to_series.cache_clear()
+    consumer.quote_basis_map.cache_clear()
     tmp = _seed_temp_root()
     old_env = os.environ.get("DATACORE_ROOT")
     try:
@@ -197,6 +203,60 @@ def main() -> int:
             ["VTI"], fetch_fallback=fb4, root=tmp, period="6mo", end="2026-06-26")
         g.check("c9b stale-windowed symbol falls back to fetch",
                 src8.get("VTI") == consumer.SRC_FETCH and "VTI" in oc8["Close"].columns, str(src8))
+
+        # c10..c12 P8c GBX currency normalization ----------------------------------------
+        # HSBA.L (px_hsba_l_daily) + AAL.L (px_aal_l_daily) are GBX (London pence); SAP.DE
+        # (px_sap_de_daily) is EUR. Write synthetic RAW bars (pence / euros) and read with the
+        # P8c normalize_currency flag. The archive stays RAW (decision 4a); /100 is the consumer step.
+        _write(tmp, "px_hsba_l_daily", [
+            _bar("2026-06-24", close=5000.0, value_tr=5000.0, open_=4900.0, high=5100.0,
+                 low=4800.0, volume=12345),
+            _bar("2026-06-25", close=5200.0, value_tr=5200.0, open_=5150.0, high=5250.0,
+                 low=5050.0, volume=22222),
+        ])
+        _write(tmp, "px_sap_de_daily", [
+            _bar("2026-06-24", close=120.0, value_tr=120.0, volume=7000),
+            _bar("2026-06-25", close=122.0, value_tr=122.0, volume=8000),
+        ])
+        # c10a raw by default -> pence preserved (the archive contract + auto_adjust parity)
+        raw_g, _ = consumer.read_base_ohlcv(["HSBA.L"], root=tmp, period="max")
+        g.check("c10a GBX raw by default (pence, no /100)",
+                abs(raw_g["Close"]["HSBA.L"][d25] - 5200.0) < 1e-9, str(raw_g["Close"]["HSBA.L"][d25]))
+        # c10b/c/d normalized -> /100 to GBP on EVERY price field, Volume untouched
+        nrm, _ = consumer.read_base_ohlcv(["HSBA.L"], root=tmp, period="max", normalize_currency=True)
+        g.check("c10b GBX normalized Close /100 (-> GBP)",
+                abs(nrm["Close"]["HSBA.L"][d25] - 52.0) < 1e-9, str(nrm["Close"]["HSBA.L"][d25]))
+        g.check("c10c GBX normalized O/H/L /100",
+                abs(nrm["Open"]["HSBA.L"][d25] - 51.5) < 1e-9
+                and abs(nrm["High"]["HSBA.L"][d25] - 52.5) < 1e-9
+                and abs(nrm["Low"]["HSBA.L"][d25] - 50.5) < 1e-9,
+                f"O={nrm['Open']['HSBA.L'][d25]} H={nrm['High']['HSBA.L'][d25]} L={nrm['Low']['HSBA.L'][d25]}")
+        g.check("c10d GBX normalized VOLUME untouched (share count, never /100)",
+                nrm["Volume"]["HSBA.L"][d25] == 22222, str(nrm["Volume"]["HSBA.L"][d25]))
+        # c11 a EUR series is divisor 1.0 -- untouched even with the flag on
+        eur, _ = consumer.read_base_ohlcv(["SAP.DE"], root=tmp, period="max", normalize_currency=True)
+        g.check("c11 EUR series untouched under normalize (divisor 1.0)",
+                abs(eur["Close"]["SAP.DE"][d25] - 122.0) < 1e-9, str(eur["Close"]["SAP.DE"][d25]))
+        # c12 UNIFORM across provenance: HSBA.L base-served + AAL.L (GBX) fetch-served (raw pence
+        # from the fallback, yfinance shape) -> BOTH /100 from the one merged frame (the core
+        # mixed-units hazard the post-merge placement exists to prevent).
+        fb5, _ = _fake_fallback({"AAL.L": 2500.0})
+        oc9, src9 = consumer.load_ohlcv_base_first(
+            ["HSBA.L", "AAL.L"], fetch_fallback=fb5, root=tmp, period="max", normalize_currency=True)
+        g.check("c12a base+fetch GBX normalized uniformly /100 (no mixed units)",
+                abs(oc9["Close"]["HSBA.L"][d25] - 52.0) < 1e-9
+                and abs(oc9["Close"]["AAL.L"][d25] - 25.0) < 1e-9,
+                f"HSBA={oc9['Close']['HSBA.L'][d25]} AAL={oc9['Close']['AAL.L'][d25]}")
+        g.check("c12b provenance still correct under normalize",
+                src9.get("HSBA.L") == consumer.SRC_BASE and src9.get("AAL.L") == consumer.SRC_FETCH,
+                str(src9))
+        fb6, _ = _fake_fallback({"AAL.L": 2500.0})
+        oc10, _ = consumer.load_ohlcv_base_first(
+            ["HSBA.L", "AAL.L"], fetch_fallback=fb6, root=tmp, period="max")
+        g.check("c12c default (no normalize) keeps raw pence (backward compat)",
+                abs(oc10["Close"]["HSBA.L"][d25] - 5200.0) < 1e-9
+                and abs(oc10["Close"]["AAL.L"][d25] - 2500.0) < 1e-9,
+                f"HSBA={oc10['Close']['HSBA.L'][d25]} AAL={oc10['Close']['AAL.L'][d25]}")
     finally:
         if old_env is not None:
             os.environ["DATACORE_ROOT"] = old_env

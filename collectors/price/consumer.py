@@ -50,6 +50,21 @@ fetch) is injected into ``load_ohlcv_base_first`` so production never stops when
 missing from the archive or the archive is not checked out. Every symbol is stamped with its
 provenance (``base`` / ``fetch`` / ``unmapped``) so the consumer can write a source map and the
 ``assert_base_sourced`` guard can fail RED on any symbol that did not come from the base.
+
+CURRENCY NORMALIZATION (INIT-22 P8c, ``normalize_currency=``). The archive stores prices RAW per
+decision 4a: a London ``.L`` name quoted in GBX (pence) sits in the archive as pence (HSBA.L
+~5000), 100x its GBP value -- ``/100 -> GBP`` is a CONSUMER step, deliberately NOT baked into the
+archive (same spirit as split_factor; the archive stays the single raw source). The readers below
+take an OPT-IN ``normalize_currency`` flag (default False -> raw, byte-identical to today's ETF
+consumers and to yfinance ``auto_adjust=True`` which ALSO returns pence for a .L name). With it
+True, every price field (Open/High/Low/Close) of a ``quote_basis=="GBX"`` series is divided by 100
+to its major currency unit (EUR/USD/CHF/... are untouched; VOLUME is a share count, never a price,
+so never divided). CRITICAL placement: normalization is applied to the FULL, already-MERGED frame
+(base + CLOSED fallback) -- never inside the raw base read -- because the strangler fallback
+(yfinance) returns the SAME raw pence for a .L name, so normalizing only the base would leave
+base-served and fetch-served bars in MIXED units in one frame (a silent, provenance-dependent
+100x). A STOXX/multi-currency consumer (P9) passes ``normalize_currency=True``; forgetting it is
+the documented footgun this step exists to make explicit.
 """
 from __future__ import annotations
 
@@ -67,6 +82,16 @@ SRC_UNMAPPED = "unmapped"  # ticker has no px_* series (not in the price univers
 
 _CONFIG_PATH = Path(__file__).resolve().parent / "config.yaml"
 
+# quote_basis -> divisor that converts a RAW stored price to its major CURRENCY unit (P8c).
+# GBX (London pence) -> 100 -> GBP is the only minor-unit basis in the universe today; a future
+# minor-unit venue (e.g. ZAc South African cents) is a one-line addition here, not a scattered
+# special-case. A major-unit basis (EUR/USD/CHF/SEK/...) or an absent basis -> 1.0 (untouched).
+_BASIS_DIVISOR = {"GBX": 100.0}
+
+# Price fields normalized by the currency divisor. VOLUME is a SHARE COUNT, never a price -> it is
+# deliberately absent here (a GBX->GBP /100 must never touch volume).
+_PRICE_FIELDS_FX = ("Open", "High", "Low", "Close")
+
 
 @lru_cache(maxsize=1)
 def symbol_to_series() -> dict[str, str]:
@@ -83,6 +108,59 @@ def symbol_to_series() -> dict[str, str]:
         sym = (meta or {}).get("symbol")
         if sym:
             out[str(sym).upper()] = series_id
+    return out
+
+
+@lru_cache(maxsize=1)
+def quote_basis_map() -> dict[str, str]:
+    """{TICKER (upper) -> quote_basis} from config.yaml's ``price`` block (P8c).
+
+    The SAME authoritative universe the citizen writes (one source of truth), inverted by
+    SYMBOL so a consumer can normalize a raw GBX series to GBP without re-reading the catalog
+    (the catalog carries the same currency/quote_basis, but the consumer already reads config
+    for symbol_to_series -- one file, one parse). A series with no quote_basis (ETF / SP500
+    single-currency USD) is simply absent -> the divisor defaults to 1.0 (major units)."""
+    data = yaml.safe_load(_CONFIG_PATH.read_text(encoding="utf-8"))
+    price = data.get("price", {}) or {}
+    out: dict[str, str] = {}
+    for meta in price.values():
+        sym = (meta or {}).get("symbol")
+        qb = (meta or {}).get("quote_basis")
+        if sym and qb:
+            out[str(sym).upper()] = str(qb)
+    return out
+
+
+def quote_basis_divisor(quote_basis) -> float:
+    """Divisor converting a raw ``quote_basis`` price to its major currency unit (P8c).
+
+    GBX (London pence) -> 100.0 (-> GBP). A major-unit basis (EUR/USD/CHF/SEK/...) or an
+    unknown/missing basis -> 1.0 (untouched)."""
+    return _BASIS_DIVISOR.get((quote_basis or "").upper(), 1.0)
+
+
+def normalize_to_currency(ohlcv):
+    """Convert raw quote-basis price fields to each series' major CURRENCY unit, per ticker (P8c).
+
+    For every column (ticker) of every PRICE field (Open/High/Low/Close), divide by the ticker's
+    quote_basis divisor: GBX -> /100 (-> GBP); EUR/USD/CHF/... -> /1 (untouched). VOLUME is a share
+    count -> never divided. A ticker absent from the quote_basis map (ETF, SP500 USD, ^VIX) -> 1.0.
+
+    Apply this to the FULL, already-MERGED OHLCV (base + CLOSED fallback) -- NOT inside the raw base
+    read -- so base-served and yfinance-fallback bars (both raw pence for a .L name) end up in the
+    SAME unit. Non-mutating: returns a new dict; the caller's frames are untouched."""
+    qb = quote_basis_map()
+    out = {}
+    for field, df in ohlcv.items():
+        if df is None or df.empty or field not in _PRICE_FIELDS_FX:
+            out[field] = df            # Volume + empty frames pass through unscaled
+            continue
+        scaled = df.copy()
+        for col in scaled.columns:
+            div = quote_basis_divisor(qb.get(str(col).upper()))
+            if div != 1.0:
+                scaled[col] = scaled[col] / div
+        out[field] = scaled
     return out
 
 
@@ -166,7 +244,7 @@ _OHLCV_FIELDS = ("Open", "High", "Low", "Close", "Volume")
 
 
 def read_base_ohlcv(tickers, *, root=None, period="2y", start=None, end=None,
-                    as_of_vintage=None):
+                    as_of_vintage=None, normalize_currency=False):
     """Read OHLCV for ``tickers`` from the canonical archive. PURE base read (no fallback).
 
     Returns ``(ohlcv, source_map)`` where:
@@ -180,6 +258,10 @@ def read_base_ohlcv(tickers, *, root=None, period="2y", start=None, end=None,
 
     If the archive root cannot be resolved, returns empty frames + an empty source_map (every
     ticker becomes a fallback candidate) -- never a root=None read against the data-core base.
+
+    ``normalize_currency`` (P8c, default False -> raw): when True, GBX (pence) price fields are
+    /100 to GBP (see ``normalize_to_currency``). On the PURE base read this is unit-consistent (no
+    fallback bars to mix); ``load_ohlcv_base_first`` normalizes AFTER the merge instead.
     """
     eff_root = resolve_root(root)
     cols: dict[str, dict[str, pd.Series]] = {f: {} for f in _OHLCV_FIELDS}
@@ -231,14 +313,19 @@ def read_base_ohlcv(tickers, *, root=None, period="2y", start=None, end=None,
 
     ohlcv = {f: (pd.DataFrame(cols[f]).sort_index() if cols[f] else pd.DataFrame())
              for f in _OHLCV_FIELDS}
+    if normalize_currency:
+        ohlcv = normalize_to_currency(ohlcv)
     return ohlcv, source_map
 
 
 def read_base_close(tickers, *, root=None, period="2y", start=None, end=None,
-                    as_of_vintage=None):
-    """Total-return Close only. ``(close_df, source_map)``; drop-in for download_prices."""
+                    as_of_vintage=None, normalize_currency=False):
+    """Total-return Close only. ``(close_df, source_map)``; drop-in for download_prices.
+
+    ``normalize_currency`` (P8c) is passed through -> a GBX Close is /100 to GBP when True."""
     ohlcv, source_map = read_base_ohlcv(
-        tickers, root=root, period=period, start=start, end=end, as_of_vintage=as_of_vintage)
+        tickers, root=root, period=period, start=start, end=end, as_of_vintage=as_of_vintage,
+        normalize_currency=normalize_currency)
     return ohlcv.get("Close", pd.DataFrame()), source_map
 
 
@@ -258,7 +345,7 @@ def _merge_field(base_df, fb_df):
 
 
 def load_ohlcv_base_first(tickers, *, fetch_fallback, root=None, period="2y",
-                          start=None, end=None):
+                          start=None, end=None, normalize_currency=False):
     """Base-first OHLCV with a CLOSED fallback to the consumer's OLD fetch (strangler).
 
     ``fetch_fallback`` is the consumer's existing downloader, called as
@@ -274,15 +361,20 @@ def load_ohlcv_base_first(tickers, *, fetch_fallback, root=None, period="2y",
 
     Production NEVER stops: an unreachable archive (no root / no checkout) routes the WHOLE
     universe through the fallback -- exactly the pre-cutover behavior.
+
+    ``normalize_currency`` (P8c, default False): when True, GBX (pence) price fields are /100 to
+    GBP AFTER the base+fallback merge -- uniform across provenance, so a base-served and a
+    fetch-served .L name never end up in mixed units (the whole reason it is applied here, not in
+    the raw base read).
     """
     base_ohlcv, source_map = read_base_ohlcv(
-        tickers, root=root, period=period, start=start, end=end)
+        tickers, root=root, period=period, start=start, end=end)   # raw base; normalize AFTER merge
 
     served = {t for t, s in source_map.items() if s == SRC_BASE}
     missing = [t for t in tickers if t not in served]
 
     if not missing:
-        return base_ohlcv, source_map
+        return (normalize_to_currency(base_ohlcv) if normalize_currency else base_ohlcv), source_map
 
     fb = fetch_fallback(missing, period=period) or {}
     ohlcv = {}
@@ -298,4 +390,7 @@ def load_ohlcv_base_first(tickers, *, fetch_fallback, root=None, period="2y",
             source_map[t] = SRC_FETCH
         else:
             source_map.pop(t, None)
+    # Normalize the WHOLE merged frame (base + fetch both raw pence for a .L name) in one pass.
+    if normalize_currency:
+        ohlcv = normalize_to_currency(ohlcv)
     return ohlcv, source_map

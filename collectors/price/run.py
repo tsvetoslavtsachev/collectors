@@ -24,6 +24,7 @@ import yaml
 
 from . import to_datacore
 from . import split_heal
+from . import reconcile
 from .fetch_prices import fetch_prices
 
 HERE = Path(__file__).resolve().parent
@@ -150,6 +151,24 @@ def main() -> int:
             only = _daily_ready_scope(cfg, only)
         raw = fetch_prices(cfg, period=period, only=only)
         mode = f"live ({scope}{', period=' + period if period else ''})"
+
+    # P8c CURRENCY RECONCILE (F3): a multi-currency (STOXX) series whose LIVE yfinance currency
+    # contradicts its catalog quote_basis -- a GBX<->GBP/USD re-denomination -> a silent 100x in the
+    # RAW store -- is DROPPED loud BEFORE the write; an unreachable fast_info is a soft WARN (the
+    # bar is still split-adjusted-correct, self-heals next run). Gated on a LIVE run with a
+    # currency-bearing series actually in scope, so an ETF/SP500-only daily makes ZERO fast_info
+    # calls and the live ETF path is byte-identical.
+    if mode != "mock" and isinstance(raw, dict):
+        # Only reconcile series that actually FETCHED ok: skip an already-dead fetch (no wasted
+        # fast_info call, and no currency reason overwriting the original fetch-error reason -- the
+        # series is dropped either way). Ungated, an ok=False STOXX would still hit the network.
+        ccy_sids = [s for s in raw
+                    if isinstance(raw.get(s), dict) and raw[s].get("ok")
+                    and cfg["price"].get(s, {}).get("quote_basis")]
+        if ccy_sids:
+            mism, _unverified = reconcile.reconcile(cfg, ccy_sids)
+            if mism:
+                reconcile.neutralize(raw, mism)
 
     value_tol = float(cfg["settings"].get("value_tol", to_datacore.DEFAULT_VALUE_TOL))
     # F5 (P8b): a run that includes the STOCK family enforces the stamp at write time -- a

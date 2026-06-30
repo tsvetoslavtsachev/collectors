@@ -19,6 +19,8 @@ Gates:
   sh7 no-op         -- a split-free window -> detection empty (heal would be a pure no-op)
   sh8 stock-scoped  -- an ETF is NEVER selected for heal (live ETF daily byte-identical)
   sh9 empty/missing -- heal([]) is a no-op; a heal of a series with no stored history is safe
+  sh15 EU split     -- P8c: a STOXX (.DE) split is detected + healed zero-cliff exactly like a US
+                       stock (the mechanism keys on split_factor, not on a US listing)
 
 Run:
   PYTHONPATH=C:\\Projects\\data-core;C:\\Projects\\collectors \\
@@ -274,6 +276,42 @@ def offline(g: Gate) -> None:
     g.check("sh14b re-including the dropped date at raw volume is a SKIP (no phantom restatement)",
             reinc.get("restated", 0) == 0 and reinc.get("skipped", 0) == 1,
             f"restated={reinc.get('restated')} skipped={reinc.get('skipped')}")
+    shutil.rmtree(tmp, ignore_errors=True)
+
+    # sh15 (P8c EU split-heal): the heal mechanism is EXCHANGE-AGNOSTIC -- it keys on split_factor
+    # != 1.0, never on a US listing. A STOXX (.DE, EUR, foreign suffix) stock with an in-window
+    # split is detected + healed to zero-cliff exactly like NVDA, confirming EU corporate actions
+    # heal through the inherited P8b mechanism (mandate P8c step 4). require_stamp=True also proves
+    # a stamped STOXX series flows the F5 forward path.
+    EU_SID, EU_RATIO = "px_sap_de_daily", 4.0     # SAP.DE -- a STOXX (EUR) stock, foreign exchange
+    tmp = _seeded_root()
+    cat = to_datacore.load_catalog(tmp)
+    eu_hist = [_bar(d, OLD, split_factor=1.0, provisional=(i == 59)) for i, d in enumerate(hist_days)]
+    to_datacore.push({EU_SID: {"ok": True, "records": eu_hist}}, root=str(tmp), catalog=cat, recorded_on=R0)
+    eu_window = [_bar(d, OLD / EU_RATIO, split_factor=(EU_RATIO if d < EX else 1.0),
+                      provisional=(d == win_days[-1])) for d in win_days]
+    eu_daily = {EU_SID: {"ok": True, "records": eu_window}}
+    detected_eu = split_heal.detect_split_symbols(CFG, eu_daily)
+    g.check("sh15a EU (.DE STOXX) split detected -- detection is exchange-agnostic, not US-only",
+            detected_eu == [EU_SID], f"detected={detected_eu}")
+    to_datacore.push(eu_daily, root=str(tmp), catalog=cat, recorded_on=R1)
+
+    def fetch_eu(cfg, *, period=None, only=None):
+        recs = [_bar(d, OLD / EU_RATIO, split_factor=(EU_RATIO if d < EX else 1.0),
+                     provisional=(d == all_days[-1])) for d in all_days]
+        return {EU_SID: {"ok": True, "records": recs}}
+
+    split_heal.heal(CFG, detected_eu, root=str(tmp), catalog=cat, recorded_on=R1,
+                    fetch=fetch_eu, require_stamp=True)
+    euv = archive.read(EU_SID, root=str(tmp))
+    eu_closes = [r["close"] for r in euv]
+    g.check("sh15b EU split heals to zero-cliff (every stored bar on the new scale)",
+            all(abs(c - OLD / EU_RATIO) < 1e-6 for c in eu_closes),
+            f"distinct closes = {sorted(set(eu_closes))[:4]}")
+    eu_astraded = {r["as_of"]: r["close"] * r.get("split_factor", 1.0) for r in euv}
+    g.check("sh15c EU as-traded immutability preserved (close*split_factor = pre-split 1000)",
+            abs(eu_astraded[hist_days[0]] - OLD) < 1e-6 and len(euv) == 61,
+            f"day1 as-traded={eu_astraded[hist_days[0]]} n={len(euv)}")
     shutil.rmtree(tmp, ignore_errors=True)
 
     # sh11 (C5 backstop): push require_stamp F5 -- a REGISTERED unstamped stock is refused on

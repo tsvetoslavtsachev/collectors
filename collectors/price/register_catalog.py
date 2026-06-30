@@ -55,6 +55,16 @@ def entry(m: dict, identity_map: dict | None = None) -> dict:
     NOT a passive text caveat. TA on ~6y of current members (50/200-DMA, RSI, MACD) is
     honest now; honest long-horizon stocks wait on P11 (paid point-in-time source)."""
     family = m.get("family", "etf")
+    # P8c defense-in-depth (carry-forward #3): a currency-bearing entry MUST be a stock. Without
+    # this, an entry carrying currency/quote_basis but MISSING family:stock would fall to the ETF
+    # branch below -- which drops currency/quote_basis and stamps backtest_valid:true -- silently
+    # misfiling a multi-currency STOXX series as a survivorship-clean ETF (and losing the per-series
+    # basis the GBX /100 consumer keys on). 0/609 violate today; this keeps the seam closed.
+    if m.get("currency") and family != "stock":
+        raise ValueError(
+            f"currency {m.get('currency')!r} on {m.get('symbol')!r} requires family=='stock', got "
+            f"{family!r} -- a currency-bearing series must not route to the ETF (survivorship-clean) "
+            f"branch.")
     # FAIL-CLOSED (adversarial gate MAJOR 1): a missing family defaults to "etf" (the ETF
     # entries legitimately omit it), but an EXPLICIT unknown/miscased value ('Stock', 'stk',
     # '') must NOT silently fall through to the ETF branch -- that is the one direction a stock
