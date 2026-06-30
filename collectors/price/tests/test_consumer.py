@@ -30,6 +30,11 @@ The gates:
                        falls back to value_tr rather than emit a corrupt series
   cR4 RIV-2 unfaithful list -- a series pinned in _UNFAITHFUL_SERIES (Yahoo's historical factor !=
                        textbook) keeps value_tr even though it classifies dividend-adjusted
+  cR5 RIV-2 regression  -- the two USD-quoted London names CPG.L / IHG.L (Yahoo adjclose is
+                       price-only; the single-ex-date discriminator mis-classifies them and the
+                       fresh-cohort belt is blind) keep value_tr via the _UNFAITHFUL_SERIES pin --
+                       a DIRECT lock on both names so a future list/threshold change that drops
+                       them fails CI
 
 Run:
   PYTHONPATH=<data-core>;<collectors> python collectors/price/tests/test_consumer.py
@@ -349,6 +354,33 @@ def main() -> int:
                 str([uc[pd.Timestamp(d)] for d in rdates]))
         g.check("cR4b contrast: the SAME bars on the NON-listed px_tlt_daily DID reconstruct (90.24)",
                 abs(rc[pd.Timestamp(rdates[0])] - 90.24) < 1e-6, str(rc[pd.Timestamp(rdates[0])]))
+
+        # cR5 REGRESSION (bug report 2026-06-30): the two USD-quoted London names CPG.L / IHG.L are
+        # pinned in _UNFAITHFUL_SERIES. Yahoo's adjclose for these LSE-in-USD venues is PRICE-ONLY
+        # (ignores dividends), so the archived value_tr matches live yfinance EXACTLY and must NOT be
+        # reconstructed. But the single-ex-date discriminator MIS-CLASSIFIES them as dividend-adjusted
+        # (measured CPG.L ~1.00, IHG.L ~0.756 -- the latter sits just above the 0.7 threshold) and the
+        # fresh-cohort belt is BLIND (recon==value_tr at the fresh tip; the divergence accrues only in
+        # OLD history). The pin is the ONLY layer keeping value_tr -> lock BOTH specific names so a
+        # future list regeneration or threshold change that drops either fails CI. SAME bars as cR1
+        # (dividend-adjusted with an OLD-vintage stale tail) -> would reconstruct to 90.24 at the
+        # oldest bar if NOT pinned; because they ARE pinned, value_tr is kept verbatim.
+        for sid, tkr in (("px_cpg_l_daily", "CPG.L"), ("px_ihg_l_daily", "IHG.L")):
+            g.check(f"cR5 {tkr} is pinned in _UNFAITHFUL_SERIES (direct membership guard)",
+                    sid in consumer._UNFAITHFUL_SERIES, sid)
+            lbars = [_bar(dt, close=100.0, value_tr=float(rvtr[k]),
+                          dividend=(4.0 if k == 1 else 6.0 if k == 9 else 0.0),
+                          recorded_on=("2025-06-01" if k < 5 else _REC))
+                     for k, dt in enumerate(rdates)]
+            _write(tmp, sid, lbars)
+            loc, _ = consumer.read_base_ohlcv([tkr], root=tmp, period="max")
+            lc = loc["Close"][tkr]
+            g.check(f"cR5 {tkr} keeps value_tr (price-only LSE-USD; no phantom-dividend injection)",
+                    all(abs(lc[pd.Timestamp(rdates[k])] - rvtr[k]) < 1e-9 for k in range(12)),
+                    str([round(lc[pd.Timestamp(d)], 4) for d in rdates]))
+            g.check(f"cR5 {tkr} oldest bar NOT reconstructed (stays {rvtr[0]}, not the 90.24 cR1 shows)",
+                    abs(lc[pd.Timestamp(rdates[0])] - float(rvtr[0])) < 1e-9,
+                    str(lc[pd.Timestamp(rdates[0])]))
 
     finally:
         if old_env is not None:
