@@ -7,7 +7,9 @@ The 9 verify gates (mapping to the P5 mandate):
   d1 one-new-row   -- two consecutive daily runs append EXACTLY one new row/symbol; the
                       prior window bars are idempotent (a re-run appends nothing)
   d2 freeze        -- the prior provisional tip FINALIZES on the next run (revise-in-window
-                      AND freeze-when-window-moved-past); exactly one provisional, at the tip
+                      AND freeze-when-window-moved-past); exactly one provisional, at the tip;
+                      + (d2e-g) a frame TRUNCATED behind the tip (the 2026-07-01 px_crwd_daily
+                      failure) lands its mid-history "provisional" as a FINALIZED restatement
   d3 no-silent     -- a finalized bar NEVER silently overwrites: a value change is a bitemporal
                       restate (new recorded_on, prior line retained); a same-vintage change is
                       REFUSED (the stale value is dropped, the stored line untouched)
@@ -21,7 +23,9 @@ The 9 verify gates (mapping to the P5 mandate):
                       (routine, not the backfill), runs `run --daily` + `verify --daily`, pushes
                       origin + bus-factor backup
   d8 daily-verify  -- verify(--daily) PASSES a legitimate bitemporal restatement + frozen tip,
-                      and HARD-FAILS a duplicate vintage / a mid-history provisional bar
+                      and HARD-FAILS a duplicate vintage / a mid-history provisional bar;
+                      + (d8g/h) v2a allows ONLY the documented quarantined series dead
+                      (_QUARANTINE_DEAD_OK, P8b HON / P8c ROG.SW) -- fail-closed otherwise
 
 (d9 -- "P1 archive.py byte-intact + citizen touched only per the agreed (a) extension" -- is a
 git-level check done at build end, not a unit test.)
@@ -175,6 +179,34 @@ def offline(g: Gate) -> None:
     g.check("d2d frozen bar is now finalized, exactly one provisional (the new tip)",
             d11.get("provisional") is False
             and [r["as_of"] for r in v if r.get("provisional")] == ["2026-06-16"])
+    shutil.rmtree(tmp, ignore_errors=True)
+
+    # d2e-d2g: a TRUNCATED upstream frame (P5 daily 2026-07-01, px_crwd_daily) -- the frame
+    # ends BEHIND the archive tip (stale vendor window, or recent rows dropped for a NaN
+    # close), so the fetcher's provisional mark sits on a MID-HISTORY bar with a nudged
+    # value. P1 strips the flag on the way in: the bar lands as a FINALIZED bitemporal
+    # restatement, the unchanged tip stays the ONLY provisional, and v4c' stays green.
+    tmp = _seed_temp_root()
+    cat = to_datacore.load_catalog(tmp)
+    _run(tmp, cat, {SID: [_bar("2026-06-24", 100), _bar("2026-06-25", 101),
+                          _bar("2026-06-26", 102),
+                          _bar("2026-06-29", 103, provisional=True)]}, R0)
+    t = _run(tmp, cat, {SID: [_bar("2026-06-25", 101),
+                              _bar("2026-06-26", 102.5, provisional=True)]}, R1)[SID]
+    v = archive.read(SID, root=str(tmp))
+    provs = [r["as_of"] for r in v if r.get("provisional")]
+    d26 = next(r for r in v if r["as_of"] == "2026-06-26")
+    g.check("d2e truncated frame: mid-history provisional STRIPPED -> finalized restate",
+            t.get("restated") == 1 and d26["value"] == 102.5
+            and d26.get("provisional") is False,
+            f"restated={t.get('restated')} d26.provisional={d26.get('provisional')}")
+    g.check("d2f exactly one provisional survives -- the unchanged tip",
+            provs == ["2026-06-29"] and v[-1]["as_of"] == "2026-06-29", f"provs={provs}")
+    gt = Gate()
+    verify_backfill.verify(tmp, CFG, gt, daily=True)
+    g.check("d2g verify(--daily) v4c' GREEN after a truncated-frame day",
+            not any(f.startswith("v4c'") for f in gt.fails),
+            f"v4_fails={[f for f in gt.fails if f.startswith('v4')]}")
     shutil.rmtree(tmp, ignore_errors=True)
 
     # d3: no silent overwrite -- value change = bitemporal restate; same-vintage = refused ----
@@ -393,6 +425,32 @@ def offline(g: Gate) -> None:
     g.check("d8f a symbol lagging the universe by >4d is surfaced by v2c (partial-throttle de-silenced)",
             any(w.startswith("v2c") for w in gd.warns), f"v2c_warns={[w for w in gd.warns if w[:3]=='v2c']}")
     shutil.rmtree(comp2, ignore_errors=True)
+
+    # d8g/d8h: the QUARANTINE allowlist (P8b HON / P8c ROG.SW). An archive complete except
+    # the DOCUMENTED quarantined series passes v2a (allowed-dead, listed loudly); any OTHER
+    # dead series still HARD-FAILS (fail-closed). One root, two verifies: first with an
+    # extra non-quarantined series dead (must FAIL), then healed (must PASS).
+    q = set(verify_backfill._QUARANTINE_DEAD_OK)
+    assert q, "allowlist unexpectedly empty -- rewrite d8g/d8h when the last entry is lifted"
+    extra_dead = next(s for s in allsids if s not in q and s != "px_spy_daily")
+    comp3 = _seed_temp_root()
+    catc3 = to_datacore.load_catalog(comp3)
+    _run(comp3, catc3,
+         {sid: [_bar("2025-01-09", 10.0), _bar("2025-01-10", 10.1, provisional=True)]
+          for sid in allsids if sid not in q and sid != extra_dead}, R0)
+    ge = Gate()
+    verify_backfill.verify(comp3, CFG, ge, daily=True)
+    g.check("d8g a dead NON-quarantined series still HARD-FAILS v2a (fail-closed)",
+            any(f.startswith("v2a") for f in ge.fails),
+            f"v2a_fails={[f for f in ge.fails if f[:3] == 'v2a']}")
+    _run(comp3, catc3, {extra_dead: [_bar("2025-01-09", 10.0),
+                                     _bar("2025-01-10", 10.1, provisional=True)]}, R0)
+    gf = Gate()
+    verify_backfill.verify(comp3, CFG, gf, daily=True)
+    g.check("d8h ONLY the documented quarantined series dead -> v2a GREEN (allowed-dead, loud)",
+            not any(f.startswith("v2a") for f in gf.fails),
+            f"v2a_fails={[f for f in gf.fails if f[:3] == 'v2a']}")
+    shutil.rmtree(comp3, ignore_errors=True)
 
 
 def main() -> int:

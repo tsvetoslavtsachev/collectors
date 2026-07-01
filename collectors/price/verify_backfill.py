@@ -9,7 +9,9 @@ Gates (exit non-zero if any HARD gate fails):
   v1b baseline  HARD  -- every baselined OLD ETF reaches its known inception + expected depth
                          (the silent-truncation catch: truncating/dropping any of them FAILS)
   v2a coverage  HARD  -- the seed is COMPLETE (0 dead/empty); a partial fetch must NOT pass
-                         (this is the CI commit gate -- a throttled partial seed fails here)
+                         (this is the CI commit gate -- a throttled partial seed fails here);
+                         series on the documented _QUARANTINE_DEAD_OK allowlist (upstream-dead,
+                         P8b HON / P8c ROG.SW pattern) are allowed-dead but LISTED loudly
   v2b thin      soft  -- no live series truncated to < 5 bars (smell, subsumed by v1b)
   v3 split      soft  -- splits (forward AND reverse) reconstruct as-traded = close*split_factor;
                          factor positive, anchors at 1.0 on the tip, piecewise-constant
@@ -52,6 +54,20 @@ from datacore import archive
 # misalignment or a single missed session does not fire; tight enough that a real partial
 # throttle (a symbol stuck behind the pack for a week) is flagged.
 _STALE_WARN_DAYS = 4
+
+# QUARANTINE ALLOWLIST (the P9 twins' assert_base_sourced ALLOWLIST pattern): config-listed
+# series DELIBERATELY absent from the archive because their UPSTREAM (Yahoo) data is broken
+# -- documented per-entry in P8b-HON-case-to-resolve.md, each with an active settle-watch +
+# a targeted re-backfill plan. They are NOT registered in the catalog (_daily_ready_scope
+# never fetches them), so v2a counting them as dead would red-fail EVERY daily run on a
+# known, tracked condition. v2a treats ONLY these as allowed-dead -- any OTHER dead series
+# still HARD-FAILS (fail-closed), and a quarantined series that comes back LIVE prints a
+# loud lift-the-entry nudge. Remove an entry together with its re-backfill (catalog
+# re-register), never before.
+_QUARANTINE_DEAD_OK = {
+    "px_hon_daily":    "HON -- upstream yfinance lagged-split (P8b 29.06), re-backfill pending",
+    "px_rog_sw_daily": "ROG.SW -- Yahoo serves no data for the symbol (P8c 30.06), re-backfill pending",
+}
 
 HERE = Path(__file__).resolve().parent
 
@@ -221,8 +237,18 @@ def verify(root: Path, cfg: dict, g: Gate, *, daily: bool = False) -> dict:
     # ---- v2 coverage (HARD) -- the seed must be COMPLETE; a partial fetch must NOT pass ----
     # This is the CI commit gate too (price-backfill.yml), so a Yahoo-throttled partial seed
     # must FAIL here rather than self-promote to the real archive + bus-factor backup.
-    g.check(f"v2a coverage: every expected series is live (0 dead/empty of {len(sids)})",
-            len(dead) == 0, f"dead={dead}")
+    # Known-quarantined series (see _QUARANTINE_DEAD_OK) are allowed-dead -- listed loudly,
+    # never silently green; every OTHER dead series still HARD-FAILS.
+    dead_unexpected = [s for s in dead if s not in _QUARANTINE_DEAD_OK]
+    dead_quarantined = [s for s in dead if s in _QUARANTINE_DEAD_OK]
+    live_quarantined = [s for s in _QUARANTINE_DEAD_OK if s in live]
+    if live_quarantined:
+        print(f"  !! quarantined series LIVE again -- re-backfill done? lift the "
+              f"_QUARANTINE_DEAD_OK entry: {live_quarantined}")
+    g.check(f"v2a coverage: every expected series is live "
+            f"({len(dead_quarantined)} quarantine-allowed of {len(sids)})",
+            len(dead_unexpected) == 0,
+            f"dead={dead_unexpected} quarantined-dead={dead_quarantined}")
     thin = [s for s in live if len(views[s]) < 5]
     g.check("v2b no live series truncated to < 5 bars (silent-truncation smell)",
             not thin, f"thin={thin}", hard=False)
