@@ -9,8 +9,14 @@ Slot file (collector dir, gitignored — licensed data, not redistributed):
     ism_manual.json = {"macro_ism_mfg":      [{"as_of":"YYYY-MM-DD","value":n}, ...],
                        "macro_ism_services": [...]}
 
-D8 contract: provisional=true on every ISM record (preserves the backtested
-series; the regime engine already treats these as provisional).
+D8 contract, amended 2026-07-02 (session C1+2, decision Д1.2 - "историята е
+финална"): provisional=true ONLY on the NEWEST record of each series (the freshly
+pasted print, the one at risk of a typo or a late correction); every older print is
+final (provisional=false). The old contract flagged EVERY record provisional, which
+saturated the flag on all downstream regime state (ISM feeds GROWTH every month) and
+made it carry zero information - REVIEW-01 §B2. This is the documented
+"historical prints are deemed final" splice (mark, don't clean) the S6c README
+anticipated. Set opts.provisional=false in config to force all-final (unchanged).
 
 Provenance: ISM keeps bloomberg_era (= as_of <= the S5 cut), UNLIKE the FRED feed.
 A live FRED re-pull is FRED-sourced, so stamping bloomberg_era there would mislabel
@@ -50,10 +56,11 @@ def load_ism(cfg: dict) -> dict:
             out[sid] = {"ok": False, "error": "no rows in manual slot"}
             continue
         try:
+            newest = max(r["as_of"] for r in rows)   # Д1.2: only the newest print is provisional
             recs = [{"as_of": r["as_of"], "value": float(r["value"]),
                      "source": "manual_bloomberg", "resolution": "monthly",
                      "bloomberg_era": bool(cut) and r["as_of"] <= cut,
-                     "provisional": bool(opts.get("provisional", True))}
+                     "provisional": bool(opts.get("provisional", True)) and r["as_of"] == newest}
                     for r in rows]
         except (KeyError, ValueError, TypeError) as e:  # one bad hand-entered row
             out[sid] = {"ok": False, "error": f"bad ISM row: {type(e).__name__}: {e}"}
