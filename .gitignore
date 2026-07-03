@@ -4,6 +4,5 @@ __pycache__/
 venv/
 .DS_Store
 _data-core/
-docs/state.json
 # VRM ISM manual slot — licensed Bloomberg data, never redistributed (S3 gap).
 collectors/vrm/ism_manual.json
