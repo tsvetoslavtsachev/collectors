@@ -426,31 +426,39 @@ def offline(g: Gate) -> None:
             any(w.startswith("v2c") for w in gd.warns), f"v2c_warns={[w for w in gd.warns if w[:3]=='v2c']}")
     shutil.rmtree(comp2, ignore_errors=True)
 
-    # d8g/d8h: the QUARANTINE allowlist (P8b HON / P8c ROG.SW). An archive complete except
-    # the DOCUMENTED quarantined series passes v2a (allowed-dead, listed loudly); any OTHER
-    # dead series still HARD-FAILS (fail-closed). One root, two verifies: first with an
-    # extra non-quarantined series dead (must FAIL), then healed (must PASS).
-    q = set(verify_backfill._QUARANTINE_DEAD_OK)
-    assert q, "allowlist unexpectedly empty -- rewrite d8g/d8h when the last entry is lifted"
-    extra_dead = next(s for s in allsids if s not in q and s != "px_spy_daily")
-    comp3 = _seed_temp_root()
-    catc3 = to_datacore.load_catalog(comp3)
-    _run(comp3, catc3,
-         {sid: [_bar("2025-01-09", 10.0), _bar("2025-01-10", 10.1, provisional=True)]
-          for sid in allsids if sid not in q and sid != extra_dead}, R0)
-    ge = Gate()
-    verify_backfill.verify(comp3, CFG, ge, daily=True)
-    g.check("d8g a dead NON-quarantined series still HARD-FAILS v2a (fail-closed)",
-            any(f.startswith("v2a") for f in ge.fails),
-            f"v2a_fails={[f for f in ge.fails if f[:3] == 'v2a']}")
-    _run(comp3, catc3, {extra_dead: [_bar("2025-01-09", 10.0),
-                                     _bar("2025-01-10", 10.1, provisional=True)]}, R0)
-    gf = Gate()
-    verify_backfill.verify(comp3, CFG, gf, daily=True)
-    g.check("d8h ONLY the documented quarantined series dead -> v2a GREEN (allowed-dead, loud)",
-            not any(f.startswith("v2a") for f in gf.fails),
-            f"v2a_fails={[f for f in gf.fails if f[:3] == 'v2a']}")
-    shutil.rmtree(comp3, ignore_errors=True)
+    # d8g/d8h: the QUARANTINE allowlist MECHANISM (P8b HON / P8c ROG.SW pattern). An archive
+    # complete except a DOCUMENTED quarantined series passes v2a (allowed-dead, listed loudly);
+    # any OTHER dead series still HARD-FAILS (fail-closed). Driven by a SYNTHETIC one-entry
+    # allowlist so the test is independent of the LIVE _QUARANTINE_DEAD_OK contents -- which is
+    # legitimately EMPTY whenever every real quarantine has been lifted (HON re-backfilled +
+    # ROG.SW->ROP.SW renamed, both 2026-07-03). One root, two verifies: first with an extra
+    # non-quarantined series dead (must FAIL), then healed (must PASS).
+    quar = next(s for s in allsids if s != "px_spy_daily")          # synthetic quarantined series
+    extra_dead = next(s for s in allsids if s not in (quar, "px_spy_daily"))
+    q = {quar}
+    saved_q = verify_backfill._QUARANTINE_DEAD_OK
+    verify_backfill._QUARANTINE_DEAD_OK = {quar: "synthetic test quarantine (mechanism check)"}
+    try:
+        comp3 = _seed_temp_root()
+        catc3 = to_datacore.load_catalog(comp3)
+        _run(comp3, catc3,
+             {sid: [_bar("2025-01-09", 10.0), _bar("2025-01-10", 10.1, provisional=True)]
+              for sid in allsids if sid not in q and sid != extra_dead}, R0)
+        ge = Gate()
+        verify_backfill.verify(comp3, CFG, ge, daily=True)
+        g.check("d8g a dead NON-quarantined series still HARD-FAILS v2a (fail-closed)",
+                any(f.startswith("v2a") for f in ge.fails),
+                f"v2a_fails={[f for f in ge.fails if f[:3] == 'v2a']}")
+        _run(comp3, catc3, {extra_dead: [_bar("2025-01-09", 10.0),
+                                         _bar("2025-01-10", 10.1, provisional=True)]}, R0)
+        gf = Gate()
+        verify_backfill.verify(comp3, CFG, gf, daily=True)
+        g.check("d8h ONLY the (synthetic) quarantined series dead -> v2a GREEN (allowed-dead, loud)",
+                not any(f.startswith("v2a") for f in gf.fails),
+                f"v2a_fails={[f for f in gf.fails if f[:3] == 'v2a']}")
+        shutil.rmtree(comp3, ignore_errors=True)
+    finally:
+        verify_backfill._QUARANTINE_DEAD_OK = saved_q
 
 
 def main() -> int:

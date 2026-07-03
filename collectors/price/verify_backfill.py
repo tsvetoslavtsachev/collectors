@@ -67,7 +67,10 @@ _STALE_WARN_DAYS = 4
 _QUARANTINE_DEAD_OK = {
     # px_hon_daily LIFTED 2026-07-03: Yahoo settled (lagged-split resolved), re-backfilled +
     # re-registered (SEC-000496, 1506 bars). Removed with the re-backfill per the fail-closed rule.
-    "px_rog_sw_daily": "ROG.SW -- Yahoo serves no data for the symbol (P8c 30.06), re-backfill pending",
+    # px_rog_sw_daily LIFTED 2026-07-03: NOT a Yahoo outage -- Roche renamed the security
+    # ROG.SW -> ROP.SW (genussschein -> participation cert, 1:1, 2026-03-17). Config symbol swapped
+    # to ROP.SW, identity continued (SEC-001113 continuation_of SEC-000840), backfilled 1510 bars.
+    # Removed with the rename per the fail-closed rule.
 }
 
 HERE = Path(__file__).resolve().parent
@@ -173,7 +176,11 @@ class Gate:
 
 
 def _series_ids(cfg: dict) -> list[str]:
-    return list(cfg["price"])
+    # Skip RETIRED constituents (merged/delisted; e.g. CTRA->DVN, 2026-07-03): their bars stay
+    # frozen in the archive for provenance, but verify must not read them -- else v2c would flag
+    # a permanently-frozen tip as a laggard on every daily run, forever. (Retire is permanent;
+    # contrast _QUARANTINE_DEAD_OK, a temporary upstream outage whose symbol returns unchanged.)
+    return [sid for sid, m in cfg["price"].items() if not m.get("retired")]
 
 
 def _raw_lines(root: Path, sid: str) -> list[dict]:

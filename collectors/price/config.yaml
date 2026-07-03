@@ -62,7 +62,9 @@ settings:
                                  # automatically: _daily_ready_scope drops unregistered families.
                                  # As-built (P8b/P8c): 132 etf + 503 SP500 + 608 STOXX600 = 1243
                                  # registered+stamped. HON re-backfilled 2026-07-03 (quarantine
-                                 # lifted); ROG.SW still quarantined (Yahoo no-data) -> 609th dropped.
+                                 # lifted). 2026-07-03: ROG.SW renamed ROP.SW (symbol swap, identity
+                                 # continued SEC-000840; 609th now registered); CTRA retired (merged
+                                 # into DVN) -> retired:true drops it from fetch+verify scope.
                                  # A FULL manual pull (no --daily) is unscoped (re-pulls every bar
                                  # -> no cliff). idx_dxy omits family -> defaults to etf -> in the run.
   # CI PERF BUDGET (P7a gate note, for the P8 stock daily CI): archive.append re-reads each
@@ -334,7 +336,14 @@ price:
   px_csgp_daily: {symbol: "CSGP", name: "CoStar Group", category: "Real Estate", family: "stock"}
   px_csx_daily: {symbol: "CSX", name: "CSX Corporation", category: "Industrials", family: "stock"}
   px_ctas_daily: {symbol: "CTAS", name: "Cintas", category: "Industrials", family: "stock"}
-  px_ctra_daily: {symbol: "CTRA", name: "Coterra", category: "Energy", family: "stock"}
+  # RETIRED 2026-07-03: Coterra merged into Devon Energy (all-stock, 0.70 DVN per CTRA share);
+  # last trade 2026-05-07 (merger-freeze 05-06/05-07 both pinned 32.56). retired:true drops it
+  # from daily fetch (_family_sids) AND verify (_series_ids) -> no perpetual v2c laggard warn.
+  # History frozen (1472 real bars, kept). DVN is a SEPARATE identity (SEC-000330, its own 6y
+  # history) -- NEVER spliced; the 0.70 ratio is a consumer-side holder-view only, not an archive
+  # mutation. TEMPLATE for a merged/delisted constituent (symbol will not return). See
+  # C:/Projects/P8b-HON-case-to-resolve.md (CTRA merger case).
+  px_ctra_daily: {symbol: "CTRA", name: "Coterra", category: "Energy", family: "stock", retired: true, retired_on: "2026-05-07", merged_into: "DVN", merge_ratio: 0.70}
   px_ctsh_daily: {symbol: "CTSH", name: "Cognizant", category: "Information Technology", family: "stock"}
   px_ctva_daily: {symbol: "CTVA", name: "Corteva", category: "Materials", family: "stock"}
   px_cvna_daily: {symbol: "CVNA", name: "Carvana", category: "Consumer Discretionary", family: "stock"}
@@ -1168,7 +1177,15 @@ price:
   px_rmv_l_daily: {symbol: "RMV.L", name: "RIGHTMOVE PLC", category: "Communication Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
   px_rno_pa_daily: {symbol: "RNO.PA", name: "RENAULT SA", category: "Consumer Cyclical", currency: "EUR", quote_basis: "EUR", family: "stock"}
   px_rock_b_co_daily: {symbol: "ROCK-B.CO", name: "ROCKWOOL CLASS B", category: "Industrials", currency: "DKK", quote_basis: "DKK", family: "stock"}
-  px_rog_sw_daily: {symbol: "ROG.SW", name: "ROCHE PS PAR AG", category: "Healthcare", currency: "CHF", quote_basis: "CHF", family: "stock"}
+  # RENAMED 2026-03-17: Roche Genussscheine (ROG.SW) exchanged 1:1 for Partizipationsscheine
+  # (participation certs) -> new ticker ROP.SW, new ISIN CH1499059983, new Valor; ROG.SW last
+  # trade 2026-03-16. iShares EXSA (STOXX600 authority) carries Roche under ROP.SW. Symbol change,
+  # NOT a delisting -> series_id stays px_rog_sw_daily (Option-A frozen store key, zero consumer
+  # break); stable identity continues via identity continuation_of SEC-000840 (ROG.SW->ROP.SW,
+  # the FB->META pattern). New ISIN breaks apply_snapshot's ISIN/FIGI auto-link -> linked MANUALLY.
+  # Yahoo stitches full 6y history under ROP.SW (economically continuous). TEMPLATE for an
+  # index-driven symbol change. See C:/Projects/P8b-HON-case-to-resolve.md (ROG.SW->ROP.SW case).
+  px_rog_sw_daily: {symbol: "ROP.SW", name: "ROCHE PS PAR AG", category: "Healthcare", currency: "CHF", quote_basis: "CHF", family: "stock"}
   px_ror_l_daily: {symbol: "ROR.L", name: "ROTORK PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
   px_rr_l_daily: {symbol: "RR.L", name: "ROLLS-ROYCE HOLDINGS PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
   px_rs1_l_daily: {symbol: "RS1.L", name: "RS GROUP PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}

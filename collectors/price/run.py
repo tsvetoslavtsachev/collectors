@@ -60,7 +60,12 @@ def _family_sids(cfg: dict, families: list[str]) -> list[str]:
     lands. A FULL manual pull (no ``--daily``) is unscoped -- it re-pulls every bar, so it
     carries no cliff risk."""
     fams = set(families)
-    return [sid for sid, m in cfg["price"].items() if m.get("family", "etf") in fams]
+    # RETIRED constituents (merged/delisted, symbol will not return -- e.g. CTRA->DVN merger,
+    # 2026-07-03) are dropped from fetch scope: their config entry stays for provenance, but the
+    # daily run must not keep probing a dead symbol. Distinct from _QUARANTINE_DEAD_OK (temporary
+    # upstream outage, symbol returns UNCHANGED) -- retire is permanent.
+    return [sid for sid, m in cfg["price"].items()
+            if m.get("family", "etf") in fams and not m.get("retired")]
 
 
 def _daily_ready_scope(cfg: dict, sids: list[str], *, root=None, log=print) -> list[str]:
