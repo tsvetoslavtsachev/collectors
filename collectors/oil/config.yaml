@@ -49,7 +49,7 @@ falsifier:                            # ценови фалсификатори 
   confirm_consecutive_closes: 5
 
 composite:                           # при 5 активни серии: 3 от 5
-  bull_needed: 3                      # от 4 активни серии
+  bull_needed: 3                      # от 5 активни серии
   bull_must_include: ["S1", "S2"]     # поне една от двете
   bear_needed: 3
 
