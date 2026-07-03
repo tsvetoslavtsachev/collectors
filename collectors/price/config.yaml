@@ -59,10 +59,10 @@ settings:
                                  # P8b LANDED: stock split-heal ships (run.py heals any in-window
                                  # split before the ~Nx TA cliff can strand pre-split bars, e.g.
                                  # NVDA 10:1), so US stocks now join the daily run. STOXX stay OUT
-                                 # automatically: _daily_ready_scope drops unregistered families,
-                                 # and STOXX are not registered until P8c (registered+stamped =
-                                 # 132 etf + 502 SP500 = 634; HON quarantined pending re-backfill
-                                 # -> 503/635; 609 STOXX dropped, never fetched).
+                                 # automatically: _daily_ready_scope drops unregistered families.
+                                 # As-built (P8b/P8c): 132 etf + 503 SP500 + 608 STOXX600 = 1243
+                                 # registered+stamped. HON re-backfilled 2026-07-03 (quarantine
+                                 # lifted); ROG.SW still quarantined (Yahoo no-data) -> 609th dropped.
                                  # A FULL manual pull (no --daily) is unscoped (re-pulls every bar
                                  # -> no cliff). idx_dxy omits family -> defaults to etf -> in the run.
   # CI PERF BUDGET (P7a gate note, for the P8 stock daily CI): archive.append re-reads each

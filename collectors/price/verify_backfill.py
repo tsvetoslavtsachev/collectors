@@ -65,7 +65,8 @@ _STALE_WARN_DAYS = 4
 # loud lift-the-entry nudge. Remove an entry together with its re-backfill (catalog
 # re-register), never before.
 _QUARANTINE_DEAD_OK = {
-    "px_hon_daily":    "HON -- upstream yfinance lagged-split (P8b 29.06), re-backfill pending",
+    # px_hon_daily LIFTED 2026-07-03: Yahoo settled (lagged-split resolved), re-backfilled +
+    # re-registered (SEC-000496, 1506 bars). Removed with the re-backfill per the fail-closed rule.
     "px_rog_sw_daily": "ROG.SW -- Yahoo serves no data for the symbol (P8c 30.06), re-backfill pending",
 }
 
