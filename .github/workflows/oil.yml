@@ -1,4 +1,4 @@
-name: oil-two-clocks
+name: oil
 
 # Needs repo secrets:
 #   DATACORE_PAT  - PAT (repo scope) to checkout + push the private data-core
