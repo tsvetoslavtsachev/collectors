@@ -97,6 +97,6 @@ jobs:
           git add data health \
             migrations/s6e_ks migrations/e1_organism_cards \
             migrations/m_atlas migrations/m_breadth \
-            migrations/m_amp migrations/m_inter
+            migrations/m_amp migrations/m_inter migrations/e2_dashboard
           git diff --cached --quiet || git commit -m "vrm: $(date -u +%Y-%m-%d) canonical + state + registries write"
           git push
