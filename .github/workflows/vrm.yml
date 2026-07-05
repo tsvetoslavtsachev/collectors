@@ -49,6 +49,18 @@ jobs:
           token: ${{ secrets.DATACORE_PAT }}
           path: _data-core
 
+      # The brain's M-modules (atlas / breadth / amp / inter, steps 11-14) read px_*
+      # bars + the catalog from the price archive -- without this checkout they die
+      # (2026-07-05 Saturday-rehearsal failure). Contents=READ token only; the brain
+      # never writes to the archive.
+      - name: Checkout price-archive (private, read-only)
+        uses: actions/checkout@v5
+        with:
+          repository: tsvetoslavtsachev/price-archive
+          token: ${{ secrets.PRICE_ARCHIVE_RO_PAT }}
+          path: _price-archive
+          fetch-depth: 1
+
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -81,6 +93,11 @@ jobs:
           # absolute root into every child env and applies a per-step truncation floor.
           # Writes data/state + the derived registries/cards under migrations/.
           DATACORE_ALLOW_REAL: "1"
+          # M-modules (steps 11-14) read the price archive from the checkout above.
+          # The 131-ETF universe + the long-history CSV are VENDORED inside data-core
+          # (m_atlas/universe_vendored.json · m_inter/data_all_years.csv) -- no other
+          # local-machine path leaks into the runner.
+          PRICE_ARCHIVE_ROOT: ${{ github.workspace }}/_price-archive
         run: python _data-core/migrations/vrm_brain/run_brain.py
 
       - name: Commit canonical + state + health + registries -> data-core (private)
