@@ -177,8 +177,18 @@ def offline(g: Gate) -> None:
     # p8a5 family-scope: partition + run --daily selection (closes Капан 1) ----------------
     etf_only = run._family_sids(CFG, ["etf"])
     stock_only = run._family_sids(CFG, ["stock"])
-    g.check("p8a5a _family_sids partitions: %d etf + %d stock, disjoint" % (len(ETF_SIDS), len(STOCK_SIDS)),
-            len(etf_only) == len(ETF_SIDS) == 137 and len(stock_only) == len(STOCK_SIDS)
+    # _family_sids EXCLUDES retired entries (permanent merger/delisting -- e.g. px_ctra_daily,
+    # CTRA->DVN, retired 2026-05-07), whereas ETF_SIDS/STOCK_SIDS are retire-INCLUSIVE: the config
+    # keeps a retired entry for provenance and the catalog register still upserts it (p8a6b's 1249).
+    # So the partition invariant compares _family_sids against the retire-EXCLUDED family membership
+    # -- else the stock side is off by the retired stock(s). Derived from config so it tracks a new
+    # retirement, not a constant.
+    etf_live = [s for s in ETF_SIDS if not CFG["price"][s].get("retired")]
+    stock_live = [s for s in STOCK_SIDS if not CFG["price"][s].get("retired")]
+    g.check("p8a5a _family_sids partitions (retire-excluded): %d etf + %d stock, disjoint"
+            % (len(etf_live), len(stock_live)),
+            len(etf_only) == len(etf_live) == 137 and len(stock_only) == len(stock_live)
+            and set(etf_only) == set(etf_live) and set(stock_only) == set(stock_live)
             and set(etf_only).isdisjoint(stock_only),
             f"etf={len(etf_only)} stock={len(stock_only)}")
     g.check("p8a5b every etf-scope sid is family etf; every stock-scope sid is family stock",

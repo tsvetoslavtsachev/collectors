@@ -57,16 +57,13 @@ jobs:
       - name: Run offline price-citizen gates
         # Each test_*.py is a script: exits 0 on all-PASS, non-zero on any FAIL. `set -e`
         # makes the job RED on the first failing gate. --live is NOT passed -> no network.
-        # test_stamp.py is TEMPORARILY EXCLUDED: it has a PRE-EXISTING failing assertion
-        # (p8a5a) unrelated to this workflow -- `_family_sids` drops the retired px_ctra_daily
-        # (CTRA->DVN merger) so its stock count (1111) != STOCK_SIDS (1112). Re-add it here
-        # once that count comparison is made retire-consistent (tracked separately).
         env:
           PYTHONPATH: ${{ github.workspace }}/_data-core:${{ github.workspace }}
         run: |
           set -e
           for t in test_backfill test_consumer test_daily test_identity \
-                   test_price test_reconcile test_split_heal test_stock test_stoxx; do
+                   test_price test_reconcile test_split_heal test_stamp \
+                   test_stock test_stoxx; do
             echo "::group::$t"
             python "collectors/price/tests/$t.py"
             echo "::endgroup::"
