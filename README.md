@@ -8,11 +8,20 @@
 
 ## Колектори
 
-| Колектор | Серии в data-core | Източници |
-|---|---|---|
-| **oil** (Два часовника) | oil_brent_m1_m2 · oil_brent_wti_spread · oil_wti_close · oil_hormuz_transit_pct · oil_eia_crude_deviation · oil_cot_wti_mm_pctile | yfinance · IMF PortWatch · EIA · CFTC |
+Репото има няколко граждани. Всеки пише през gate-а (identity + schema + health);
+числата живеят в data-core (или в price-archive за цените), тук е само fetch/compute
+логиката.
+
+| Колектор | Пише в | Какво | Източници |
+|---|---|---|---|
+| **oil** | data-core | oil_* серии (spread, WTI close, Hormuz transit, EIA deviation, COT pctile) | yfinance · IMF PortWatch · EIA · CFTC |
+| **cot** | data-core | cot_<key>_net позиционни серии + персентили (S13) | CFTC |
+| **vrm** | data-core | 51 VRM серии (ETF/idx dual-basis, FRED levels, computed, manual ISM) + brain M-модулите | yfinance · FRED · manual ISM |
+| **price** | price-archive | каноничен дневен ETF/stock архив (append-only, year-partitioned, bitemporal) | yfinance |
+| **vrm/alfred** | data-core (vintage/) | ALFRED PIT vintage история на 7-те FRED режимни серии (M1) | FRED ALFRED |
 
 oil е **първият гражданин** на новата архитектура (INIT-22 E2): роден през принципите от ден 1.
+cot, vrm, price и alfred следват същия шаблон (base-first, cardinal rule, health-per-write).
 
 ## Локален run
 
@@ -27,8 +36,15 @@ python -m collectors.oil.run --mock                # mock = без мрежа/к
 
 ## CI (cross-repo)
 
-`.github/workflows/oil.yml` чеква collectors + data-core (private), пуска oil, commit-ва каноничните данни обратно в data-core и светофара тук. Нужни secrets:
-- `DATACORE_PAT` — PAT (repo scope) за push в private data-core
-- `EIA_API_KEY` — за серия С3
+Всеки workflow чеква collectors + private data-core, пуска колектора и commit-ва
+каноничните данни обратно (cross-repo push):
+- `oil.yml` — oil серии (Ср + Пт)
+- `cot.yml` — COT серии (съб, staggered след vrm)
+- `vrm.yml` — VRM серии + brain M-модулите (съб)
+- `alfred-vintage.yml` — ALFRED PIT vintage (месечно, 5-о число)
+
+Нужни secrets (по workflow): `DATACORE_PAT` (push в private data-core) ·
+`EIA_API_KEY` (oil серия С3) · `FRED_API_KEY` (vrm/alfred) · `PRICE_ARCHIVE_RO_PAT`
+(brain M-модули четат price-archive) · `OPS_PAT` (oil health digest, guarded).
 
 Pages: Settings → Pages → main /docs (светофарът).
