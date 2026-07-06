@@ -208,6 +208,13 @@ price:
   px_fxy_daily:    {symbol: "FXY", name: "Invesco CurrencyShares Yen", category: "Currency"}
   px_fxf_daily:    {symbol: "FXF", name: "Invesco CurrencyShares CHF", category: "Currency"}
   px_dxy_daily:    {symbol: "DX-Y.NYB", name: "US Dollar Index", category: "Currency Index"}
+  # macro-satellite gap ETFs (REV2 queue, INIT-24): registered into price-archive so the
+  # satellite base-first covers 47/47 (was 42/47; the 5 were on the CLOSED yfinance fallback).
+  px_dfen_daily:   {symbol: "DFEN", name: "Direxion Daily Aerospace & Defense Bull 3X", category: "US Sector"}
+  px_efa_daily:    {symbol: "EFA", name: "iShares MSCI EAFE", category: "Intl Equity"}
+  px_vea_daily:    {symbol: "VEA", name: "Vanguard FTSE Developed Markets", category: "Intl Equity"}
+  px_ibit_daily:   {symbol: "IBIT", name: "iShares Bitcoin Trust", category: "Commodity"}
+  px_ashr_daily:   {symbol: "ASHR", name: "Xtrackers Harvest CSI 300 China A-Shares", category: "Intl Equity"}
 
   # ---- SP500 stock family (current members; snapshot from
   # SP500-rotationradar/data/sector_map.json, updated 2026-04-25T23:33:28; generated 2026-06-27 P7a) ----
