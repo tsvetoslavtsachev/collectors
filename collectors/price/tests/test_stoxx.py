@@ -6,7 +6,7 @@ Offline gates (default run) -- no network, against a TEMPORARY archive root:
   t2 GBX rule       -- .L+GBP -> quote_basis "GBX" (pence); USD-on-LSE (IHG.L) -> "USD" not GBX;
                        a EUR name (SAP.DE) -> "EUR" (currency-driven, NOT suffix-driven)
   t3 collisions=0   -- suffix-retained series_id -> 0 dup symbol/series_id across the WHOLE union
-                       (132 ETF + 503 SP500 + ~609 STOXX); the cardinal cross-archive risk
+                       (137 ETF + 503 SP500 + ~609 STOXX); the cardinal cross-archive risk
   t4 normalization  -- dashed+suffixed (NOVO-B.CO -> px_novo_b_co_daily); intra-STOXX base-dup
                        disambiguation (SAN.PA Sanofi vs SAN.MC Santander -> distinct ids/names)
   t5 entry routing  -- STOXX entry: currency+quote_basis+backtest_valid:false+survivorship;
@@ -103,7 +103,7 @@ def offline(g: Gate, tmp: Path) -> None:
     # t3 collisions = 0 across the WHOLE union (cardinal cross-archive risk) ------
     all_sids = list(CFG["price"].keys())
     all_syms = [m["symbol"].upper() for m in CFG["price"].values()]
-    g.check("t3a 0 duplicate series_id across union (132 ETF + 503 SP500 + ~609 STOXX)",
+    g.check("t3a 0 duplicate series_id across union (137 ETF + 503 SP500 + ~609 STOXX)",
             len(all_sids) == len(set(all_sids)),
             "total=%d unique=%d" % (len(all_sids), len(set(all_sids))))
     g.check("t3b 0 duplicate symbol across union", len(all_syms) == len(set(all_syms)),
@@ -138,8 +138,8 @@ def offline(g: Gate, tmp: Path) -> None:
             "currency" not in esp and esp["backtest_valid"] is False)
 
     # t6 counts ------------------------------------------------------------------
-    g.check("t6 families: 132 ETF, stock = SP500 + STOXX",
-            len(ETF) == 132 and len(STOCK) == len(SP500_STOCK) + len(STOXX),
+    g.check("t6 families: 137 ETF, stock = SP500 + STOXX",
+            len(ETF) == 137 and len(STOCK) == len(SP500_STOCK) + len(STOXX),
             "etf=%d stock=%d sp500=%d stoxx=%d" % (len(ETF), len(STOCK), len(SP500_STOCK), len(STOXX)))
 
     # t8 (P8c) currency=>family defense-in-depth -- a currency-bearing entry MUST be a stock.

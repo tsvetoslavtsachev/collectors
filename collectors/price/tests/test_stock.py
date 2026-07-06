@@ -8,7 +8,7 @@ Offline gates (default run) -- no network, against a TEMPORARY archive root:
   s3 B2/D3 control -- a programmatic reader can HARD-REFUSE a flagged series by the flag
   s4 family route  -- entry() returns the stock shape for family:stock, etf shape otherwise
   s5 dotted ticker -- BRK-B -> series_id px_brk_b_daily, symbol "BRK-B", in config + catalog
-  s6 collision     -- no dup series_id / symbol across the whole config; ~503 stock + 132 etf
+  s6 collision     -- no dup series_id / symbol across the whole config; ~503 stock + 137 etf
   s7 per-family    -- fetch default period = stock "6y" / etf "max" (monkeypatched, no network)
 
 Live gate (--live, network):
@@ -129,7 +129,7 @@ def offline(g: Gate, tmp: Path) -> None:
             "total=%d unique=%d" % (len(sids), len(set(sids))))
     g.check("s6b no duplicate symbol across the whole config", len(syms) == len(set(syms)),
             "total=%d unique=%d" % (len(syms), len(set(syms))))
-    g.check("s6c union = 132 ETF + ~503 stock", len(ETF_SIDS) == 132 and len(STOCK_SIDS) >= 490,
+    g.check("s6c union = 137 ETF + ~503 stock", len(ETF_SIDS) == 137 and len(STOCK_SIDS) >= 490,
             "etf=%d stock=%d" % (len(ETF_SIDS), len(STOCK_SIDS)))
 
     # s7 per-family default depth (no network -- monkeypatch fetch_one) ----------

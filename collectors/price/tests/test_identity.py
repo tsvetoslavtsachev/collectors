@@ -11,7 +11,7 @@ Offline gates (default run) -- no network:
   t3 ETF no-regress  -- NO ETF entry gains stable_id; ETF entries are BYTE-identical
                        with vs without the identity map (verify gate 3).
   t4 dotted/suffix   -- BRK-B -> US, SAP.DE -> GR, HSBA.L -> LN; each minted + stamped.
-  t5 1244 intact     -- 132 ETF + 1112 stock = 1244 unique series_id; no re-key.
+  t5 1249 intact     -- 137 ETF + 1112 stock = 1249 unique series_id; no re-key.
   t6 invariants      -- the seeded 1112 map: unique ids, 1 active epoch/ticker, dense.
   t7 splice-refuse   -- a recycled ticker on the REAL map mints a 2nd id, flagged.
   t8 rename-continuity-- a FIGI-confirmed rename on the real map -> ONE stable_id;
@@ -139,10 +139,10 @@ def offline(g: Gate, tmp: Path) -> None:
             identity.exch_code("HSBA.L") == "LN"
             and isinstance(cat.get("px_hsba_l_daily", {}).get("stable_id"), str))
 
-    # t5 1244 series intact (no re-key) -----------------------------------------
+    # t5 1249 series intact (no re-key) -----------------------------------------
     sids = [s for s in cat if s.startswith("px_") and s != "px_probe_daily"]
-    g.check("t5a 132 ETF + 1112 stock = 1244 series registered",
-            len(ETF_SIDS) == 132 and len(STOCK_SIDS) == 1112 and len(sids) == 1244,
+    g.check("t5a 137 ETF + 1112 stock = 1249 series registered",
+            len(ETF_SIDS) == 137 and len(STOCK_SIDS) == 1112 and len(sids) == 1249,
             "etf=%d stock=%d total=%d" % (len(ETF_SIDS), len(STOCK_SIDS), len(sids)))
     g.check("t5b series_ids unchanged (px_<ticker>_daily; no re-key to px_<id>)",
             all(s.startswith("px_") and s.endswith("_daily") for s in sids)

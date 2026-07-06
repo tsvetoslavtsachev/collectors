@@ -178,7 +178,7 @@ def offline(g: Gate) -> None:
     etf_only = run._family_sids(CFG, ["etf"])
     stock_only = run._family_sids(CFG, ["stock"])
     g.check("p8a5a _family_sids partitions: %d etf + %d stock, disjoint" % (len(ETF_SIDS), len(STOCK_SIDS)),
-            len(etf_only) == len(ETF_SIDS) == 132 and len(stock_only) == len(STOCK_SIDS)
+            len(etf_only) == len(ETF_SIDS) == 137 and len(stock_only) == len(STOCK_SIDS)
             and set(etf_only).isdisjoint(stock_only),
             f"etf={len(etf_only)} stock={len(stock_only)}")
     g.check("p8a5b every etf-scope sid is family etf; every stock-scope sid is family stock",
@@ -236,7 +236,7 @@ def offline(g: Gate) -> None:
     finally:
         os.environ.pop("DATACORE_ALLOW_REAL", None)
     g.check("p8a6b register is idempotent (a 2nd register adds 0 new, all upserted)",
-            added2 == [] and len(_updated2) == 1244, f"added2={len(added2)} updated2={len(_updated2)}")
+            added2 == [] and len(_updated2) == 1249, f"added2={len(added2)} updated2={len(_updated2)}")
     shutil.rmtree(bare, ignore_errors=True)
 
 
