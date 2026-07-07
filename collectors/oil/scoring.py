@@ -21,13 +21,13 @@ def score_s1(prices: dict, cfg: dict) -> dict:
     spread = prices["spread_last"]
     if len(last_n) >= c["persistence_days"] and min(last_n) >= c["bull_threshold"]:
         state = "BULL"
-    elif spread <= c["bear_threshold"]:
-        state = "BEAR"
+    elif len(last_n) >= c["persistence_days"] and max(last_n) <= c["bear_threshold"]:
+        state = "BEAR"                                 # О4a: симетричен persistence (всички N ≤ прага)
     else:
         state = "NEUTRAL"
     return {"state": state,
             "value": f"M1−M2 = {spread:+.2f} $/б ({prices['m1_ticker']}−{prices['m2_ticker']})",
-            "detail": f"праг ✅ ≥ {c['bull_threshold']:.2f} устойчиво {c['persistence_days']} дни; ❌ ≤ {c['bear_threshold']:.2f}"}
+            "detail": f"праг ✅ ≥ {c['bull_threshold']:.2f} устойчиво {c['persistence_days']} дни; ❌ ≤ {c['bear_threshold']:.2f} устойчиво {c['persistence_days']} дни"}
 
 
 def score_s2(hz: dict, cfg: dict) -> dict:
@@ -85,7 +85,7 @@ def score_s5(cot: dict, cfg: dict, others_tight: bool) -> dict:
         state = "BEAR"
     return {"state": state,
             "value": f"MM net {cot['net_last']:,} к-та; {p_now:.0f}-и персентил (преди 2 седм.: {p_2w:.0f}-и)".replace(",", " "),
-            "detail": f"✅ скок ≥ +{c['bull_pctile_jump']} п.п. за 2 седм. от база < {c['bull_from_below_pctile']}-и; ❌ флат при физическо затягане. Доклад: {cot['report_date']}"}
+            "detail": f"контекст — контрариан на екстрем, НЕ глас в композита (managed money слаб предиктор в енергия). ✅ скок ≥ +{c['bull_pctile_jump']} п.п. за 2 седм. от база < {c['bull_from_below_pctile']}-и; ❌ флат при физическо затягане. Доклад: {cot['report_date']}"}
 
 
 def score_s6(prices: dict, cfg: dict) -> dict:
@@ -97,13 +97,13 @@ def score_s6(prices: dict, cfg: dict) -> dict:
     spr = prices["bw_last"]
     if len(last_n) >= c["persistence_days"] and min(last_n) >= c["bull_threshold"]:
         state = "BULL"
-    elif spr <= c["bear_threshold"]:
-        state = "BEAR"
+    elif len(last_n) >= c["persistence_days"] and max(last_n) <= c["bear_threshold"]:
+        state = "BEAR"                                 # О4b: симетричен persistence (всички N ≤ прага)
     else:
         state = "NEUTRAL"
     return {"state": state,
             "value": f"Brent−WTI = {spr:+.2f} $/б (предвоенно ~3.5; априлски пик ~11)",
-            "detail": f"✅ ≥ {c['bull_threshold']:.0f} устойчиво {c['persistence_days']} дни — вносният регион се задушава; ❌ ≤ {c['bear_threshold']:.0f} — атлантическият басейн се справя"}
+            "detail": f"✅ ≥ {c['bull_threshold']:.0f} устойчиво {c['persistence_days']} дни — вносният регион се задушава; ❌ ≤ {c['bear_threshold']:.0f} устойчиво {c['persistence_days']} дни — атлантическият басейн се справя"}
 
 
 def falsifier(prices: dict, cfg: dict) -> dict:
@@ -133,8 +133,12 @@ def _streak(vals: list, pred) -> int:
 def composite(scores: dict, fals: dict, cfg: dict) -> dict:
     c = cfg["composite"]
     active = {k: v for k, v in scores.items() if v["state"] != "NODATA"}
-    bulls = [k for k, v in active.items() if v["state"] == "BULL"]
-    bears = [k for k, v in active.items() if v["state"] == "BEAR"]
+    # О3 [2026-07-08]: S5 (COT managed money) ОСТАВА в active за дисплей, но НЕ гласува —
+    # managed money е слаб/контрариан предиктор в енергия (IC≈0; >80-и персентил в 0 обс,
+    # <20-и в 96%). Сигналната COT ос е хеджърската, не managed money. active/nodata
+    # броячите включват S5 (контекст); bulls/bears го изключват → 4 гласуващи серии.
+    bulls = [k for k, v in active.items() if v["state"] == "BULL" and k != "S5"]
+    bears = [k for k, v in active.items() if v["state"] == "BEAR" and k != "S5"]
 
     if fals["dead"]:
         verdict, label = "DEAD", "ТЕЗАТА ОПРОВЕРГАНА — военната премия се топи"

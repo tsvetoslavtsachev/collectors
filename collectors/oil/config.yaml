@@ -1,4 +1,4 @@
-# Два часовника — конфигурация на праговете (v1, 11 юни 2026)
+# Два часовника — конфигурация на праговете (v1.1, 08 юли 2026 — О3/О4: S5 контекст, симетричен persistence, С6 рецентриран)
 # Промяна на праг = промяна тук, не в кода.
 
 prices:
@@ -9,9 +9,10 @@ prices:
   history_days: 400
 
 series1_spread:                       # Brent M1–M2 (бекуордейшън)
+                                      # [LOCKED 2026-07-08] bull 1.50 / bear 0.50; whipsaw адресиран чрез симетричен persistence (О4a), не чрез промяна на нивата.
   bull_threshold: 1.50                # USD/барел — устойчиво над = ✅
-  bear_threshold: 0.50                # под, или контанго = ❌
-  persistence_days: 5                 # колко затваряния за "устойчиво"
+  bear_threshold: 0.50                # под, или контанго = ❌ (сега устойчиво N дни)
+  persistence_days: 5                 # колко затваряния за "устойчиво" (важи за ✅ И ❌)
 
 series2_hormuz:                       # IMF PortWatch — транзити
   arcgis_url: "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/Daily_Chokepoints_Data/FeatureServer/0/query"
@@ -48,12 +49,12 @@ falsifier:                            # ценови фалсификатори 
   confirm_above: 95.0
   confirm_consecutive_closes: 5
 
-composite:                           # при 5 активни серии: 3 от 5
-  bull_needed: 3                      # от 5 активни серии
+composite:                           # 4 гласуващи серии (S5=контекст, не гласува): 3 от 4
+  bull_needed: 3                      # от 4-те гласуващи серии (S1/S2/S3/S6); по-консервативен бар
   bull_must_include: ["S1", "S2"]     # поне една от двете
-  bear_needed: 3
+  bear_needed: 3                      # от 4-те гласуващи серии
 
 series6_canary:                       # Brent−WTI спред — вносният регион срещу производителския
   bull_threshold: 8.0                 # USD/барел — устойчиво над = ✅ вносният стрес се връща
-  bear_threshold: 4.0                 # под = ❌ атлантическият басейн се справя
-  persistence_days: 5
+  bear_threshold: 2.0                 # [CALIBRATED 2026-07-08] mean 4.35 седеше на стария 4.0 (~2×/мес whipsaw); 2.0 ≈ mean−1σ = ясно под предвоенната норма ~3.5. Одит _sensors_analytics/SYNTHESIS.md V5.
+  persistence_days: 5                 # важи за ✅ И ❌ (симетричен persistence, О4b)
