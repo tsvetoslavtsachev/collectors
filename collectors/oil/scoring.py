@@ -140,14 +140,18 @@ def composite(scores: dict, fals: dict, cfg: dict) -> dict:
     bulls = [k for k, v in active.items() if v["state"] == "BULL" and k != "S5"]
     bears = [k for k, v in active.items() if v["state"] == "BEAR" and k != "S5"]
 
+    # О4/B2 [Вълна 1]: ЛИЦЕТО носи ДЕСКРИПТИВЕН режимен речник (РЕЖИМ: ...), не
+    # predictive „ТЕЗАТА ДОКАЗАНА/ОПРОВЕРГАНА" (органът е дескриптивен, звучеше
+    # predictive — Г8 дупка №5). Вътрешните verdict-ключове PROVEN/WAIT/DEAD остават
+    # за цвят/логика; сменя се само показаният текст. Пълният редизайн = oil-v2.
     if fals["dead"]:
-        verdict, label = "DEAD", "ТЕЗАТА ОПРОВЕРГАНА — военната премия се топи"
+        verdict, label = "DEAD", "РЕЖИМ: РАЗТОВАРВАНЕ — военната премия се топи"
     elif len(bulls) >= c["bull_needed"] and any(k in bulls for k in c["bull_must_include"]):
-        verdict, label = "PROVEN", "ТЕЗАТА ДОКАЗАНА — очаквай гап, не тренд"
+        verdict, label = "PROVEN", "РЕЖИМ: НЕРАВНОВЕСИЕ — дисбалансът е налице (гап-риск, не тренд)"
     elif len(bears) >= c["bear_needed"]:
-        verdict, label = "DEAD", "ТЕЗАТА ОПРОВЕРГАНА — диапазонът се разпада"
+        verdict, label = "DEAD", "РЕЖИМ: РАЗТОВАРВАНЕ — диапазонът се разпада"
     else:
-        verdict, label = "WAIT", "ИЗЧАКВАНЕ — пружината се навива"
+        verdict, label = "WAIT", "РЕЖИМ: ИЗЧАКВАНЕ — пружината се навива"
 
     if fals["confirm"] and verdict == "WAIT":
         label += " · ценово потвърждение в ход (WTI > 95)"

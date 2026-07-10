@@ -121,7 +121,10 @@ body {{ background:var(--bg); color:var(--ink);
   text-transform:uppercase; letter-spacing:.06em }}
 .tape b {{ color:var(--ink); font-weight:500 }}
 h1 {{ font-size:26px; letter-spacing:.02em; margin:28px 0 4px }}
-.subtitle {{ color:var(--dim); margin-bottom:20px }}
+.subtitle {{ color:var(--dim); margin-bottom:14px }}
+.o4badge {{ display:inline-block; margin:0 0 20px; padding:4px 12px;
+  border:1px solid var(--line); border-radius:999px; color:var(--dim);
+  font-size:11.5px; font-weight:600; letter-spacing:.07em; text-transform:uppercase }}
 .verdict {{ border:1px solid {vcol}; border-left:6px solid {vcol}; background:var(--panel);
   padding:16px 20px; margin:0 0 24px; display:flex; align-items:baseline; gap:14px; flex-wrap:wrap }}
 .verdict .big {{ font-size:19px; font-weight:700; color:{vcol} }}
@@ -162,6 +165,7 @@ footer {{ margin-top:28px; color:var(--dim); font-size:12px; line-height:1.7 }}
 <div class="wrap">
 <h1>Два часовника</h1>
 <p class="subtitle">Изпразва ли се запасът по-бързо, отколкото потокът се лекува. Седмичен монитор на петролното неравновесие.</p>
+<div class="o4badge" title="Организмов договор О4: дескриптивно режимно наблюдение — не сигнал за действие, не прогноза за посока.">НАБЛЮДЕНИЕ · дескриптивен режим</div>
 <div class="verdict"><span class="big">{comp["label"]}</span>
 <span class="tally">✅ {comp["bulls"]} · ❌ {comp["bears"]} от {comp["active"]} активни серии{" · без данни: " + str(comp["nodata"]) if comp["nodata"] else ""}</span></div>
 <div class="clocks">{g1}{g2}</div>
