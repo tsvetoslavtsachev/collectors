@@ -8,6 +8,7 @@ data-core; this repo holds only the fetch logic and the identity/percentile lib.
 Percentiles are derived on the clean segment with explicit windows, never baked.
 """
 from __future__ import annotations
+import datetime as dt
 import sys
 from pathlib import Path
 import yaml
@@ -15,6 +16,49 @@ import yaml
 from . import to_datacore, derive, markets
 
 HERE = Path(__file__).resolve().parent
+
+# Symmetric with cot-monitor/scripts/check_freshness.py -- see that docstring for
+# the Tuesday-report / Friday-publish (+3d) / holiday-shift (<=+3d) calibration.
+# Beyond 11 days a full weekly reporting cycle was missed.
+STALE_DAYS = 11
+
+
+def _base_frontier(pushed: list) -> str | None:
+    """Newest as_of across the series actually written this run (the base frontier)."""
+    dates = [r["as_of"] for r in pushed
+             if r.get("rows") is not None and r.get("as_of")]
+    return max(dates) if dates else None
+
+
+def freshness_verdict(pushed: list, today: dt.date | None = None,
+                      stale_days: int = STALE_DAYS) -> tuple[int, str]:
+    """Fail-loud guard symmetric to the dashboard's check_freshness.py.
+
+    Returns (exit_code, message). RED (1) when the COT base did not advance past a
+    full weekly reporting cycle, so frozen positioning can never quietly ship on a
+    green run. The prices/manifest churn every run, so silence is the default
+    failure mode this makes loud.
+
+    NOT fired on the normal "run before publication" case: those runs still write
+    the full cohort with a frontier <= stale_days old, so age stays within budget.
+    Only a genuinely missed cycle (or a total fetch failure that wrote nothing)
+    trips it.
+    """
+    today = today or dt.datetime.now(dt.timezone.utc).date()
+    frontier = _base_frontier(pushed)
+    if frontier is None:
+        return 1, ("no market wrote a canonical row this run (total fetch failure) "
+                   "-- cannot confirm COT base freshness")
+    try:
+        last = dt.date.fromisoformat(frontier[:10])
+    except ValueError:
+        return 1, f"unparseable base frontier date {frontier!r}"
+    age = (today - last).days
+    if age > stale_days:
+        return 1, (f"COT base STALE: newest canonical as_of {frontier} is {age}d old "
+                   f"(> {stale_days}d) -- a weekly reporting cycle was missed")
+    return 0, (f"COT base fresh: newest canonical as_of {frontier} is {age}d old "
+               f"(<= {stale_days}d)")
 
 
 def main() -> int:
@@ -43,7 +87,12 @@ def main() -> int:
         print(f"  + {r['series_id']}: {r['rows']} rows, as_of {r['as_of']}{mark}")
     for r in skipped:
         print(f"  - {r['series_id']}: SKIP ({r.get('skipped')})")
-    return 0
+
+    # fail-loud freshness guard (before the CI commit step): a missed reporting
+    # cycle must go RED, never silently green.
+    code, msg = freshness_verdict(pushed)
+    print(("FAIL: " if code else "OK: ") + msg)
+    return code
 
 
 if __name__ == "__main__":
