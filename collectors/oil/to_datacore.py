@@ -6,7 +6,10 @@ file. A dead source -> empty points -> that series is skipped (never a silent ze
 """
 from __future__ import annotations
 import datacore
+from datacore import storage
 from datacore.schema import SCHEMA_VERSION
+
+from collectors import price_guard
 
 # (data-core series_id, raw block, source tag, field holding [(date, value), ...])
 SERIES = [
@@ -21,6 +24,7 @@ SERIES = [
 
 def push(raw: dict) -> list[dict]:
     results = []
+    revisions = {}       # мандат №44: {series_id: declaration} -> health ledger
     for series_id, block_key, source, field in SERIES:
         block = raw.get(block_key, {})
         points = block.get(field, []) if block.get("ok") else []
@@ -29,10 +33,20 @@ def push(raw: dict) -> list[dict]:
                             "skipped": block.get("error", "no data")})
             continue
         records = [{"as_of": d, "value": v, "source": source} for d, v in points]
+        records = price_guard.round_records(records)          # №44: write хигиена
+        existing = storage.read_canonical(series_id)
+        records = price_guard.apply_deadband(existing, records)  # №44: епсилон джитър
+        decl = price_guard.declare_revisions(existing, records)
+        if decl:
+            revisions[series_id] = decl
+            print("  [REVISION] {}: {}".format(series_id, price_guard.summarize(decl)))
         try:
-            results.append(
-                datacore.write(series_id, records, schema_version=SCHEMA_VERSION)
-            )
+            res = datacore.write(series_id, records, schema_version=SCHEMA_VERSION)
+            if decl:
+                res["revisions"] = price_guard.summarize(decl)
+            results.append(res)
         except datacore.WriteRejected as e:
             results.append({"series_id": series_id, "skipped": f"rejected: {e}"})
+    ledger = price_guard.write_ledger("oil", revisions)
+    print("  [LEDGER] {} series with revisions -> {}".format(len(revisions), ledger))
     return results

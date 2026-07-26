@@ -20,6 +20,8 @@ import datacore
 from datacore import storage
 from datacore.schema import SCHEMA_VERSION
 
+from collectors import price_guard
+
 # write_canonical overwrites the whole file; a short live pull would silently
 # truncate the frozen 19y history. Refuse a full-replace that would drop the
 # target series below this fraction of its existing rows (anti-truncation floor).
@@ -103,6 +105,7 @@ def push(raw: dict) -> list:
     head erosion, tail regression, or interior holes a live source gap introduces)."""
     assert_safe_root()   # structural cardinal-rule guard at the write path itself
     results = []
+    revisions = {}       # мандат №44: {series_id: declaration} -> health ledger
     for series_id in sorted(raw):
         block = raw[series_id]
         records = block.get("records") if block.get("ok") else None
@@ -120,11 +123,21 @@ def push(raw: dict) -> list:
                                 f"refused: would truncate {len(existing)}->{len(records)} rows"})
                 continue
             warnings = _edge_warnings(existing, records)
+        records = price_guard.round_records(records)          # №44: write хигиена
+        records = price_guard.apply_deadband(existing, records)  # №44: епсилон джитър
+        decl = price_guard.declare_revisions(existing, records)
+        if decl:
+            revisions[series_id] = decl
+            print("  [REVISION] {}: {}".format(series_id, price_guard.summarize(decl)))
         try:
             res = datacore.write(series_id, records, SCHEMA_VERSION)
             if warnings:
                 res["warnings"] = warnings
+            if decl:
+                res["revisions"] = price_guard.summarize(decl)
             results.append(res)
         except datacore.WriteRejected as e:
             results.append({"series_id": series_id, "skipped": f"rejected: {e}"})
+    ledger = price_guard.write_ledger("vrm", revisions)
+    print("  [LEDGER] {} series with revisions -> {}".format(len(revisions), ledger))
     return results
