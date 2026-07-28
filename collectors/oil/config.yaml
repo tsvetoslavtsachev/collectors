@@ -14,12 +14,13 @@ series1_spread:                       # Brent M1–M2 (бекуордейшън)
   bear_threshold: 0.50                # под, или контанго = ❌ (сега устойчиво N дни)
   persistence_days: 5                 # колко затваряния за "устойчиво" (важи за ✅ И ❌)
 
-series2_hormuz:                       # IMF PortWatch — транзити
+series2_hormuz:                       # IMF PortWatch — транзити (AIS-видими; долна граница при dark fleet)
   arcgis_url: "https://services9.arcgis.com/weJ1QsnbMYJlCHdG/arcgis/rest/services/Daily_Chokepoints_Data/FeatureServer/0/query"
   port_filter_field: "portname"
   port_filter_value: "Hormuz"         # LIKE филтър
   date_field_candidates: ["date", "Date", "date_"]
   tanker_field_candidates: ["n_tankers", "n_tanker", "tankers", "n_cargo", "n_total"]
+  history_start: "2023-10-21"         # събота — начало на първата канонична W-FRI седмица (27.10.2023); държи пагинирания pull байт-идемпотентен със замразения канон
   baseline_start: "2026-01-01"        # предвоенна база
   baseline_end: "2026-02-27"
   bull_pct_of_baseline: 50            # 7-дн. средно под 50% от базата...
