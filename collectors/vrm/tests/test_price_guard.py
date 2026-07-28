@@ -165,3 +165,47 @@ def test_ledger_write_and_empty_declaration(tmp_path):
                         "settled": [], "settled_n": 1}}
     p2 = pg.write_ledger("vrm", decl, base=tmp_path)
     assert json.load(open(p2, encoding="utf-8")) == decl
+
+
+def _journal(tmp_path, collector="vrm"):
+    p = tmp_path / "health" / "price_revisions_{}_journal.jsonl".format(collector)
+    if not p.exists():
+        return None
+    return [json.loads(line) for line in p.read_text(encoding="utf-8").splitlines()]
+
+
+def test_journal_remembers_what_the_face_forgets(tmp_path):
+    # flip-flop 28.07.2026: лицето се презаписва и тихият трети пуск изтри
+    # доказателството; журналът трябва да пази ДВЕТЕ противоположни декларации
+    import datetime as dt
+    t = dt.datetime(2026, 7, 28, 10, 57, tzinfo=dt.timezone.utc)
+    flip = {"oil_hormuz_transit_pct": {"tip": "2026-07-17",
+            "historical_value": [{"as_of": "2023-10-27", "field": "value",
+                                  "old": 114.9, "new": 117.9}],
+            "historical_value_n": 1}}
+    flop = {"oil_hormuz_transit_pct": {"tip": "2026-07-24",
+            "historical_value": [{"as_of": "2023-10-27", "field": "value",
+                                  "old": 117.9, "new": 114.9}],
+            "historical_value_n": 1}}
+    pg.write_ledger("oil", flip, base=tmp_path, now=t)
+    pg.write_ledger("oil", flop, base=tmp_path, now=t.replace(hour=11, minute=21))
+    pg.write_ledger("oil", {}, base=tmp_path)          # тихият пуск: лицето празно...
+    face = json.load(open(tmp_path / "health" / "price_revisions_oil.json",
+                          encoding="utf-8"))
+    assert face == {}
+    j = _journal(tmp_path, "oil")                      # ...журналът помни всичко
+    assert [e["declarations"] for e in j] == [flip, flop]
+    assert [e["run_at"] for e in j] == ["2026-07-28T10:57:00Z", "2026-07-28T11:21:00Z"]
+
+
+def test_journal_untouched_by_quiet_runs(tmp_path):
+    pg.write_ledger("vrm", {}, base=tmp_path)
+    assert _journal(tmp_path) is None                  # тих пуск не ражда журнал
+    decl = {"etf_vnq": {"tip": "2026-07-24", "settled_n": 1, "settled": []}}
+    import datetime as dt
+    t = dt.datetime(2026, 7, 28, 12, 0, tzinfo=dt.timezone.utc)
+    pg.write_ledger("vrm", decl, base=tmp_path, now=t)
+    raw = (tmp_path / "health" / "price_revisions_vrm_journal.jsonl").read_bytes()
+    pg.write_ledger("vrm", {}, base=tmp_path)          # следващ тих пуск
+    assert (tmp_path / "health"
+            / "price_revisions_vrm_journal.jsonl").read_bytes() == raw

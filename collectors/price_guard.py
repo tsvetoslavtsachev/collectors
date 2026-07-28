@@ -21,7 +21,13 @@
             дивидентни рескейли (3-4-ти знак и нагоре) остават видими.
 2. DECLARE — всяка промяна спрямо съществуващия канон се декларира в ledger-а
             health/price_revisions_<collector>.json (чиста функция на
-            (стар канон, нов fetch), без wallclock; пътува в git с канона):
+            (стар канон, нов fetch), без wallclock; пътува в git с канона).
+            Ledger-ът е ЛИЦЕТО на последния пуск и се презаписва — затова
+            декларациите се дописват и в append-only журнала
+            health/price_revisions_<collector>_journal.jsonl (по един ред на
+            пуск С декларации, с wallclock): flip-flop-ът 28.07.2026 показа,
+            че следващият тих пуск изтрива доказателството от лицето и то
+            оцелява само в git историята. Видове декларации:
             - в SETTLE_DAYS от върха: "settled" — нормалното доуточняване на
               пресния бар (поименно);
             - извън прозореца, поле value: поименно — историческа ревизия на
@@ -169,16 +175,32 @@ def datacore_base():
     return Path(datacore.__file__).resolve().parent.parent
 
 
-def write_ledger(collector, declarations, base=None):
+def write_ledger(collector, declarations, base=None, now=None):
     """health/price_revisions_<collector>.json — written on every real run; an
     empty {} is a meaningful declaration ('nothing moved'). Deterministic: pure
-    content, sorted keys, no wallclock."""
+    content, sorted keys, no wallclock.
+
+    Освен лицето: пуск С декларации се дописва като един JSONL ред в
+    health/price_revisions_<collector>_journal.jsonl — журналът ПОМНИ
+    (лицето се презаписва: flip-flop-ът 28.07.2026 оцеля само в git
+    историята, защото следващият тих пуск го изтри от лицето). Тихите
+    пускове не пипат журнала, така че остават байт-идентични. Журналът
+    е събитиен запис, затова редът носи wallclock (UTC); `now` е
+    инжектируем за тестове."""
     base = Path(base) if base else datacore_base()
-    path = base / "health" / "price_revisions_{}.json".format(collector)
-    path.parent.mkdir(parents=True, exist_ok=True)
+    health = base / "health"
+    health.mkdir(parents=True, exist_ok=True)
+    path = health / "price_revisions_{}.json".format(collector)
     with open(path, "w", encoding="utf-8") as f:
         json.dump(declarations, f, ensure_ascii=False, indent=2, sort_keys=True)
         f.write("\n")
+    if declarations:
+        stamp = (now or _dt.datetime.now(_dt.timezone.utc)).strftime(
+            "%Y-%m-%dT%H:%M:%SZ")
+        entry = {"run_at": stamp, "declarations": declarations}
+        jpath = health / "price_revisions_{}_journal.jsonl".format(collector)
+        with open(jpath, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False, sort_keys=True) + "\n")
     return path
 
 
