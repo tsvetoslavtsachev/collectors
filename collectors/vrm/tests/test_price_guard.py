@@ -65,6 +65,48 @@ def test_split_suspect_on_mass_historical_value_change():
     assert d["split_suspect"] is True
 
 
+def test_recomputed_series_summarized_not_named():
+    # COT персентил (жив пуск 28.07): плъзгащият прозорец мести цялата история
+    # с ~0.1-0.2 п.п. всяка седмица -> обобщение {n, max_abs}, БЕЗ поименен
+    # списък и БЕЗ split-suspect; фронтиерът (settle прозорецът) остава поименен
+    hist = [_row("2025-{:02d}-{:02d}".format(m, d), 10.0 + m)
+            for m in range(1, 6) for d in (3, 10, 17, 24)]
+    ex = hist + [_row("2026-07-17", 48.0), _row("2026-07-21", 50.0)]
+    new = pg.round_records(
+        [{**r, "value": r["value"] + 0.2} for r in hist]
+        + [_row("2026-07-17", 48.3), _row("2026-07-21", 50.0)])
+    d = pg.declare_revisions(ex, new, recomputed=True)
+    assert d["value_recomputed"]["n"] == 20
+    assert abs(d["value_recomputed"]["max_abs"] - 0.2) < 1e-6
+    assert "historical_value" not in d and "split_suspect" not in d
+    assert d["settled_n"] == 1
+    line = pg.summarize(d)
+    assert "recomputed n=20" in line and "SPLIT-SUSPECT" not in line
+
+
+def test_recomputed_real_revision_shows_as_outsized_max_abs():
+    # реална историческа ревизия при recomputed серия личи по извънреден max_abs
+    ex = [_row("2025-03-07", 12.0), _row("2025-06-06", 40.0),
+          _row("2026-07-21", 50.0)]
+    new = pg.round_records([_row("2025-03-07", 12.1), _row("2025-06-06", 25.0),
+                            _row("2026-07-21", 50.0)])
+    d = pg.declare_revisions(ex, new, recomputed=True)
+    assert d["value_recomputed"]["n"] == 2
+    assert abs(d["value_recomputed"]["max_abs"] - 15.0) < 1e-6
+
+
+def test_recomputed_flag_is_per_series_default_stays_named():
+    # без флага (другите серии) историческата ревизия остава поименна + split-suspect
+    ex = [_row("2025-{:02d}-{:02d}".format(m, d), 100.0 + m)
+          for m in range(1, 6) for d in (3, 10, 17, 24)] + [_row("2026-07-24", 88.86)]
+    new = pg.round_records(
+        [{**r, "value": r["value"] / 2} for r in ex[:-1]] + [ex[-1]])
+    d = pg.declare_revisions(ex, new)
+    assert d["historical_value_n"] == 20
+    assert d["split_suspect"] is True
+    assert "value_recomputed" not in d
+
+
 def test_value_tr_rescale_is_summarized_not_named():
     ex = [_row("2025-0{}-03".format(m), 100.0, 20.0) for m in range(1, 8)] + \
          [_row("2026-07-24", 88.86, 88.86)]

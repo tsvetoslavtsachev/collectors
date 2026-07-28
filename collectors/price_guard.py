@@ -27,9 +27,17 @@
             - извън прозореца, поле value: поименно — историческа ревизия на
               суров факт е СЪБИТИЕ, не шум;
             - извън прозореца, поле value_tr: обобщение {n, max_rel} —
-              рескейлът е очакван по конструкция; интересен е мащабът.
+              рескейлът е очакван по конструкция; интересен е мащабът;
+            - серии от клас recomputed-by-construction (recomputed=True; напр.
+              COT персентил върху плъзгащ се прозорец — всяка нова седмица
+              мести цялата историческа опашка с ~0.1-0.2 п.п.): обобщение
+              {n, max_abs} вместо поименен списък — преизчислението е свойство
+              на конструкцията, като value_tr рескейла; реална историческа
+              ревизия личи по извънреден max_abs.
 3. SPLIT-SUSPECT — >= SPLIT_SUSPECT_MIN_ROWS исторически value промени в един
             пуск миришат на сплит/ребейс на източника -> флаг за човешко око.
+            НЕ важи за recomputed-by-construction серии — там масовата
+            историческа промяна е очакваният режим, не аномалия.
 """
 from __future__ import annotations
 
@@ -89,17 +97,24 @@ def apply_deadband(existing, records):
     return out
 
 
-def declare_revisions(existing, records):
+def declare_revisions(existing, records, recomputed=False):
     """Pure function (existing canon rows, incoming ROUNDED rows) -> declaration
     dict, or None when nothing changed. Existing values are compared at the same
-    precision, so the one-off 4dp migration does not read as a mass revision."""
+    precision, so the one-off 4dp migration does not read as a mass revision.
+
+    recomputed=True marks a recomputed-by-construction series (e.g. a percentile
+    ranked over a sliding window): historical value changes are then a summary
+    {n, max_abs} — expected by construction, like the value_tr rescale — and the
+    SPLIT-SUSPECT heuristic does not apply. A real historical revision still
+    surfaces: it reads as an outsized max_abs. The settle window stays named —
+    the frontier is where genuine settling happens."""
     if not existing or not records:
         return None
     ex = {r["as_of"]: r for r in existing}
     tip = max(r["as_of"] for r in records)
     settle_from = (_dt.date.fromisoformat(tip)
                    - _dt.timedelta(days=SETTLE_DAYS)).isoformat()
-    settled, hist_value, tr_rel = [], [], []
+    settled, hist_value, tr_rel, rec_abs = [], [], [], []
     for r in records:
         e = ex.get(r["as_of"])
         if e is None:
@@ -116,10 +131,15 @@ def declare_revisions(existing, records):
             if r["as_of"] >= settle_from:
                 settled.append(item)
             elif f == "value":
-                hist_value.append(item)
+                if recomputed:
+                    rec_abs.append(abs(new - old)
+                                   if isinstance(old, (int, float))
+                                   and isinstance(new, (int, float)) else 0.0)
+                else:
+                    hist_value.append(item)
             else:
                 tr_rel.append(abs(new - old) / abs(old) if old else 0.0)
-    if not settled and not hist_value and not tr_rel:
+    if not settled and not hist_value and not tr_rel and not rec_abs:
         return None
     decl = {"tip": tip, "settle_window_from": settle_from}
     if settled:
@@ -130,6 +150,9 @@ def declare_revisions(existing, records):
         decl["historical_value_n"] = len(hist_value)
         if len(hist_value) >= SPLIT_SUSPECT_MIN_ROWS:
             decl["split_suspect"] = True
+    if rec_abs:
+        decl["value_recomputed"] = {"n": len(rec_abs),
+                                    "max_abs": round(max(rec_abs), 8)}
     if tr_rel:
         decl["value_tr_rescale"] = {"n": len(tr_rel),
                                     "max_rel": round(max(tr_rel), 8)}
@@ -168,6 +191,9 @@ def summarize(decl):
         bits.append("HISTORICAL value {}{}".format(
             decl["historical_value_n"],
             " SPLIT-SUSPECT" if decl.get("split_suspect") else ""))
+    if decl.get("value_recomputed"):
+        v = decl["value_recomputed"]
+        bits.append("recomputed n={} max_abs={}".format(v["n"], v["max_abs"]))
     if decl.get("value_tr_rescale"):
         v = decl["value_tr_rescale"]
         bits.append("tr-rescale n={} max_rel={}".format(v["n"], v["max_rel"]))

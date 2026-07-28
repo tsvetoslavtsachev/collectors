@@ -21,6 +21,12 @@ SERIES = [
     ("oil_cot_wti_mm_pctile",   "cot",    "cftc",          "pctile_series"),
 ]
 
+# Recomputed-by-construction (№44 жив пуск 28.07): персентилът се ранкира върху
+# плъзгащ се прозорец (history_rows COT седмици) — всяка нова седмица мести
+# цялата историческа опашка с ~0.1-0.2 п.п. Декларира се като обобщение
+# {n, max_abs}, не поименно + split-suspect.
+RECOMPUTED_BY_CONSTRUCTION = {"oil_cot_wti_mm_pctile"}
+
 
 def push(raw: dict) -> list[dict]:
     results = []
@@ -36,7 +42,9 @@ def push(raw: dict) -> list[dict]:
         records = price_guard.round_records(records)          # №44: write хигиена
         existing = storage.read_canonical(series_id)
         records = price_guard.apply_deadband(existing, records)  # №44: епсилон джитър
-        decl = price_guard.declare_revisions(existing, records)
+        decl = price_guard.declare_revisions(
+            existing, records,
+            recomputed=series_id in RECOMPUTED_BY_CONSTRUCTION)
         if decl:
             revisions[series_id] = decl
             print("  [REVISION] {}: {}".format(series_id, price_guard.summarize(decl)))
