@@ -29,7 +29,10 @@ name: vrm-weekly
 
 on:
   schedule:
-    - cron: "0 6 * * 6"     # Sat 06:00 UTC -- after the Friday close has settled
+    # Sat 04:23 UTC -- after the Friday close has settled, staggered after price-daily (00:37).
+    # Off the round hour: 06:00 sharp queued ~1.5h on the shared scheduler (fired 07:24-07:48
+    # three Saturdays running); odd minutes cut that (same lesson as alfred-vintage "17 7").
+    - cron: "23 4 * * 6"
   workflow_dispatch:
 
 permissions:

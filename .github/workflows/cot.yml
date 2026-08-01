@@ -15,7 +15,7 @@ name: cot-weekly
 
 on:
   schedule:
-    - cron: "30 7 * * 6"    # Sat 07:30 UTC -- after the Fri CFTC release settles; staggered after vrm (06:00)
+    - cron: "23 5 * * 6"    # Sat 05:23 UTC -- after the Fri CFTC release settles (Fri afternoon ET); staggered after vrm (04:23); off the round hour (scheduler congestion)
   workflow_dispatch:
 
 permissions:
