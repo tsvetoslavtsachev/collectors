@@ -246,7 +246,7 @@ def offline(g: Gate) -> None:
     finally:
         os.environ.pop("DATACORE_ALLOW_REAL", None)
     g.check("p8a6b register is idempotent (a 2nd register adds 0 new, all upserted)",
-            added2 == [] and len(_updated2) == 1249, f"added2={len(added2)} updated2={len(_updated2)}")
+            added2 == [] and len(_updated2) == 1253, f"added2={len(added2)} updated2={len(_updated2)}")
     shutil.rmtree(bare, ignore_errors=True)
 
 

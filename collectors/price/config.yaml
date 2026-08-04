@@ -427,6 +427,7 @@ price:
   px_fcx_daily: {symbol: "FCX", name: "Freeport-McMoRan", category: "Materials", family: "stock"}
   px_fds_daily: {symbol: "FDS", name: "FactSet", category: "Financials", family: "stock"}
   px_fdx_daily: {symbol: "FDX", name: "FedEx", category: "Industrials", family: "stock"}
+  px_fdxf_daily: {symbol: "FDXF", name: "FedEx Freight", category: "Industrials", family: "stock"}
   px_fe_daily: {symbol: "FE", name: "FirstEnergy", category: "Utilities", family: "stock"}
   px_ffiv_daily: {symbol: "FFIV", name: "F5, Inc.", category: "Information Technology", family: "stock"}
   px_fico_daily: {symbol: "FICO", name: "Fair Isaac", category: "Information Technology", family: "stock"}
@@ -434,6 +435,7 @@ price:
   px_fisv_daily: {symbol: "FISV", name: "Fiserv", category: "Financials", family: "stock"}
   px_fitb_daily: {symbol: "FITB", name: "Fifth Third Bancorp", category: "Financials", family: "stock"}
   px_fix_daily: {symbol: "FIX", name: "Comfort Systems USA", category: "Industrials", family: "stock"}
+  px_flex_daily: {symbol: "FLEX", name: "Flex", category: "Information Technology", family: "stock"}
   px_fox_daily: {symbol: "FOX", name: "Fox Corporation (Class B)", category: "Communication Services", family: "stock"}
   px_foxa_daily: {symbol: "FOXA", name: "Fox Corporation (Class A)", category: "Communication Services", family: "stock"}
   px_frt_daily: {symbol: "FRT", name: "Federal Realty Investment Trust", category: "Real Estate", family: "stock"}
@@ -468,6 +470,7 @@ price:
   px_hii_daily: {symbol: "HII", name: "Huntington Ingalls Industries", category: "Industrials", family: "stock"}
   px_hlt_daily: {symbol: "HLT", name: "Hilton Worldwide", category: "Consumer Discretionary", family: "stock"}
   px_hon_daily: {symbol: "HON", name: "Honeywell", category: "Industrials", family: "stock"}
+  px_hona_daily: {symbol: "HONA", name: "Honeywell Aerospace", category: "Industrials", family: "stock"}
   px_hood_daily: {symbol: "HOOD", name: "Robinhood Markets", category: "Financials", family: "stock"}
   px_hpe_daily: {symbol: "HPE", name: "Hewlett Packard Enterprise", category: "Information Technology", family: "stock"}
   px_hpq_daily: {symbol: "HPQ", name: "HP Inc.", category: "Information Technology", family: "stock"}
@@ -557,6 +560,7 @@ price:
   px_mrk_daily: {symbol: "MRK", name: "Merck & Co.", category: "Health Care", family: "stock"}
   px_mrna_daily: {symbol: "MRNA", name: "Moderna", category: "Health Care", family: "stock"}
   px_mrsh_daily: {symbol: "MRSH", name: "Marsh McLennan", category: "Financials", family: "stock"}
+  px_mrvl_daily: {symbol: "MRVL", name: "Marvell Technology", category: "Information Technology", family: "stock"}
   px_ms_daily: {symbol: "MS", name: "Morgan Stanley", category: "Financials", family: "stock"}
   px_msci_daily: {symbol: "MSCI", name: "MSCI Inc.", category: "Financials", family: "stock"}
   px_msft_daily: {symbol: "MSFT", name: "Microsoft", category: "Information Technology", family: "stock"}
@@ -710,6 +714,7 @@ price:
   px_uri_daily: {symbol: "URI", name: "United Rentals", category: "Industrials", family: "stock"}
   px_usb_daily: {symbol: "USB", name: "U.S. Bancorp", category: "Financials", family: "stock"}
   px_v_daily: {symbol: "V", name: "Visa Inc.", category: "Financials", family: "stock"}
+  px_veev_daily: {symbol: "VEEV", name: "Veeva Systems", category: "Health Care", family: "stock"}
   px_vici_daily: {symbol: "VICI", name: "Vici Properties", category: "Real Estate", family: "stock"}
   px_vlo_daily: {symbol: "VLO", name: "Valero Energy", category: "Energy", family: "stock"}
   px_vlto_daily: {symbol: "VLTO", name: "Veralto", category: "Industrials", family: "stock"}

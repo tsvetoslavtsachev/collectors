@@ -169,6 +169,8 @@ def register(cfg: dict, root: Path, identity_map: dict | None = None) -> tuple[l
     for sid, m in cfg["price"].items():
         if not sid.startswith(ns):        # px_* namespace only -- never touch others
             continue
+        if m.get("retired"):              # retire template: the catalog entry is a frozen
+            continue                      # tombstone -- an upsert must never re-stamp it
         (updated if sid in series else added).append(sid)
         series[sid] = entry(m, identity_map)   # upsert (stock branch stamps stable_id)
 

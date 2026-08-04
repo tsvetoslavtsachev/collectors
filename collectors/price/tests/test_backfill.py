@@ -108,7 +108,7 @@ def offline(g: Gate) -> None:
 
     res = backfill.backfill(CFG, tmp, batch_size=25, batch_sleep=0, recorded_on=_REC,
                             fetch=counting_fetch, log=lambda *a: None)
-    n_series = len(CFG["price"])
+    n_series = sum(1 for m in CFG["price"].values() if not m.get("retired"))
     expected_batches = (n_series + 24) // 25
     g.check("b2a one fetch call per batch (CFG series / 25, P7a: ETF+stock union)",
             calls["n"] == expected_batches,
@@ -144,7 +144,8 @@ def offline(g: Gate) -> None:
                             fetch=dead_fetch, log=lambda *a: None)
     g.check("b4a dead symbol marked not-ok, run continues",
             res["px_spy_daily"]["ok"] is False
-            and sum(1 for r in res.values() if r.get("ok")) == len(CFG["price"]) - 1)
+            and sum(1 for r in res.values() if r.get("ok"))
+            == sum(1 for m in CFG["price"].values() if not m.get("retired")) - 1)
     g.check("b4b dead symbol never written to the archive",
             archive.read("px_spy_daily", root=str(tmp)) == [])
     shutil.rmtree(tmp, ignore_errors=True)

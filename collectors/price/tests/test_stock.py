@@ -35,7 +35,8 @@ from collectors.price import fetch_prices, to_datacore, register_catalog
 
 PRICE_DIR = Path(register_catalog.__file__).resolve().parent
 CFG = yaml.safe_load((PRICE_DIR / "config.yaml").read_text(encoding="utf-8"))
-STOCK_SIDS = [s for s, m in CFG["price"].items() if m.get("family") == "stock"]
+STOCK_SIDS = [s for s, m in CFG["price"].items()
+              if m.get("family") == "stock" and not m.get("retired")]
 ETF_SIDS = [s for s, m in CFG["price"].items() if m.get("family", "etf") == "etf"]
 
 

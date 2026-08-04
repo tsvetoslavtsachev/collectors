@@ -390,9 +390,14 @@ def stock_universe(cfg: dict, *, include_multi_ccy: bool = True) -> list:
     that STOXX identity belongs to P8c; ``seed`` uses this to keep a REAL
     (DATACORE_ALLOW_REAL) seed SP500-only so a P8b-style real SP500 register can never
     sweep STOXX identity into the live map ahead of P8c. A TEMP root keeps the full
-    scaffold."""
+    scaffold.
+
+    A ``retired: true`` member (the P8b lifecycle template -- delisted/merged, its
+    closed epoch is the tombstone) is EXCLUDED: a retired ticker must never re-mint
+    a fresh identity (that would resurrect it as a phantom new company)."""
     return sorted(((sid, m) for sid, m in cfg["price"].items()
                    if m.get("family") == "stock"
+                   and not m.get("retired")
                    and (include_multi_ccy or not m.get("currency"))),
                   key=lambda kv: kv[0])
 

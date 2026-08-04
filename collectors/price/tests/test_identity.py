@@ -43,7 +43,8 @@ from collectors.price import identity, register_catalog
 
 PRICE_DIR = Path(register_catalog.__file__).resolve().parent
 CFG = yaml.safe_load((PRICE_DIR / "config.yaml").read_text(encoding="utf-8"))
-STOCK_SIDS = [s for s, m in CFG["price"].items() if m.get("family") == "stock"]
+STOCK_SIDS = [s for s, m in CFG["price"].items()
+              if m.get("family") == "stock" and not m.get("retired")]
 ETF_SIDS = [s for s, m in CFG["price"].items() if m.get("family", "etf") == "etf"]
 SEED_DATE = "2026-06-28"
 
@@ -82,8 +83,8 @@ def offline(g: Gate, tmp: Path) -> None:
     g.check("t1a seed minted one epoch per stock series (== %d)" % len(STOCK_SIDS),
             minted == len(STOCK_SIDS) and len(m["epochs"]) == len(STOCK_SIDS),
             "minted=%d epochs=%d stock=%d" % (minted, len(m["epochs"]), len(STOCK_SIDS)))
-    g.check("t1b 1112 current stock members (503 SP500 + 609 STOXX)",
-            len(STOCK_SIDS) == 1112, "stock=%d" % len(STOCK_SIDS))
+    g.check("t1b 1116 current stock members (1112 P7b + 5 index adds 2026-H1 - 1 retired CTRA)",
+            len(STOCK_SIDS) == 1116, "stock=%d" % len(STOCK_SIDS))
     g.check("t1c every internal_id unique", len(ids) == len(set(ids)),
             "ids=%d unique=%d" % (len(ids), len(set(ids))))
     nums = sorted(int(i[4:]) for i in ids)
@@ -141,8 +142,8 @@ def offline(g: Gate, tmp: Path) -> None:
 
     # t5 1249 series intact (no re-key) -----------------------------------------
     sids = [s for s in cat if s.startswith("px_") and s != "px_probe_daily"]
-    g.check("t5a 137 ETF + 1112 stock = 1249 series registered",
-            len(ETF_SIDS) == 137 and len(STOCK_SIDS) == 1112 and len(sids) == 1249,
+    g.check("t5a 137 ETF + 1116 stock = 1253 series registered (retired CTRA not re-added)",
+            len(ETF_SIDS) == 137 and len(STOCK_SIDS) == 1116 and len(sids) == 1253,
             "etf=%d stock=%d total=%d" % (len(ETF_SIDS), len(STOCK_SIDS), len(sids)))
     g.check("t5b series_ids unchanged (px_<ticker>_daily; no re-key to px_<id>)",
             all(s.startswith("px_") and s.endswith("_daily") for s in sids)
@@ -200,7 +201,8 @@ def offline(g: Gate, tmp: Path) -> None:
     # leaks into the live map ahead of P8c (the audit-found leak guard). A TEMP seed stays 1112
     # (t1 above); the multi-currency STOXX600 members come in ONLY with an explicit P8c opt-in.
     sp500_n = len([s for s, mk in CFG["price"].items()
-                   if mk.get("family") == "stock" and not mk.get("currency")])
+                   if mk.get("family") == "stock" and not mk.get("currency")
+                   and not mk.get("retired")])
     real_tmp, optin_tmp = _temp_root(), _temp_root()
     os.environ["DATACORE_ALLOW_REAL"] = "1"          # simulate the gated real-register run
     try:

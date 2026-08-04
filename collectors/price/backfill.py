@@ -98,7 +98,10 @@ def backfill(cfg: dict, root, *, only=None, period=None, batch_size=25,
     Returns {series_id: per-series result dict} (the push summary, ok/skip_reason).
     """
     root = str(root)
-    sids = [s for s in cfg["price"] if (only is None or s in only)]
+    # retired series (P8b lifecycle template) are never fetched/promoted -- the
+    # archive keeps their history, but no writer should touch a delisted symbol.
+    sids = [s for s in cfg["price"]
+            if (only is None or s in only) and not cfg["price"][s].get("retired")]
     # Load the archive catalog ONCE here too (the catalog-once contract, program R6),
     # and pass the SAME dict to every batch's push so it is never re-parsed per series.
     cat = catalog if catalog is not None else to_datacore.load_catalog(root)
