@@ -65,6 +65,12 @@ settings:
                                  # lifted). 2026-07-03: ROG.SW renamed ROP.SW (symbol swap, identity
                                  # continued SEC-000840; 609th now registered); CTRA retired (merged
                                  # into DVN) -> retired:true drops it from fetch+verify scope.
+                                 # 2026-08-04: BK renamed BNY and SATS renamed ECHO (both RENAME,
+                                 # not retire -- same CIK/file number per SEC EDGAR). Yahoo kept
+                                 # serving the RETIRED aliases for weeks after the exchange change,
+                                 # degrading daily -> Fridays-only (from 2026-07-06) -> dead
+                                 # (BK 404; SATS returns one stranded 2026-07-17 row). That decay
+                                 # is what the recency gate must catch -- see verify_backfill v2c.
                                  # A FULL manual pull (no --daily) is unscoped (re-pulls every bar
                                  # -> no cliff). idx_dxy omits family -> defaults to etf -> in the run.
   # CI PERF BUDGET (P7a gate note, for the P8 stock daily CI): archive.append re-reads each
@@ -281,7 +287,13 @@ price:
   px_bf_b_daily: {symbol: "BF-B", name: "Brown–Forman", category: "Consumer Staples", family: "stock"}
   px_bg_daily: {symbol: "BG", name: "Bunge Global", category: "Consumer Staples", family: "stock"}
   px_biib_daily: {symbol: "BIIB", name: "Biogen", category: "Health Care", family: "stock"}
-  px_bk_daily: {symbol: "BK", name: "BNY Mellon", category: "Financials", family: "stock"}
+  # RENAMED 2026-08-04: NYSE ticker BK -> BNY (rebrand). NOT a delisting -- SEC EDGAR shows the
+  # SAME registrant (THE BANK OF NEW YORK MELLON CORPORATION), CIK 1390777 and Commission File
+  # Number 001-35651 UNCHANGED; the Q2 10-Q cover (filed 2026-07-31) reads "Trading Symbol BNY".
+  # Exchange change bracketed to (2026-05-01, 2026-06-12]: the 10-Q filed 05-01 still read BK,
+  # the 8-K dated 06-12 already read BNY (no intervening cover-page filing to narrow it).
+  # series_id px_bk_daily is KEPT (Option-A frozen store key, ROG.SW->ROP.SW precedent).
+  px_bk_daily: {symbol: "BNY", name: "BNY Mellon", category: "Financials", family: "stock"}
   px_bkng_daily: {symbol: "BKNG", name: "Booking Holdings", category: "Consumer Discretionary", family: "stock"}
   px_bkr_daily: {symbol: "BKR", name: "Baker Hughes", category: "Energy", family: "stock"}
   px_bldr_daily: {symbol: "BLDR", name: "Builders FirstSource", category: "Industrials", family: "stock"}
@@ -627,7 +639,12 @@ price:
   px_rsg_daily: {symbol: "RSG", name: "Republic Services", category: "Industrials", family: "stock"}
   px_rtx_daily: {symbol: "RTX", name: "RTX Corporation", category: "Industrials", family: "stock"}
   px_rvty_daily: {symbol: "RVTY", name: "Revvity", category: "Health Care", family: "stock"}
-  px_sats_daily: {symbol: "SATS", name: "EchoStar", category: "Communication Services", family: "stock"}
+  # RENAMED 2026-08-04: Nasdaq ticker SATS -> ECHO. NOT a delisting -- SEC EDGAR shows the SAME
+  # registrant (EchoStar Corporation), CIK 1415404 and Commission File Number 001-33807 UNCHANGED;
+  # the Q2 10-Q cover (filed 2026-08-03) reads "Trading Symbol ECHO". Exchange change bracketed to
+  # (2026-06-17, 2026-06-23]: the 8-K dated 06-17 still read SATS, the 8-K dated 06-23 read ECHO.
+  # series_id px_sats_daily is KEPT (Option-A frozen store key, ROG.SW->ROP.SW precedent).
+  px_sats_daily: {symbol: "ECHO", name: "EchoStar", category: "Communication Services", family: "stock"}
   px_sbac_daily: {symbol: "SBAC", name: "SBA Communications", category: "Real Estate", family: "stock"}
   px_sbux_daily: {symbol: "SBUX", name: "Starbucks", category: "Consumer Discretionary", family: "stock"}
   px_schw_daily: {symbol: "SCHW", name: "Charles Schwab Corporation", category: "Financials", family: "stock"}
