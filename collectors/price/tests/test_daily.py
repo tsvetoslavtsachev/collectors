@@ -460,6 +460,122 @@ def offline(g: Gate) -> None:
     finally:
         verify_backfill._QUARANTINE_DEAD_OK = saved_q
 
+    # ---- d10: the FRESHNESS gate (v2c recency + v2d density) -------------------------------
+    # Every threshold is exercised AT its edge -- N must stay soft, N+1 must go hard. A guard
+    # tested only far from its boundary is a guard nobody has actually tested; and this whole
+    # gate exists because the previous one fired correctly for weeks while the run stayed green.
+    # Driven through freshness_report() on synthetic views (as_of is all it reads), so the
+    # boundaries are exact instead of approximated by seeding archives.
+    sids_all = verify_backfill._series_ids(CFG)
+    us_sids = [s for s in sids_all if "." not in CFG["price"][s]["symbol"]]
+    DAYS = ([f"2026-06-{d:02d}" for d in range(1, 31)]
+            + [f"2026-07-{d:02d}" for d in range(1, 11)])      # 40 dates -> calendar = last 30
+    victim = us_sids[0]
+
+    def _rep(overrides=None, today="2026-07-10"):
+        views = {s: [{"as_of": d} for d in DAYS] for s in sids_all}
+        for sid, ds in (overrides or {}).items():
+            views[sid] = [{"as_of": d} for d in ds]
+        return verify_backfill.freshness_report(CFG, views, sids_all, today=today)
+
+    def _tier(rep, key, sid):
+        return next((r["tier"] for r in rep[key] if r["series_id"] == sid), None)
+
+    # d10a baseline: a complete, aligned universe fires nothing at all
+    base = _rep()
+    g.check("d10a a complete aligned universe: 0 stale, 0 sparse, not hard",
+            not base["stale"] and not base["sparse"] and not base["hard"],
+            f"stale={len(base['stale'])} sparse={len(base['sparse'])} hard={base['hard']}")
+
+    # d10b/c RECENCY at the edge: 10 days behind the pack is the last SOFT day; 11 is hard.
+    r10 = _rep({victim: [d for d in DAYS if d <= "2026-06-30"]})   # mode 07-10 -> 10 days
+    r11 = _rep({victim: [d for d in DAYS if d <= "2026-06-29"]})   # -> 11 days
+    g.check(f"d10b recency AT the line ({verify_backfill._STALE_FAIL_DAYS}d behind): WARN, not hard",
+            _tier(r10, "stale", victim) == "warn" and not r10["hard"],
+            f"tier={_tier(r10, 'stale', victim)} hard={r10['hard']}")
+    g.check(f"d10c recency ONE DAY past the line ({verify_backfill._STALE_FAIL_DAYS + 1}d): HARD",
+            _tier(r11, "stale", victim) == "fail" and r11["hard"],
+            f"tier={_tier(r11, 'stale', victim)} hard={r11['hard']}")
+
+    # d10d/e DENSITY at the edge -- the BK/SATS shape: tip still fresh, interior sessions gone.
+    # 4 missing is the worst legitimate gap ever measured (px_vend_ol 2025-10-28..31) -> soft.
+    gap4 = [d for d in DAYS if d not in {"2026-06-20", "2026-06-21", "2026-06-22", "2026-06-23"}]
+    gap5 = [d for d in gap4 if d != "2026-06-24"]
+    r4, r5 = _rep({victim: gap4}), _rep({victim: gap5})
+    g.check(f"d10d density AT the line ({verify_backfill._SPARSE_FAIL_MAX} interior sessions "
+            f"missing, tip fresh): WARN, not hard",
+            _tier(r4, "sparse", victim) == "warn" and not r4["hard"] and not r4["stale"],
+            f"tier={_tier(r4, 'sparse', victim)} hard={r4['hard']} stale={len(r4['stale'])}")
+    g.check(f"d10e density ONE SESSION past the line ({verify_backfill._SPARSE_FAIL_MAX + 1}): HARD "
+            f"-- caught while the tip is still current (what v2c cannot see)",
+            _tier(r5, "sparse", victim) == "fail" and r5["hard"] and not r5["stale"],
+            f"tier={_tier(r5, 'sparse', victim)} hard={r5['hard']} stale={len(r5['stale'])}")
+
+    # d10f the false-positive that would kill trust: a venue holiday moves the WHOLE group.
+    holiday = _rep({s: [d for d in DAYS if d <= "2026-06-20"] for s in sids_all})
+    g.check("d10f a whole-universe shift (holiday/full block) fires NOTHING (mode-relative)",
+            not holiday["stale"] and not holiday["sparse"] and not holiday["hard"],
+            f"stale={len(holiday['stale'])} sparse={len(holiday['sparse'])}")
+
+    # d10g a RETIRED constituent is out of scope entirely -- a permanently frozen CTRA must never
+    # come back as a daily alarm (the gotcha that made `retired` the mechanism, not close_epoch).
+    g.check("d10g retired constituents are outside the freshness scope (CTRA cannot re-alarm)",
+            "px_ctra_daily" not in sids_all and CFG["price"]["px_ctra_daily"].get("retired"),
+            f"in_scope={'px_ctra_daily' in sids_all}")
+
+    # d10h/i the exemption ROTS: live review_by demotes a hard failure; an expired one IS one.
+    saved_ex = verify_backfill._FRESHNESS_EXEMPT
+    try:
+        verify_backfill._FRESHNESS_EXEMPT = {victim: ("synthetic test exemption", "2026-08-01")}
+        live_ex = _rep({victim: [d for d in DAYS if d <= "2026-06-29"]}, today="2026-07-10")
+        g.check("d10h an UNEXPIRED exemption demotes the hard failure (green, but listed loudly)",
+                _tier(live_ex, "stale", victim) == "exempt" and not live_ex["hard"]
+                and [e["series_id"] for e in live_ex["exempt"]] == [victim],
+                f"tier={_tier(live_ex, 'stale', victim)} hard={live_ex['hard']}")
+        dead_ex = _rep(today="2026-08-02")        # everything healthy, only the excuse is stale
+        g.check("d10i an EXPIRED exemption HARD-FAILS on its own, with nothing else wrong",
+                dead_ex["hard"] and [e["series_id"] for e in dead_ex["expired_exempt"]] == [victim]
+                and not dead_ex["stale"] and not dead_ex["sparse"],
+                f"hard={dead_ex['hard']} expired={dead_ex['expired_exempt']}")
+    finally:
+        verify_backfill._FRESHNESS_EXEMPT = saved_ex
+
+    # d10j the verdict survives the round-trip to disk and becomes an EXIT CODE
+    tmpd = Path(tempfile.mkdtemp(prefix="fresh_"))
+    try:
+        clean_p, hard_p = tmpd / "clean.json", tmpd / "hard.json"
+        clean_p.write_text(json.dumps(base), encoding="utf-8")
+        hard_p.write_text(json.dumps(r11), encoding="utf-8")
+        g.check("d10j --assert-freshness: clean report -> 0, hard report -> 1, missing -> 0",
+                verify_backfill.assert_freshness(clean_p) == 0
+                and verify_backfill.assert_freshness(hard_p) == 1
+                and verify_backfill.assert_freshness(tmpd / "nope.json") == 0)
+    finally:
+        shutil.rmtree(tmpd, ignore_errors=True)
+
+    # d10k a WARN is no longer counted as a PASS (the headline that hid BK/SATS for two weeks)
+    gw = verify_backfill.Gate()
+    gw.check("synthetic soft check", False, hard=False)
+    g.check("d10k Gate counts a fired WARN separately from PASS (honest tally)",
+            gw.warns == ["synthetic soft check"] and gw.fails == [] and gw.total == 1,
+            f"warns={gw.warns} fails={gw.fails}")
+
+    # d10l the WORKFLOW wiring -- the gate must be UNABLE to withhold the commit
+    if wf is not None:
+        text = wf.read_text(encoding="utf-8")
+        i_commit = text.find("Commit current-year partition")
+        i_fresh = text.find("--assert-freshness")
+        g.check("d10l1 the verify step writes the deferred verdict (--freshness-report)",
+                "--freshness-report" in text)
+        g.check("d10l2 the freshness gate runs AFTER the commit step (good bars land first)",
+                i_commit != -1 and i_fresh != -1 and i_fresh > i_commit,
+                f"commit@{i_commit} freshness@{i_fresh}")
+        g.check("d10l3 the freshness gate still reports when an earlier step failed (if: always)",
+                "if: always()" in text[i_commit:] if i_commit != -1 else False)
+    else:
+        g.check("d10l workflow freshness wiring (price-archive not co-located -> skipped)",
+                True, "run from a full local checkout to lint the workflow", hard=False)
+
 
 def main() -> int:
     g = Gate()

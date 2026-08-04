@@ -32,9 +32,25 @@ v4'. The "no finalized bar is silently overwritten" guarantee is enforced at WRI
 archive.append's advancing-recorded_on refusal, not re-proven here. The default (no flag) is the
 seed gate, byte-for-byte unchanged -- so price-backfill.yml is untouched.
 
+FRESHNESS (v2c recency + v2d density, --daily only). "Is every series in the active universe
+still ARRIVING?" is a question the integrity gates cannot answer: v2a calls a series live if it
+has ANY bar, so one that stopped months ago passes forever. v2c catches a frozen tip, v2d catches
+the stage BEFORE that -- a series still arriving but thinned out (a dying vendor alias goes daily
+-> weekly -> dead, and each late bar resets v2c's clock while interior sessions vanish).
+
+Their verdict is DEFERRED, not softened. Both print here as warnings and are written to a JSON
+report (--freshness-report); the workflow re-reads it AFTER the commit step
+(--assert-freshness) and fails the run there. Reason: this verify runs BEFORE the commit, so a
+hard failure would withhold every other symbol's good new bars -- the exact trade-off that kept
+the recency check toothless for months. Moving WHEN it is judged dissolves it: good bars land,
+the run still goes red. Exemptions live in _FRESHNESS_EXEMPT and carry a review_by date that
+EXPIRES into a failure.
+
 Run:
   PYTHONPATH=<data-core>;<collectors> python -m collectors.price.verify_backfill --root <root>
   PYTHONPATH=<data-core>;<collectors> python -m collectors.price.verify_backfill --root <root> --daily
+  ... --root <root> --daily --freshness-report fresh.json     # write the deferred verdict
+  ... --assert-freshness fresh.json                           # judge it (post-commit; no archive read)
 """
 from __future__ import annotations
 
@@ -55,6 +71,49 @@ from datacore import archive
 # throttle (a symbol stuck behind the pack for a week) is flagged.
 _STALE_WARN_DAYS = 4
 
+# ...and beyond THIS many days it is no longer a throttle -- it is a series that has stopped
+# arriving, which is an ERROR, not an observation (the VendorEmpty doctrine from
+# fundamentals-archive/scripts/fetch.py: a vendor saying nothing is a fault, not data).
+# WHY 10: the measured noise ceiling is a missed CI firing over a weekend (~4 days, which is
+# exactly why _STALE_WARN_DAYS is 4), so 10 sits 2.5x above it; and it is still INSIDE the
+# ~1mo daily_period self-heal window, so the alarm rings while the routine path can still
+# fill the hole -- not after it has become unrecoverable.
+_STALE_FAIL_DAYS = 10
+
+# ---- DENSITY (v2d): the catch v2c structurally CANNOT make ---------------------------------
+# A dying vendor alias does not stop dead -- it THINS OUT. Measured live on the BK/SATS case
+# (2026-08-04): daily bars through 07-02, then Fridays only (07-10, 07-17), then nothing. While
+# the Friday bars kept arriving, every one of them RESET the v2c clock, so a gate that looks at
+# the latest as_of alone stayed quiet while 8 interior sessions went missing. Density compares a
+# series against the SESSION CALENDAR OF ITS OWN EXCHANGE GROUP (US, .L, .PA, ...) -- so a
+# holiday that closes a whole venue moves the calendar with it and nothing false-fires.
+# Only sessions INSIDE the series' own [first bar .. last bar] range count: gaps AFTER the last
+# bar are a stale tip (v2c's job, never double-counted) and gaps before the first are a young
+# series.
+#
+# THRESHOLDS ARE MEASURED, NOT GUESSED (probe over 8 historical cut dates x 1248 series):
+#   * typical legitimate miss = 1 session (px_hsba_l 2026-04-13, px_glen_l, px_rr_l, px_rio_l);
+#   * worst legitimate observation in ~1 year = 4 consecutive (px_vend_ol, 2025-10-28..31);
+#   * the only bigger ones were px_sunb_l (21) and px_csg_as (14) -- the DOCUMENTED junk-early-bar
+#     STOXX listings, i.e. true positives the gate SHOULD catch, not noise.
+# So: WARN above the typical miss, HARD strictly above the worst legitimate observation.
+#
+# REPLAYED against the real pre-heal archive (BK/SATS as_ofs restored from git, gate run at six
+# historical cut dates), which corrected the estimate this comment first carried:
+#   2026-07-08  v2c warn (6d)          v2d  -          -> yellow
+#   2026-07-13  -                      v2d  4 (warn)   -> yellow   [4 == the measured noise line]
+#   2026-07-17  -                      v2d  8 (FAIL)   -> RED      <- the alarm
+#   2026-08-04  v2c 17d (FAIL)         v2d  8 (FAIL)   -> RED      <- when it surfaced by hand
+# Note WHY 07-17 and not 07-13: on the 13th those sessions were still beyond the series' last bar
+# (a stale tip, not a hole). The second Friday bar on the 17th is what turns the missed week into
+# INTERIOR sessions -- the very bar that reset v2c's clock is the one that convicts under v2d.
+# Net: 18 days earlier than the recency tier, and 18 days earlier than a human noticed.
+_SPARSE_WINDOW = 30        # last N sessions of the series' own exchange-group calendar
+_SPARSE_WARN_MAX = 1       # > this many missing interior sessions -> WARN
+_SPARSE_FAIL_MAX = 4       # > this many -> HARD (strictly above the measured worst legitimate)
+_GROUP_QUORUM = 0.60       # a date is a group session if >= this share of the group has it
+_GROUP_MIN = 5             # groups smaller than this cannot form a quorum -> not density-checked
+
 # QUARANTINE ALLOWLIST (the P9 twins' assert_base_sourced ALLOWLIST pattern): config-listed
 # series DELIBERATELY absent from the archive because their UPSTREAM (Yahoo) data is broken
 # -- documented per-entry in P8b-HON-case-to-resolve.md, each with an active settle-watch +
@@ -71,6 +130,18 @@ _QUARANTINE_DEAD_OK = {
     # ROG.SW -> ROP.SW (genussschein -> participation cert, 1:1, 2026-03-17). Config symbol swapped
     # to ROP.SW, identity continued (SEC-001113 continuation_of SEC-000840), backfilled 1510 bars.
     # Removed with the rename per the fail-closed rule.
+}
+
+# FRESHNESS EXEMPTIONS -- the escape hatch for v2c/v2d, and the one that ROTS ON PURPOSE.
+#   series_id -> (reason, review_by "YYYY-MM-DD")
+# A quarantine allowlist with no expiry is just the old silence wearing a badge: the entry
+# outlives the incident, nobody re-reads it, and the gate is green forever on a condition that
+# stopped being understood months ago. So an entry PAST its review_by HARD-FAILS on its own
+# ("the excuse expired") -- the only way to stay green is to renew it deliberately or fix the
+# series. Keep entries rare and dated; a delisted/merged constituent belongs in config as
+# `retired: true` (CTRA template), NOT here.
+_FRESHNESS_EXEMPT: dict[str, tuple[str, str]] = {
+    # e.g. "px_xyz_daily": ("venue-wide outage, vendor confirmed", "2026-09-01"),
 }
 
 HERE = Path(__file__).resolve().parent
@@ -163,9 +234,18 @@ _INCEPTION_BASELINE = {
 
 
 class Gate:
+    """Counts checks, HARD fails and (since 2026-08-04) WARNs separately.
+
+    Warns used to be invisible to the tally: `total - len(fails)` counted a fired [WARN] as a
+    pass, so the BK/SATS decay printed a laggard line in EVERY daily log under a headline that
+    read "14/14 PASS". A warn is not a pass -- it is a check that fired without stopping the
+    run, and the headline now says so.
+    """
+
     def __init__(self):
         self.total = 0
         self.fails: list[str] = []
+        self.warns: list[str] = []
 
     def check(self, name, cond, detail="", hard=True):
         self.total += 1
@@ -173,6 +253,8 @@ class Gate:
         print(f"  {tag} {name}" + (f" -- {detail}" if detail else ""))
         if not cond and hard:
             self.fails.append(name)
+        elif not cond:
+            self.warns.append(name)
 
 
 def _series_ids(cfg: dict) -> list[str]:
@@ -198,9 +280,107 @@ def _raw_lines(root: Path, sid: str) -> list[dict]:
     return out
 
 
+def _exch_group(symbol: str) -> str:
+    """Exchange-CALENDAR group. The suffix is the venue (.L London, .PA Paris, ...); a bare
+    symbol is US. Grouping by venue is what makes the density gate holiday-proof: a closed
+    venue moves its whole group's calendar together, so nothing inside it looks sparse."""
+    return symbol.rsplit(".", 1)[1] if "." in symbol else "US"
+
+
+def _sparse_series(cfg: dict, views: dict, sids: list) -> list:
+    """[(sid, n_missing, missing_dates)] -- sessions the series' OWN exchange group had and it
+    did not, inside its own [first .. last] range, over the last _SPARSE_WINDOW group sessions."""
+    groups: dict[str, list] = {}
+    for sid in sids:
+        if views.get(sid):
+            groups.setdefault(_exch_group(cfg["price"][sid]["symbol"]), []).append(sid)
+    out = []
+    for members in groups.values():
+        if len(members) < _GROUP_MIN:
+            continue                      # too small for a quorum -> no trustworthy calendar
+        have = {sid: {b["as_of"] for b in views[sid]} for sid in members}
+        seen = Counter(a for sid in members for a in have[sid])
+        cal = sorted(a for a, n in seen.items()
+                     if n >= _GROUP_QUORUM * len(members))[-_SPARSE_WINDOW:]
+        if not cal:
+            continue
+        for sid in members:
+            lo, hi = views[sid][0]["as_of"], views[sid][-1]["as_of"]
+            missing = [a for a in cal if lo <= a <= hi and a not in have[sid]]
+            if missing:
+                out.append((sid, len(missing), missing))
+    out.sort(key=lambda r: (-r[1], r[0]))
+    return out
+
+
+def freshness_report(cfg: dict, views: dict, sids: list, *, today: str | None = None) -> dict:
+    """The DEFERRED verdict: is every series in the active universe still ARRIVING?
+
+    Separated from the rest of verify on purpose. The integrity gates must run BEFORE the
+    commit (they stop corrupt bars from landing); this one must run AFTER it, because a single
+    unreachable series must never withhold 1247 other symbols' good new bars. That trade-off is
+    exactly why the recency check was left soft for months -- the fix is to move WHEN it is
+    judged, not to keep it toothless. So verify() only prints it; the workflow re-reads this
+    report after committing and fails the run on ``hard``.
+    """
+    today = today or date.today().isoformat()
+    live = {sid: v for sid, v in views.items() if v}
+    latest = {sid: v[-1]["as_of"] for sid, v in live.items()}
+    rep: dict = {
+        "generated_on": today,
+        "universe_session": None,
+        "stale": [], "sparse": [], "exempt": [], "expired_exempt": [], "hard": False,
+        "thresholds": {"stale_warn_days": _STALE_WARN_DAYS, "stale_fail_days": _STALE_FAIL_DAYS,
+                       "sparse_window": _SPARSE_WINDOW, "sparse_warn_max": _SPARSE_WARN_MAX,
+                       "sparse_fail_max": _SPARSE_FAIL_MAX},
+    }
+    if not latest:
+        return rep
+
+    def _tier(sid: str, hard_cond: bool) -> str:
+        """FAIL -> WARN when a live, unexpired exemption covers the series."""
+        if not hard_cond:
+            return "warn"
+        ex = _FRESHNESS_EXEMPT.get(sid)
+        return "exempt" if (ex and ex[1] >= today) else "fail"
+
+    # ---- v2c recency: latest as_of vs the session the PACK reached (mode-relative) ----
+    mode_asof = Counter(latest.values()).most_common(1)[0][0]
+    rep["universe_session"] = mode_asof
+    for sid, ao in sorted(latest.items()):
+        if ao >= mode_asof:
+            continue
+        days = (date.fromisoformat(mode_asof) - date.fromisoformat(ao)).days
+        if days > _STALE_WARN_DAYS:
+            rep["stale"].append({"series_id": sid, "symbol": cfg["price"][sid]["symbol"],
+                                 "latest": ao, "days": days,
+                                 "tier": _tier(sid, days > _STALE_FAIL_DAYS)})
+
+    # ---- v2d density: interior sessions missing vs the series' own venue calendar ----
+    for sid, n, dates in _sparse_series(cfg, views, sids):
+        if n > _SPARSE_WARN_MAX:
+            rep["sparse"].append({"series_id": sid, "symbol": cfg["price"][sid]["symbol"],
+                                  "missing": n, "dates": dates[:12],
+                                  "tier": _tier(sid, n > _SPARSE_FAIL_MAX)})
+
+    # ---- the exemptions themselves are audited: a stale excuse is its own failure ----
+    fired = {r["series_id"] for r in rep["stale"] + rep["sparse"]}
+    for sid, (reason, review_by) in sorted(_FRESHNESS_EXEMPT.items()):
+        entry = {"series_id": sid, "reason": reason, "review_by": review_by}
+        if review_by < today:
+            rep["expired_exempt"].append(entry)
+        elif sid in fired:
+            rep["exempt"].append(entry)
+
+    rep["hard"] = bool(rep["expired_exempt"]
+                       or any(r["tier"] == "fail" for r in rep["stale"] + rep["sparse"]))
+    return rep
+
+
 def verify(root: Path, cfg: dict, g: Gate, *, daily: bool = False) -> dict:
     sids = _series_ids(cfg)
     sym = {sid: m["symbol"] for sid, m in cfg["price"].items()}
+    fresh: dict | None = None            # daily only; the deferred (post-commit) verdict
 
     # Read every series once (current view) + raw line counts (+ raw lines for --daily,
     # which needs each line's recorded_on to prove restatements are bitemporal).
@@ -262,29 +442,50 @@ def verify(root: Path, cfg: dict, g: Gate, *, daily: bool = False) -> dict:
             not thin, f"thin={thin}", hard=False)
 
     if daily:
-        # v2c (DAILY RECENCY) -- the partial-throttle catch that v2a CANNOT make. v2a passes as
-        # long as every series has SOME bar (the P4 seed), so a day where Yahoo serves only a
-        # SUBSET of the 132 symbols commits a GREEN run while silently omitting today's bar for
-        # the rest (the rest keep yesterday's tip). Compare each series' latest as_of to the
-        # UNIVERSE MODE (the session the pack reached): a series lagging the mode is genuinely
-        # behind. Mode-relative by design -> a FULL-block day shifts the whole pack together so
-        # the mode moves with it and NOTHING lags (no weekend/holiday false-fire); only a series
-        # stuck BEHIND an advanced majority is flagged. SOFT/surfaced (not HARD): one unrecoverable
-        # >1mo hole must not block committing every OTHER symbol's good new bar -- but it is no
-        # longer SILENT (the count + laggards print in the CI log; run.py's skip headline echoes it).
-        latest = {sid: v[-1]["as_of"] for sid, v in live.items()}
-        if latest:
-            mode_asof = Counter(latest.values()).most_common(1)[0][0]
-            laggards = sorted(
-                (sid, ao, abs((date.fromisoformat(mode_asof) - date.fromisoformat(ao)).days))
-                for sid, ao in latest.items()
-                if ao < mode_asof
-                and abs((date.fromisoformat(mode_asof) - date.fromisoformat(ao)).days) > _STALE_WARN_DAYS)
-            g.check(f"v2c daily recency: 0 series lag the universe session {mode_asof} by >{_STALE_WARN_DAYS}d",
-                    not laggards,
-                    f"laggards={[(s, a) for s, a, _ in laggards][:8]} (n={len(laggards)} -- "
-                    f"partial throttle: today's bar missing for these; self-heals within the window "
-                    f"unless the gap exceeds daily_period)", hard=False)
+        # v2c RECENCY + v2d DENSITY -- the two catches v2a structurally CANNOT make. v2a passes
+        # as long as every series has SOME bar, so a series that stopped arriving months ago is
+        # "live" forever. v2c compares each latest as_of to the UNIVERSE MODE (the session the
+        # pack reached): mode-relative by design, so a full-block day shifts the whole pack and
+        # NOTHING lags (no weekend/holiday false-fire); only a series stuck behind an advanced
+        # majority fires. v2d then catches what v2c cannot see at all -- a series still arriving,
+        # but THINNED OUT (the BK/SATS Fridays-only decay), where every late bar resets v2c's clock
+        # while interior sessions quietly go missing.
+        #
+        # Both stay SOFT *here* -- and that is not the old toothlessness, it is a change of VENUE.
+        # This verify runs BEFORE the commit, where a hard failure would withhold 1247 other
+        # symbols' good new bars; that trade-off is precisely why the recency check stayed a warn
+        # for months. The verdict now travels in the freshness report, and the workflow re-reads it
+        # AFTER committing (`--assert-freshness`) and fails the run there. Good bars land; the run
+        # still goes red.
+        fresh = freshness_report(cfg, views, sids)
+        mode_asof = fresh["universe_session"]
+        n_fail = sum(1 for r in fresh["stale"] + fresh["sparse"] if r["tier"] == "fail")
+        if fresh["stale"] or fresh["sparse"] or fresh["expired_exempt"]:
+            print(f"  !! freshness: {n_fail} series past a HARD line -> the post-commit gate "
+                  f"will FAIL this run" if fresh["hard"] else
+                  "  !! freshness: warnings only (nothing past a hard line)")
+        g.check(f"v2c daily recency: 0 series lag the universe session {mode_asof} "
+                f"by >{_STALE_WARN_DAYS}d",
+                not fresh["stale"],
+                "laggards=%s (n=%d, of which %d past the %dd HARD line)"
+                % ([(r["series_id"], r["latest"]) for r in fresh["stale"]][:8], len(fresh["stale"]),
+                   sum(1 for r in fresh["stale"] if r["tier"] == "fail"), _STALE_FAIL_DAYS),
+                hard=False)
+        g.check(f"v2d density: 0 series miss >{_SPARSE_WARN_MAX} interior session(s) of their own "
+                f"venue calendar (last {_SPARSE_WINDOW})",
+                not fresh["sparse"],
+                "sparse=%s (n=%d, of which %d past the >%d HARD line -- a thinning-out vendor "
+                "alias looks like this)"
+                % ([(r["series_id"], r["missing"]) for r in fresh["sparse"]][:8], len(fresh["sparse"]),
+                   sum(1 for r in fresh["sparse"] if r["tier"] == "fail"), _SPARSE_FAIL_MAX),
+                hard=False)
+        for e in fresh["expired_exempt"]:
+            print(f"  !! EXPIRED freshness exemption {e['series_id']} (review_by "
+                  f"{e['review_by']}): renew it deliberately or fix the series -- an excuse that "
+                  f"outlives its review date is the old silence wearing a badge")
+        for e in fresh["exempt"]:
+            print(f"  -- freshness exemption ACTIVE for {e['series_id']} until {e['review_by']}: "
+                  f"{e['reason']}")
 
     # ---- v3 split: as-traded reconstruction over the FULL history ----
     # Detect ANY split (factor != 1.0) -- FORWARD (>1, e.g. QQQ 2:1) AND REVERSE (<1,
@@ -386,15 +587,71 @@ def verify(root: Path, cfg: dict, g: Gate, *, daily: bool = False) -> dict:
             not bad_shape, f"missing={bad_shape[:3]}")
 
     return {"live": len(live), "dead": dead, "split_syms": split_syms,
-            "spy_earliest": spy_earliest}
+            "spy_earliest": spy_earliest, "freshness": fresh}
+
+
+def assert_freshness(path: Path) -> int:
+    """Read a freshness report and TURN IT INTO AN EXIT CODE. Touches no archive.
+
+    This is the whole point of the split: the workflow runs it AFTER the commit step, so a
+    series that stopped arriving reddens the run WITHOUT withholding every other symbol's
+    good new bars. A missing report means verify never got that far -- the run is already
+    failing for a louder reason, so do not mask it.
+    """
+    if not path.exists():
+        print(f"freshness gate: no report at {path} -- verify did not reach it; "
+              f"nothing to judge (the earlier failure stands)")
+        return 0
+    rep = json.loads(path.read_text(encoding="utf-8"))
+    t = rep.get("thresholds", {})
+    print(f"freshness gate: universe session {rep.get('universe_session')} "
+          f"(report generated {rep.get('generated_on')})")
+    for r in rep.get("stale", []):
+        print(f"  [{r['tier'].upper():>6}] STALE  {r['series_id']} ({r['symbol']}): last bar "
+              f"{r['latest']}, {r['days']}d behind the pack "
+              f"(hard line >{t.get('stale_fail_days')}d)")
+    for r in rep.get("sparse", []):
+        print(f"  [{r['tier'].upper():>6}] SPARSE {r['series_id']} ({r['symbol']}): "
+              f"{r['missing']} interior sessions missing (hard line >{t.get('sparse_fail_max')}); "
+              f"{r['dates'][:6]}")
+    for e in rep.get("exempt", []):
+        print(f"  [EXEMPT] {e['series_id']} until {e['review_by']}: {e['reason']}")
+    for e in rep.get("expired_exempt", []):
+        print(f"  [  FAIL] EXPIRED exemption {e['series_id']} (review_by {e['review_by']}): "
+              f"{e['reason']}")
+    if rep.get("hard"):
+        print("\nfreshness gate: FAILED -- a series in the active universe has stopped arriving.\n"
+              "A vendor that goes quiet is an ERROR, not an observation. Decide which it is:\n"
+              "  RENAME  -- ticker changed, same book: check SEC EDGAR by CIK (the 10-Q/8-K cover\n"
+              "             gives the trading symbol); swap config `symbol`, continue the identity\n"
+              "             epoch, re-register, heal with `run --spot <NEW> --period 3mo`;\n"
+              "  RETIRE  -- merged/delisted (EDGAR Form 15 / no ticker): config `retired: true`\n"
+              "             + `retired_on`, close the identity epoch, freeze the history;\n"
+              "  WAIT    -- genuine temporary vendor outage: add a DATED _FRESHNESS_EXEMPT entry.\n"
+              "Templates + worked cases: P8b-HON-case-to-resolve.md.")
+        return 1
+    print("freshness gate: PASS (every series in the active universe is still arriving)")
+    return 0
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="INIT-22 price-archive verify (P4 seed / P5 daily)")
-    ap.add_argument("--root", required=True, help="archive root to verify")
+    ap.add_argument("--root", help="archive root to verify")
     ap.add_argument("--daily", action="store_true",
                     help="P5 routine-daily gate: restatements are bitemporal (not a clean seed)")
+    ap.add_argument("--freshness-report", metavar="PATH",
+                    help="--daily: also write the recency/density verdict as JSON, for the "
+                         "post-commit --assert-freshness step")
+    ap.add_argument("--assert-freshness", metavar="PATH",
+                    help="stand-alone: read a report written earlier and exit 1 if it is hard "
+                         "(reads NO archive -- run it AFTER the commit step)")
     args = ap.parse_args(argv)
+
+    if args.assert_freshness:
+        return assert_freshness(Path(args.assert_freshness).resolve())
+    if not args.root:
+        ap.error("--root is required (or use --assert-freshness PATH)")
+
     root = Path(args.root).resolve()
     cfg = yaml.safe_load((HERE / "config.yaml").read_text(encoding="utf-8"))
 
@@ -402,9 +659,20 @@ def main(argv=None) -> int:
     label = "P5 daily" if args.daily else "P4 backfill"
     print(f"{label} verify: root = {root}")
     summary = verify(root, cfg, g, daily=args.daily)
+    if args.freshness_report and summary.get("freshness") is not None:
+        p = Path(args.freshness_report).resolve()
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(summary["freshness"], ensure_ascii=False, indent=2) + "\n",
+                     encoding="utf-8")
+        print(f"\n  freshness report -> {p} (hard={summary['freshness']['hard']}; "
+              f"judged after the commit by --assert-freshness)")
     print(f"\n  summary: {summary['live']} live, {len(summary['dead'])} dead, "
           f"{len(summary['split_syms'])} split ETF(s), SPY->{summary['spy_earliest']}")
-    print("\n%s verify: %d/%d PASS" % (label, g.total - len(g.fails), g.total))
+    # A WARN is not a PASS -- the tally says so out loud (see Gate).
+    print("\n%s verify: %d/%d PASS%s" % (label, g.total - len(g.fails) - len(g.warns), g.total,
+                                         f" ({len(g.warns)} WARN)" if g.warns else ""))
+    if g.warns:
+        print("WARN (soft): " + ", ".join(g.warns))
     if g.fails:
         print("FAILED (hard): " + ", ".join(g.fails))
         return 1
