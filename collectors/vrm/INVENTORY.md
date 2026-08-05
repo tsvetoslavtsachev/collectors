@@ -5,7 +5,7 @@ INIT-22 E4/E5. Authoritative series contract, verified from
 un-freezes the 51 VRM canonical series (frozen at S6 migration: prices 2026-06-12,
 macro 2026-05-31) so the engines compute on fresh food instead of stale.
 
-## 51 VRM series (the fetch set)
+## 51 VRM series (the fetch set) + fx_usdjpy (ORGANISM-v1 F6, non-VRM daily FX)
 
 Count by feed (verified against catalog `vrm_role` membership):
 

@@ -101,6 +101,11 @@ fred:
   mkt_hy_oas:              {ticker: "BAMLH0A0HYM2", transform: level, model_freq: daily,   source_freq: daily}
   mkt_breakeven_10y:       {ticker: "T10YIE",       transform: level, model_freq: daily,   source_freq: daily}
   mkt_curve_10y2y:         {ticker: "T10Y2Y",       transform: level, model_freq: daily,   source_freq: daily}
+  # USD/JPY директно в канона (мандат ORGANISM-v1 Ф6): дрилът четеше двойката
+  # само през UUP×FXY прокси-та. Дневна серия като mkt_* — не участва в
+  # месечната кохорта/frontier (carry_forward гледа само monthly), не е
+  # VRM режимен вход.
+  fx_usdjpy:               {ticker: "DEXJPUS",      transform: level, model_freq: daily,   source_freq: daily}
   # AHE is FRED-fetched but COMPUTED (value = 12m YoY %, the salary watcher input).
   # Listed under fred for the fetch; the YoY transform lives in compute.py.
   macro_ahe_yoy:           {ticker: "CES0500000003", transform: yoy12, model_freq: monthly, source_freq: monthly, computed: true}

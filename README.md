@@ -16,7 +16,7 @@
 |---|---|---|---|
 | **oil** | data-core | oil_* серии (spread, WTI close, Hormuz transit, EIA deviation, COT pctile) | yfinance · IMF PortWatch · EIA · CFTC |
 | **cot** | data-core | cot_<key>_net позиционни серии + персентили (S13) | CFTC |
-| **vrm** | data-core | 51 VRM серии (ETF/idx dual-basis, FRED levels, computed, manual ISM) + brain M-модулите | yfinance · FRED · manual ISM |
+| **vrm** | data-core | 51 VRM серии (ETF/idx dual-basis, FRED levels, computed, manual ISM) + fx_usdjpy (мандат ORGANISM-v1 Ф6) + brain M-модулите | yfinance · FRED · manual ISM |
 | **price** | price-archive | каноничен дневен ETF/stock архив (append-only, year-partitioned, bitemporal) | yfinance |
 | **vrm/alfred** | data-core (vintage/) | ALFRED PIT vintage история на 7-те FRED режимни серии (M1) | FRED ALFRED |
 

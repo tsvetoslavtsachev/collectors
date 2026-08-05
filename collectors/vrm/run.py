@@ -6,7 +6,7 @@ Flow: fetch (yfinance + FRED) -> compute (ahe YoY, pce nowcast) -> manual (ISM) 
 WRITE each series through the data-core gate (identity + schema + health) -> report.
 The numbers live in data-core; this repo holds only the fetch/compute logic.
 
-51 VRM series un-frozen: 34 yfinance (32 ETF/idx dual-basis + ^VIX/^MOVE) + 13 FRED
+52 series un-frozen: 34 yfinance (32 ETF/idx dual-basis + ^VIX/^MOVE) + 14 FRED
 levels + 2 computed (ahe_yoy, pce_nowcast) + 2 manual ISM.
 
 Cardinal rule: a model never writes numbers here. Point DATACORE_ROOT at a TEMP
@@ -83,7 +83,7 @@ def main() -> int:
     root = os.environ.get("DATACORE_ROOT", "(data-core repo default)")
     exp = expected_series(cfg)
     print(f"VRM collector -> DATACORE_ROOT = {root}")
-    print(f"expected series: {len(exp)}  (wiring check: {'OK' if len(exp) == 51 else 'MISMATCH'})")
+    print(f"expected series: {len(exp)}  (wiring check: {'OK' if len(exp) == 52 else 'MISMATCH'})")  # 52 = 51 VRM + fx_usdjpy (мандат ORGANISM-v1 Ф6)
 
     if "--mock" in sys.argv:
         from . import mockdata
