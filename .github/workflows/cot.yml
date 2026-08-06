@@ -15,7 +15,7 @@ name: cot-weekly
 
 on:
   schedule:
-    - cron: "23 5 * * 6"    # Sat 05:23 UTC -- after the Fri CFTC release settles (Fri afternoon ET); staggered after vrm (04:23); off the round hour (scheduler congestion)
+    - cron: "23 4 * * 6"    # Sat 04:23 UTC (Р2 суап, 06.08.2026: БЕШЕ 05:23 СЛЕД vrm -- но мозъкът в vrm печеше cot картата преди този collect; сега cot е ПЪРВИ, vrm+мозъкът в 05:23 ядат прясното). CFTC огр. се пази (релийзът е петък следобед ET, отдавна улегнал); off the round hour (scheduler congestion)
   workflow_dispatch:
 
 permissions:

@@ -29,10 +29,13 @@ name: vrm-weekly
 
 on:
   schedule:
-    # Sat 04:23 UTC -- after the Friday close has settled, staggered after price-daily (00:37).
-    # Off the round hour: 06:00 sharp queued ~1.5h on the shared scheduler (fired 07:24-07:48
-    # three Saturdays running); odd minutes cut that (same lesson as alfred-vintage "17 7").
-    - cron: "23 4 * * 6"
+    # Sat 05:23 UTC (Р2 суап, 06.08.2026): БЕШЕ 04:23, но мозъкът (run_brain -> e1
+    # картите) печеше cot-monitor картата ЧАС ПРЕДИ съботния cot collect (05:23) --
+    # картата носеше миналоседмичния принт цяла седмица (хванато от FXY дрила:
+    # карта 21.07 срещу канон 28.07). Сега cot върви в 04:23, vrm+мозъкът в 05:23 --
+    # картите ядат прясното. Off the round hour: 06:00 sharp queued ~1.5h on the
+    # shared scheduler; odd minutes cut that (same lesson as alfred-vintage "17 7").
+    - cron: "23 5 * * 6"
   workflow_dispatch:
 
 permissions:
