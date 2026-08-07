@@ -221,6 +221,18 @@ price:
   px_vea_daily:    {symbol: "VEA", name: "Vanguard FTSE Developed Markets", category: "Intl Equity"}
   px_ibit_daily:   {symbol: "IBIT", name: "iShares Bitcoin Trust", category: "Commodity"}
   px_ashr_daily:   {symbol: "ASHR", name: "Xtrackers Harvest CSI 300 China A-Shares", category: "Intl Equity"}
+  # F13 client-portfolio series (MANDATE-price-collector-additions, 2026-08-07): the
+  # Balansiran portfolio instruments + the historical EW/FX proxies fixed by the ladder
+  # tests (VERDICTS-ladder-tests). XDEW/VWCE are EUR-quoted Xetra UCITS ETFs -- the ETF
+  # branch carries no machine-readable currency field (P8c: currency requires
+  # family=stock), so the EUR basis is carried in the name; the F13 consumers read
+  # these as EUR natively. EURUSD=X is the yfinance FX diagnostic series (from 2003-12;
+  # deep pre-2003 FX history stays on the FRED DEXUSEU snapshot in the ladder test
+  # root -- a canonical FRED series was considered and deferred: no live consumer).
+  px_xdew_de_daily: {symbol: "XDEW.DE", name: "Xtrackers S&P 500 Equal Weight UCITS 1C (EUR, Xetra)", category: "Client Portfolio"}
+  px_vwce_de_daily: {symbol: "VWCE.DE", name: "Vanguard FTSE All-World UCITS Acc (EUR, Xetra)", category: "Client Portfolio"}
+  px_rsp_daily:    {symbol: "RSP", name: "Invesco S&P 500 Equal Weight", category: "US Equity"}
+  px_eurusd_daily: {symbol: "EURUSD=X", name: "EUR/USD Spot (Yahoo FX)", category: "Currency"}
 
   # ---- SP500 stock family (current members; snapshot from
   # SP500-rotationradar/data/sector_map.json, updated 2026-04-25T23:33:28; generated 2026-06-27 P7a) ----
