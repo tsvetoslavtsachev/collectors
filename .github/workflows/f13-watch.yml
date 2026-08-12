@@ -1,0 +1,80 @@
+name: f13-watch
+
+# F13 (Д-К5/INIT-24) - the daily П5 threshold-watch of the client-portfolio
+# ladder (promoted 2026-08-12; discipline signed in VERDICTS-ladder-tests
+# 07.08.2026): weekly observation in GREEN, daily from YELLOW (-10% from peak).
+#
+# This runner implements exactly that cadence at the CI level:
+#   - it rebuilds pf_balansiran_state IN-MEMORY from the fresh price archive
+#     every trading morning (after price-daily has appended the bars);
+#   - GREEN tip  -> marker only, NO write, NO commit (the Saturday brain owns
+#     the weekly canonical write - collectors/vrm.yml);
+#   - YELLOW/RED -> the importer writes the escalated series and this workflow
+#     commits it to data-core, so every consumer (bulletin, watchers, Лента Б)
+#     sees the daily rows the discipline demands.
+#
+# Needs repo secrets (same as vrm.yml): DATACORE_PAT, PRICE_ARCHIVE_RO_PAT.
+# Cardinal rule: a model never writes numbers - only the deterministic importer.
+
+on:
+  schedule:
+    # Tue-Sat 03:07 UTC - after price-daily (00:37) has appended yesterday's
+    # bars and pushed. Off the round hour (shared-scheduler queue lesson).
+    - cron: "7 3 * * 2-6"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout data-core (private)
+        uses: actions/checkout@v5
+        with:
+          repository: tsvetoslavtsachev/data-core
+          token: ${{ secrets.DATACORE_PAT }}
+          path: _data-core
+
+      - name: Checkout price-archive (private, read-only)
+        uses: actions/checkout@v5
+        with:
+          repository: tsvetoslavtsachev/price-archive
+          token: ${{ secrets.PRICE_ARCHIVE_RO_PAT }}
+          path: _price-archive
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install writer lib + pandas
+        run: |
+          pip install -e "./_data-core[watch]"   # jsonschema + pyyaml
+          pip install pandas
+
+      - name: Daily П5 watch check
+        id: watch
+        env:
+          DATACORE_ROOT: ${{ github.workspace }}/_data-core
+          # Writing to the checkout is the intended CI behavior (vrm.yml pattern);
+          # the importer only writes on ESCALATION (yellow/red tip).
+          DATACORE_ALLOW_REAL: "1"
+          PRICE_ARCHIVE_ROOT: ${{ github.workspace }}/_price-archive
+        run: |
+          python _data-core/migrations/f13_portfolio/import_pf_state.py --daily-watch | tee watch_out.txt
+          MARKER=$(grep -oE 'F13-WATCH: (GREEN|ESCALATED)' watch_out.txt | head -1 | awk '{print $2}')
+          echo "marker=${MARKER}" >> "$GITHUB_OUTPUT"
+          { echo "### F13 daily watch"; echo; grep 'F13-WATCH:' watch_out.txt; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit escalated state -> data-core (yellow/red only)
+        if: steps.watch.outputs.marker == 'ESCALATED'
+        working-directory: _data-core
+        run: |
+          git config user.name "collectors-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/state/pf_balansiran_state.json migrations/f13_portfolio/import_report_f13_portfolio.json
+          git diff --cached --quiet || git commit -m "f13: $(date -u +%Y-%m-%d) daily watch escalation (П5) - pf_balansiran_state"
+          git push
