@@ -52,7 +52,7 @@ import json
 import os
 from pathlib import Path
 
-PRICE_DECIMALS = 4          # 0.1 цент — под всяка аналитична резолюция на организма
+PRICE_DECIMALS = 4          # 0.1 цент — под всяка аналитична резолюция на обсерваторията
 SETTLE_DAYS = 7             # календарни дни назад от върха, в които барът „сетълва"
 SPLIT_SUSPECT_MIN_ROWS = 20  # толкова исторически value промени = сплит/ребейс съмнение
 NUMERIC_FIELDS = ("value", "value_tr")

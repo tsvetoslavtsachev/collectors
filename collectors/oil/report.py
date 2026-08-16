@@ -165,7 +165,7 @@ footer {{ margin-top:28px; color:var(--dim); font-size:12px; line-height:1.7 }}
 <div class="wrap">
 <h1>Два часовника</h1>
 <p class="subtitle">Изпразва ли се запасът по-бързо, отколкото потокът се лекува. Седмичен монитор на петролното неравновесие.</p>
-<div class="o4badge" title="Организмов договор О4: дескриптивно режимно наблюдение — не сигнал за действие, не прогноза за посока.">НАБЛЮДЕНИЕ · дескриптивен режим</div>
+<div class="o4badge" title="Обсерваторен договор О4: дескриптивно режимно наблюдение — не сигнал за действие, не прогноза за посока.">НАБЛЮДЕНИЕ · дескриптивен режим</div>
 <div class="verdict"><span class="big">{comp["label"]}</span>
 <span class="tally">✅ {comp["bulls"]} · ❌ {comp["bears"]} от {comp["active"]} активни серии{" · без данни: " + str(comp["nodata"]) if comp["nodata"] else ""}</span></div>
 <div class="clocks">{g1}{g2}</div>
