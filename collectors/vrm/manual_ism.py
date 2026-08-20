@@ -9,6 +9,11 @@ Slot file (collector dir, gitignored — licensed data, not redistributed):
     ism_manual.json = {"macro_ism_mfg":      [{"as_of":"YYYY-MM-DD","value":n}, ...],
                        "macro_ism_services": [...]}
 
+A series may name its own slot via opts.slot_file (same row format, same gitignore
+rationale); without it, the shared man["slot_file"] is read. First non-ISM tenant:
+macro_mn_ore_cny in manganese_manual.json (INIT-27 план А — the unmarketized gauge,
+month-end snap of the weekly Bloomberg prints, vrm_role=observation).
+
 D8 contract, amended 2026-07-02 (session C1+2, decision Д1.2 - "историята е
 финална"): provisional=true ONLY on the NEWEST record of each series (the freshly
 pasted print, the one at risk of a typo or a late correction); every older print is
@@ -31,26 +36,32 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 
 
+def _load_slot(name: str, cache: dict) -> dict:
+    """Parse one slot file once; {"__slot_error__": msg} instead of raising."""
+    if name not in cache:
+        slot = HERE / name
+        if not slot.exists():
+            cache[name] = {"__slot_error__": f"manual slot not found: {slot.name}"}
+        else:
+            try:
+                cache[name] = json.loads(slot.read_text(encoding="utf-8"))
+            except Exception as e:  # noqa: BLE001
+                cache[name] = {"__slot_error__": f"slot parse error: {type(e).__name__}: {e}"}
+    return cache[name]
+
+
 def load_ism(cfg: dict) -> dict:
-    """{series_id: {ok, records}} for the two ISM series from the manual slot."""
+    """{series_id: {ok, records}} for every manual series from its slot file."""
     man = cfg["manual"]
-    slot = HERE / man["slot_file"]
     cut = cfg.get("settings", {}).get("bloomberg_era_cut")   # S5 provenance boundary
     out: dict = {}
-
-    if not slot.exists():
-        for sid in man["series"]:
-            out[sid] = {"ok": False, "error": f"manual slot not found: {slot.name}"}
-        return out
-
-    try:
-        data = json.loads(slot.read_text(encoding="utf-8"))
-    except Exception as e:  # noqa: BLE001
-        for sid in man["series"]:
-            out[sid] = {"ok": False, "error": f"slot parse error: {type(e).__name__}: {e}"}
-        return out
+    cache: dict = {}
 
     for sid, opts in man["series"].items():
+        data = _load_slot(opts.get("slot_file", man["slot_file"]), cache)
+        if "__slot_error__" in data:
+            out[sid] = {"ok": False, "error": data["__slot_error__"]}
+            continue
         rows = data.get(sid, [])
         if not rows:
             out[sid] = {"ok": False, "error": "no rows in manual slot"}

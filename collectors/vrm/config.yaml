@@ -126,3 +126,8 @@ manual:
   series:
     macro_ism_mfg:      {provisional: true}
     macro_ism_services: {provisional: true}
+    # INIT-27 план А (подписан 2026-08-20): манганова руда, китайско пристанище —
+    # немаркетизираният уред (без фючърс/ETF/COT). Месечен month-end snap от
+    # седмичните Bloomberg точки (M4CNTSWC AMTL Index); vrm_role=observation,
+    # НЕ влиза в S6c преди два тримесечни цикъла наблюдение.
+    macro_mn_ore_cny:   {provisional: true, slot_file: "manganese_manual.json"}

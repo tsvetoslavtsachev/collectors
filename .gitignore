@@ -6,3 +6,5 @@ venv/
 _data-core/
 # VRM ISM manual slot — licensed Bloomberg data, never redistributed (S3 gap).
 collectors/vrm/ism_manual.json
+# VRM manganese manual slot — Bloomberg terminal export, never redistributed (INIT-27 план А).
+collectors/vrm/manganese_manual.json

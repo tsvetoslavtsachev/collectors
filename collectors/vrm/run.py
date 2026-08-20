@@ -83,7 +83,7 @@ def main() -> int:
     root = os.environ.get("DATACORE_ROOT", "(data-core repo default)")
     exp = expected_series(cfg)
     print(f"VRM collector -> DATACORE_ROOT = {root}")
-    print(f"expected series: {len(exp)}  (wiring check: {'OK' if len(exp) == 52 else 'MISMATCH'})")  # 52 = 51 VRM + fx_usdjpy (мандат ORGANISM-v1 Ф6)
+    print(f"expected series: {len(exp)}  (wiring check: {'OK' if len(exp) == 53 else 'MISMATCH'})")  # 53 = 51 VRM + fx_usdjpy (мандат ORGANISM-v1 Ф6) + macro_mn_ore_cny (INIT-27 план А)
 
     if "--mock" in sys.argv:
         from . import mockdata
