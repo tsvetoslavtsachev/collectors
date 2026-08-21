@@ -1,17 +1,9 @@
 {
- "generated_at": "2026-08-19 16:03 UTC",
+ "generated_at": "2026-08-21 16:37 UTC",
  "raw": {
   "prices": {
    "ok": true,
    "wti_closes": [
-    [
-     "2025-08-19",
-     62.35
-    ],
-    [
-     "2025-08-20",
-     63.21
-    ],
     [
      "2025-08-21",
      63.52
@@ -1010,19 +1002,19 @@
     ],
     [
      "2026-08-19",
-     85.21
+     85.83
+    ],
+    [
+     "2026-08-20",
+     87.83
+    ],
+    [
+     "2026-08-21",
+     86.57
     ]
    ],
-   "wti_last": 85.21,
+   "wti_last": 86.57,
    "bw_spread_series": [
-    [
-     "2025-08-19",
-     3.44
-    ],
-    [
-     "2025-08-20",
-     3.63
-    ],
     [
      "2025-08-21",
      4.15
@@ -2021,21 +2013,21 @@
     ],
     [
      "2026-08-19",
-     6.97
+     5.79
+    ],
+    [
+     "2026-08-20",
+     5.95
+    ],
+    [
+     "2026-08-21",
+     7.41
     ]
    ],
-   "bw_last": 6.97,
+   "bw_last": 7.41,
    "m1_ticker": "BZV26.NYM",
    "m2_ticker": "BZX26.NYM",
    "spread_series": [
-    [
-     "2026-05-19",
-     3.31
-    ],
-    [
-     "2026-05-20",
-     2.87
-    ],
     [
      "2026-05-21",
      2.69
@@ -2282,11 +2274,19 @@
     ],
     [
      "2026-08-19",
-     1.73
+     1.83
+    ],
+    [
+     "2026-08-20",
+     1.81
+    ],
+    [
+     "2026-08-21",
+     1.72
     ]
    ],
-   "spread_last": 1.73,
-   "brent_m1_last": 92.18
+   "spread_last": 1.72,
+   "brent_m1_last": 93.98
   },
   "hormuz": {
    "ok": true,
@@ -3127,14 +3127,10 @@
   },
   "eia": {
    "ok": true,
-   "crude_last_mbbl": 424.4,
-   "cushing_last_mbbl": 22.6,
-   "last_change_mbbl": 17.42,
+   "crude_last_mbbl": 428.8,
+   "cushing_last_mbbl": 21.3,
+   "last_change_mbbl": 4.41,
    "deviations_mbbl": [
-    [
-     "2026-02-13",
-     -11.11
-    ],
     [
      "2026-02-20",
      9.66
@@ -3234,6 +3230,10 @@
     [
      "2026-08-07",
      16.5
+    ],
+    [
+     "2026-08-14",
+     7.51
     ]
    ],
    "consecutive_draws": 0
@@ -3460,7 +3460,7 @@
  "scores": {
   "S1": {
    "state": "BULL",
-   "value": "M1−M2 = +1.73 $/б (BZV26.NYM−BZX26.NYM)",
+   "value": "M1−M2 = +1.72 $/б (BZV26.NYM−BZX26.NYM)",
    "detail": "праг ✅ ≥ 1.50 устойчиво 5 дни; ❌ ≤ 0.50 устойчиво 5 дни"
   },
   "S2": {
@@ -3470,8 +3470,8 @@
   },
   "S3": {
    "state": "BEAR",
-   "value": "посл. промяна +17.4 млн.; 0 поредни изтегляния; откл. от нормата (4 седм. ср.): +4.3 млн./седм.",
-   "detail": "✅ ср. отклонение ≤ -3 млн.; ❌ 2 поредни builds над нормата. Cushing: 22.6 млн. б."
+   "value": "посл. промяна +4.4 млн.; 0 поредни изтегляния; откл. от нормата (4 седм. ср.): +5.0 млн./седм.",
+   "detail": "✅ ср. отклонение ≤ -3 млн.; ❌ 2 поредни builds над нормата. Cushing: 21.3 млн. б."
   },
   "S5": {
    "state": "NEUTRAL",
@@ -3480,14 +3480,14 @@
   },
   "S6": {
    "state": "NEUTRAL",
-   "value": "Brent−WTI = +6.97 $/б (предвоенно ~3.5; априлски пик ~11)",
+   "value": "Brent−WTI = +7.41 $/б (предвоенно ~3.5; априлски пик ~11)",
    "detail": "✅ ≥ 8 устойчиво 5 дни — вносният регион се задушава; ❌ ≤ 2 устойчиво 5 дни — атлантическият басейн се справя"
   }
  },
  "falsifier": {
   "dead": false,
   "confirm": false,
-  "text": "WTI 85.21. Под 80: 0/15 затваряния · Над 95: 0/5 затваряния"
+  "text": "WTI 86.57. Под 80: 0/15 затваряния · Над 95: 0/5 затваряния"
  },
  "composite": {
   "verdict": "WAIT",
@@ -3501,21 +3501,21 @@
   {
    "series_id": "oil_brent_m1_m2",
    "rows": 64,
-   "as_of": "2026-08-19",
+   "as_of": "2026-08-21",
    "source": "yfinance",
    "revisions": "settled 1"
   },
   {
    "series_id": "oil_brent_wti_spread",
    "rows": 252,
-   "as_of": "2026-08-19",
+   "as_of": "2026-08-21",
    "source": "yfinance",
    "revisions": "settled 1"
   },
   {
    "series_id": "oil_wti_close",
    "rows": 252,
-   "as_of": "2026-08-19",
+   "as_of": "2026-08-21",
    "source": "yfinance",
    "revisions": "settled 1"
   },
@@ -3523,21 +3523,19 @@
    "series_id": "oil_hormuz_transit_pct",
    "rows": 147,
    "as_of": "2026-08-14",
-   "source": "imf_portwatch",
-   "revisions": "HISTORICAL value 4"
+   "source": "imf_portwatch"
   },
   {
    "series_id": "oil_eia_crude_deviation",
    "rows": 26,
-   "as_of": "2026-08-07",
+   "as_of": "2026-08-14",
    "source": "eia"
   },
   {
    "series_id": "oil_cot_wti_mm_pctile",
    "rows": 52,
    "as_of": "2026-08-11",
-   "source": "cftc",
-   "revisions": "settled 1 · recomputed n=14 max_abs=0.2"
+   "source": "cftc"
   }
  ]
 }
