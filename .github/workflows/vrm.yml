@@ -67,6 +67,18 @@ jobs:
           path: _price-archive
           fetch-depth: 1
 
+      # The brain's E6B bridge step (m_bridge/export_bridge.py, wired 2026-08-25) reads the
+      # rotation radar's committed snapshot (docs/data.json) -- the sector-z ranks behind the
+      # regime->sector->3-names card. PUBLIC repo, so no token; shallow, read-only. The brain
+      # step below points ROTATION_DATA_JSON at this checkout (locally the sibling-repo
+      # default path applies).
+      - name: Checkout SP500-rotationradar (public, read-only)
+        uses: actions/checkout@v5
+        with:
+          repository: tsvetoslavtsachev/SP500-rotationradar
+          path: _rotation-radar
+          fetch-depth: 1
+
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -104,6 +116,8 @@ jobs:
           # (m_atlas/universe_vendored.json · m_inter/data_all_years.csv) -- no other
           # local-machine path leaks into the runner.
           PRICE_ARCHIVE_ROOT: ${{ github.workspace }}/_price-archive
+          # The E6B bridge step reads the rotation radar snapshot from the checkout above.
+          ROTATION_DATA_JSON: ${{ github.workspace }}/_rotation-radar/docs/data.json
         run: python _data-core/migrations/vrm_brain/run_brain.py
 
       - name: Commit canonical + state + health + registries -> data-core (private)
