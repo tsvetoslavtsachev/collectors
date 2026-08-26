@@ -83,8 +83,9 @@ def offline(g: Gate, tmp: Path) -> None:
     g.check("t1a seed minted one epoch per stock series (== %d)" % len(STOCK_SIDS),
             minted == len(STOCK_SIDS) and len(m["epochs"]) == len(STOCK_SIDS),
             "minted=%d epochs=%d stock=%d" % (minted, len(m["epochs"]), len(STOCK_SIDS)))
-    g.check("t1b 1116 current stock members (1112 P7b + 5 index adds 2026-H1 - 1 retired CTRA)",
-            len(STOCK_SIDS) == 1116, "stock=%d" % len(STOCK_SIDS))
+    g.check("t1b 1117 current stock members (1112 P7b + 5 index adds 2026-H1 - 1 retired CTRA "
+            "+ 1 P7a-3 curated off-index ERA.PA, 26.08.2026)",
+            len(STOCK_SIDS) == 1117, "stock=%d" % len(STOCK_SIDS))
     g.check("t1c every internal_id unique", len(ids) == len(set(ids)),
             "ids=%d unique=%d" % (len(ids), len(set(ids))))
     nums = sorted(int(i[4:]) for i in ids)
@@ -142,8 +143,9 @@ def offline(g: Gate, tmp: Path) -> None:
 
     # t5 1249 series intact (no re-key) -----------------------------------------
     sids = [s for s in cat if s.startswith("px_") and s != "px_probe_daily"]
-    g.check("t5a 137 ETF + 1116 stock = 1253 series registered (retired CTRA not re-added)",
-            len(ETF_SIDS) == 137 and len(STOCK_SIDS) == 1116 and len(sids) == 1253,
+    g.check("t5a 141 ETF + 1117 stock = 1258 series registered (retired CTRA not re-added; "
+            "+4 F13 ETFs 22.08 · +1 P7a-3 ERA.PA 26.08)",
+            len(ETF_SIDS) == 141 and len(STOCK_SIDS) == 1117 and len(sids) == 1258,
             "etf=%d stock=%d total=%d" % (len(ETF_SIDS), len(STOCK_SIDS), len(sids)))
     g.check("t5b series_ids unchanged (px_<ticker>_daily; no re-key to px_<id>)",
             all(s.startswith("px_") and s.endswith("_daily") for s in sids)

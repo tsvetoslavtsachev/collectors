@@ -3,7 +3,8 @@
 
 Offline gates (default run) -- no network, against a TEMPORARY archive root:
   s1 survivorship  -- EVERY stock series carries backtest_valid:false +
-                      survivorship:"current-members-only", MACHINE-READABLE (not text)
+                      survivorship:"current-members-only" (или "curated-watchlist" за
+                      P7a-3 curated OFF-INDEX citizens), MACHINE-READABLE (not text)
   s2 no-regression -- EVERY ETF series stays backtest_valid:true, no survivorship key
   s3 B2/D3 control -- a programmatic reader can HARD-REFUSE a flagged series by the flag
   s4 family route  -- entry() returns the stock shape for family:stock, etf shape otherwise
@@ -73,8 +74,11 @@ def offline(g: Gate, tmp: Path) -> None:
             "stock=%d" % len(STOCK_SIDS))
     missing_flag = [s for s in STOCK_SIDS
                     if cat.get(s, {}).get("backtest_valid") is not False
-                    or cat.get(s, {}).get("survivorship") != "current-members-only"]
-    g.check("s1b EVERY stock series: backtest_valid:false + survivorship:current-members-only",
+                    or cat.get(s, {}).get("survivorship") not in ("current-members-only", "curated-watchlist")]
+    # P7a-3: curated OFF-INDEX citizens (config origin: "curated-offindex") carry the honest
+    # label survivorship:"curated-watchlist" -- NOT an index member, still backtest_valid:false.
+    # Both labels are machine-readable survivorship flags; s3's HARD-REFUSE keys on backtest_valid.
+    g.check("s1b EVERY stock series: backtest_valid:false + survivorship in (current-members-only | curated-watchlist)",
             not missing_flag, "offenders=%d e.g.%s" % (len(missing_flag), missing_flag[:5]))
     # machine-readable = real JSON booleans/strings, not buried in description text.
     # (px_aapl_daily is a STOCK -- AAPL, not the SPY ETF -- so backtest_valid must be False.)
@@ -108,7 +112,7 @@ def offline(g: Gate, tmp: Path) -> None:
     ee = register_catalog.entry({"symbol": "SPY", "name": "SPDR S&P 500",
                                  "category": "US Equity"})  # no family -> etf
     g.check("s4a entry(stock) -> backtest_valid:false + survivorship",
-            es["backtest_valid"] is False and es["survivorship"] == "current-members-only")
+            es["backtest_valid"] is False and es["survivorship"] in ("current-members-only", "curated-watchlist"))
     g.check("s4b entry(etf default) -> backtest_valid:true, no survivorship",
             ee["backtest_valid"] is True and "survivorship" not in ee)
 
@@ -130,7 +134,11 @@ def offline(g: Gate, tmp: Path) -> None:
             "total=%d unique=%d" % (len(sids), len(set(sids))))
     g.check("s6b no duplicate symbol across the whole config", len(syms) == len(set(syms)),
             "total=%d unique=%d" % (len(syms), len(set(syms))))
-    g.check("s6c union = 137 ETF + ~503 stock", len(ETF_SIDS) == 137 and len(STOCK_SIDS) >= 490,
+    # 141 = 137 + 4 F13 client-group ETFs (22.08.2026). Stock floor unchanged; the union
+    # equals the whole config (P7a-3 curated off-index stocks included, 26.08.2026).
+    g.check("s6c union = 141 ETF + ~503+ stock", len(ETF_SIDS) == 141 and len(STOCK_SIDS) >= 490
+            and len(ETF_SIDS) + len(STOCK_SIDS)
+            == sum(1 for m in CFG["price"].values() if not m.get("retired")),
             "etf=%d stock=%d" % (len(ETF_SIDS), len(STOCK_SIDS)))
 
     # s7 per-family default depth (no network -- monkeypatch fetch_one) ----------

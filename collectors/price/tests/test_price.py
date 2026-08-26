@@ -37,6 +37,12 @@ _REC = "2026-06-25"           # fixed recorded_on -> deterministic
 PRICE_DIR = Path(register_catalog.__file__).resolve().parent
 CFG = yaml.safe_load((PRICE_DIR / "config.yaml").read_text(encoding="utf-8"))
 N_PX = len(CFG["price"])      # all configured px_* series (ETF + stock); P7a grew this 132 -> 635
+N_LIVE = sum(1 for m in CFG["price"].values() if not m.get("retired"))
+# N_LIVE excludes retired tombstones (CTRA): register skips them (never re-stamped) and a
+# full push gets them REFUSED by the archive -- so "registered" and "written" counts track
+# N_LIVE, while g6b's append count tracks N_PX (a retired series still reaches append and
+# is refused there). Derived from config so universe growth (F13 ETFs 22.08.2026; P7a-3
+# curated off-index ERA.PA 26.08.2026) never turns these gates stale.
 
 
 # --------------------------------------------------------------------------- harness
@@ -81,10 +87,10 @@ def offline(g: Gate, tmp: Path) -> None:
 
     # g1 identity ----------------------------------------------------------------
     g.check("g1a px_spy_daily registered in temp catalog", "px_spy_daily" in cat["series"])
-    g.check("g1b all configured px_* series registered (CFG-derived count)",
-            sum(1 for s in cat["series"] if s.startswith("px_") and s != "px_probe_daily") == N_PX,
+    g.check("g1b all LIVE configured px_* series registered (CFG-derived, retired excluded)",
+            sum(1 for s in cat["series"] if s.startswith("px_") and s != "px_probe_daily") == N_LIVE,
             "registered=%d expected=%d" % (
-                sum(1 for s in cat["series"] if s.startswith("px_") and s != "px_probe_daily"), N_PX))
+                sum(1 for s in cat["series"] if s.startswith("px_") and s != "px_probe_daily"), N_LIVE))
     unreg_refused = False
     try:
         archive.append("px_notreal_daily", [_bar("2025-01-02", 1.0)], root=tmp, catalog=cat,
@@ -237,9 +243,11 @@ def offline(g: Gate, tmp: Path) -> None:
             len(calls["catalogs"]) == N_PX - 1 and all(isinstance(c, dict) for c in calls["catalogs"]),
             "appends=%d (expected %d -- dead symbol never reaches append)" % (
                 len(calls["catalogs"]), N_PX - 1))
-    g.check("g6c dead symbol skipped, run continues (N_PX-1 written, 1 skipped)",
-            len(wrote) == N_PX - 1 and len(dead) == 1 and dead[0]["series_id"] == "px_spy_daily",
-            "wrote=%d dead=%d" % (len(wrote), len(dead)))
+    dead_sids = {r["series_id"] for r in dead}
+    retired_sids = {sid for sid, m in CFG["price"].items() if m.get("retired")}
+    g.check("g6c dead symbol skipped, run continues (N_LIVE-1 written; dead = SPY + retired refusals)",
+            len(wrote) == N_LIVE - 1 and dead_sids == ({"px_spy_daily"} | retired_sids),
+            "wrote=%d dead=%s" % (len(wrote), sorted(dead_sids)))
     shutil.rmtree(fresh, ignore_errors=True)
 
     # g7 zero-dep / untouched ----------------------------------------------------

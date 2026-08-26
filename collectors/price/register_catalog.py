@@ -94,6 +94,20 @@ def entry(m: dict, identity_map: dict | None = None) -> dict:
             "category": m["category"],
             "record_fields": _RECORD_FIELDS,
         }
+        # P7a-3: CURATED OFF-INDEX citizens (watchlist, added on request) are NOT index
+        # constituents -- the honest label differs: survivorship "curated-watchlist"
+        # (machine-readable; still backtest_valid:false) and a description that says NOT
+        # an index member. Only entries carrying origin: "curated-offindex" take this
+        # branch; every other stock entry stays byte-identical (regression gate).
+        if m.get("origin") == "curated-offindex":
+            out["survivorship"] = "curated-watchlist"
+            out["origin"] = "curated-offindex"
+            out["description"] = (
+                f"{m['name']} ({m['symbol']}) daily price bar -- split-adjusted OHLCV + "
+                f"fully-adjusted close + split/dividend factors. CURATED OFF-INDEX citizen "
+                f"(P7a-3 watchlist, added on request), NOT an index member ({m['category']}); "
+                f"survivorship-flagged: backtest_valid=false. Written by collectors/price "
+                f"through datacore.archive (append-only, year-partitioned, bitemporal).")
         # Multi-currency families (STOXX600, P7a-2) carry currency + quote_basis per series
         # (decision 4a: store RAW; GBX = London pence -> /100 to GBP is a CONSUMER step, NOT
         # baked into the archive, same spirit as split_factor). currency comes from the index

@@ -1389,3 +1389,13 @@ price:
   px_zeal_co_daily: {symbol: "ZEAL.CO", name: "ZEALAND PHARMA", category: "Healthcare", currency: "DKK", quote_basis: "DKK", family: "stock"}
   px_zeg_l_daily: {symbol: "ZEG.L", name: "ZEGONA COMMUNICATIONS PLC", category: "Communication Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
   px_zurn_sw_daily: {symbol: "ZURN.SW", name: "ZURICH INSURANCE GROUP AG", category: "Financial Services", currency: "CHF", quote_basis: "CHF", family: "stock"}
+
+  # ---- CURATED OFF-INDEX CITIZENS (P7a-3, design/price-archive-P7a-3-offindex-citizens-mandate.md) ----
+  # Hand-curated watchlist names OUTSIDE the tracked indexes (not SP500, not STOXX600).
+  # Open list, grows ON REQUEST (решение на Цветослав 21.08.2026): a new name = one row
+  # here + a WHY comment, never code. Honest label: register_catalog stamps these
+  # survivorship: "curated-watchlist" (not "current-members-only") + backtest_valid:false;
+  # the description says NOT an index member. Same fetch/push/daily path as every stock.
+  # WHY px_era_pa_daily: the M-FUND motivating case (Eramet cut 20.08.2026; манган/никел/
+  # литий, INIT-27 lessons) -- the missing price input for the bottom-up drill.
+  px_era_pa_daily: {symbol: "ERA.PA", name: "ERAMET SA", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock", origin: "curated-offindex"}

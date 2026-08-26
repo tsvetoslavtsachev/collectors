@@ -187,7 +187,7 @@ def offline(g: Gate) -> None:
     stock_live = [s for s in STOCK_SIDS if not CFG["price"][s].get("retired")]
     g.check("p8a5a _family_sids partitions (retire-excluded): %d etf + %d stock, disjoint"
             % (len(etf_live), len(stock_live)),
-            len(etf_only) == len(etf_live) == 137 and len(stock_only) == len(stock_live)
+            len(etf_only) == len(etf_live) == 141 and len(stock_only) == len(stock_live)
             and set(etf_only) == set(etf_live) and set(stock_only) == set(stock_live)
             and set(etf_only).isdisjoint(stock_only),
             f"etf={len(etf_only)} stock={len(stock_only)}")
@@ -245,8 +245,10 @@ def offline(g: Gate) -> None:
         added2, _updated2 = register_catalog.register(CFG, bare)
     finally:
         os.environ.pop("DATACORE_ALLOW_REAL", None)
+    # 1258 live series = 1259 config - 1 retired (141 ETF incl. F13 22.08 + 1117 stock incl.
+    # P7a-3 ERA.PA 26.08; register never re-stamps the retired tombstone).
     g.check("p8a6b register is idempotent (a 2nd register adds 0 new, all upserted)",
-            added2 == [] and len(_updated2) == 1253, f"added2={len(added2)} updated2={len(_updated2)}")
+            added2 == [] and len(_updated2) == 1258, f"added2={len(added2)} updated2={len(_updated2)}")
     shutil.rmtree(bare, ignore_errors=True)
 
 
