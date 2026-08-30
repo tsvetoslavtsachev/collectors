@@ -282,7 +282,34 @@ price:
   px_are_daily: {symbol: "ARE", name: "Alexandria Real Estate Equities", category: "Real Estate", family: "stock"}
   px_ares_daily: {symbol: "ARES", name: "Ares Management", category: "Financials", family: "stock"}
   px_ato_daily: {symbol: "ATO", name: "Atmos Energy", category: "Utilities", family: "stock"}
-  px_avb_daily: {symbol: "AVB", name: "AvalonBay Communities", category: "Real Estate", family: "stock"}
+  # RETIRED 2026-08-30 (КАЗУС 3, P8b-HON-case-to-resolve.md; реш. Ц. 30.08).
+  # AvalonBay се слива с Equity Residential на 17.08.2026 в Vivmark Residential.
+  # AVB се влива в дъщерно дружество (Canopy Merger Sub) и ПРЕСТАВА ДА СЪЩЕСТВУВА;
+  # държателите получават 2.793 VMRK за акция и накрая държат ~51%. Оцелелият
+  # регистрант е EQR (същият CIK 906107, преименуван на Vivmark, тикер VMRK от
+  # 18.08) -> продължението на живата серия е `px_eqr_daily`, НЕ тази.
+  # retired_on = 2026-08-14: последният бар с реален обем в AVB мащаб
+  # (as-traded 184.06, обем 2 484 400). От 17.08 нататък серията носи VMRK.
+  # ⚠️ СЪСТОЯНИЕ НА ДАННИТЕ (mark-don't-clean, кардиналното правило: архивът е
+  # append-only, няма механизъм за махане на барове — promote също минава през
+  # append/restate):
+  #   (1) Доставчикът е третирал коефициента 2.793 като СТОКОВ СПЛИТ: рестейтмънт
+  #       от 22.08 пре-мащабира цените (÷2.793) И обемите (×2.793) на цялата
+  #       история. as-traded ОСТАВА ВЕРЕН: close × split_factor възстановява
+  #       истинските цени на AvalonBay (14.08 -> 184.06). Нищо не е загубено.
+  #   (2) Чистата предсливаща серия е запазена в БИТЕМПОРАЛНАТА памет:
+  #       `archive.read('px_avb_daily', as_of_vintage='2026-08-19')` дава 1541
+  #       бара честна AvalonBay, split_factor 1.0 навсякъде, оригинални обеми.
+  #   (3) Пет бара от 18/19/20/21/24.08 са на VMRK (реален обем, ~63-68) и
+  #       НЕ МОГАТ да бъдат махнати. Оставени нарочно: рестейтване само на
+  #       предсливащите барове би създало -65% отвес на 17.08 БЕЗ стъпка в
+  #       split_factor — точно „stranded cliff"-ът от КАЗУС 1 (HON), който v3
+  #       не открива. Текущият изглед е вътрешно НЕПРЕКЪСНАТ в VMRK-единици;
+  #       по-безопасно е да остане така и да е описано тук.
+  #   (4) Барът 2026-08-17 (обем 0, 184.06 в предсливащия винтидж) е фантом на
+  #       доставчика — същият подпис като при CTRA и EA.
+  # merge_ratio е holder-view метаданни, НЕ мутация на архива (правилото от CTRA).
+  px_avb_daily: {symbol: "AVB", name: "AvalonBay Communities", category: "Real Estate", family: "stock", retired: true, retired_on: "2026-08-14", merged_into: "VMRK", merge_ratio: 2.793}
   px_avgo_daily: {symbol: "AVGO", name: "Broadcom", category: "Information Technology", family: "stock"}
   px_avy_daily: {symbol: "AVY", name: "Avery Dennison", category: "Materials", family: "stock"}
   px_awk_daily: {symbol: "AWK", name: "American Water Works", category: "Utilities", family: "stock"}
@@ -405,7 +432,23 @@ price:
   px_dva_daily: {symbol: "DVA", name: "DaVita", category: "Health Care", family: "stock"}
   px_dvn_daily: {symbol: "DVN", name: "Devon Energy", category: "Energy", family: "stock"}
   px_dxcm_daily: {symbol: "DXCM", name: "Dexcom", category: "Health Care", family: "stock"}
-  px_ea_daily: {symbol: "EA", name: "Electronic Arts", category: "Communication Services", family: "stock"}
+  # RETIRED 2026-08-30 (открито в съботния ритуал — freshness гейтът падаше 22/25-29.08):
+  # Electronic Arts стана частна. Изкупуването за $55 млрд от PIF (93.4%), Silver Lake
+  # (5.5%) и Affinity Partners (1.1%) затвори на 2026-08-04, $210/акция; акцията спря да
+  # се търгува и беше делистната от NASDAQ. Край на 35 години публичен живот; най-голямото
+  # LBO досега. [T1 — ea.com/news/ea-announces-completion-of-acquisition]
+  # retired_on = 2026-08-04 (спиране на търговията, реш. Ц. 30.08) — НЕ 2026-08-10, което
+  # е само последният бар, който доставчикът изплю. retired:true го маха от дневния fetch
+  # (_family_sids) И от verify (_series_ids) -> гейтът спира да пада.
+  # ⚠️ Историята се замразява КАКТО Е, с две отбелязани нередности (mark-don't-clean):
+  #   (1) последният ИСТИНСКИ бар е 2026-07-17 (208.90, обем 3.88M); дните 18.07-04.08,
+  #       в които акцията още се е търгувала, ЛИПСВАТ от архива — доставчикът е спрял
+  #       да я дава ~2.5 седмици преди делистването;
+  #   (2) четири бара 05/06/07/10.08 са закотвени на 209.699997 с ОБЕМ 0 — артефакт на
+  #       доставчика след затварянето (същият подпис като merger-freeze при CTRA).
+  # Няма merged_into: това е take-private, не сливане в друг листнат емитент — не
+  # съществува приемаща идентичност, към която да се гледа holder-side.
+  px_ea_daily: {symbol: "EA", name: "Electronic Arts", category: "Communication Services", family: "stock", retired: true, retired_on: "2026-08-04"}
   px_ebay_daily: {symbol: "EBAY", name: "eBay Inc.", category: "Consumer Discretionary", family: "stock"}
   px_ecl_daily: {symbol: "ECL", name: "Ecolab", category: "Materials", family: "stock"}
   px_ed_daily: {symbol: "ED", name: "Consolidated Edison", category: "Utilities", family: "stock"}
@@ -419,7 +462,22 @@ price:
   px_eog_daily: {symbol: "EOG", name: "EOG Resources", category: "Energy", family: "stock"}
   px_epam_daily: {symbol: "EPAM", name: "EPAM Systems", category: "Information Technology", family: "stock"}
   px_eqix_daily: {symbol: "EQIX", name: "Equinix", category: "Real Estate", family: "stock"}
-  px_eqr_daily: {symbol: "EQR", name: "Equity Residential", category: "Real Estate", family: "stock"}
+  # RENAME 2026-08-30, НЕ retire (КАЗУС 3; реш. Ц. 30.08): компанията е ЖИВА.
+  # Equity Residential се преименува на Vivmark Residential след сливането с
+  # AvalonBay (17.08.2026); тикерът става VMRK от 18.08. Това е СЪЩИЯТ регистрант
+  # — CIK 906107; филингите вече излизат под името „VIVMARK RESIDENTIAL". EQR
+  # акциите стават VMRK 1:1, затова епохата на идентичността ПРОДЪЛЖАВА и
+  # series_id остава `px_eqr_daily` (историята е една и съща книга).
+  # Проверка на структурата: ~$51 млрд капитализация = (EQR ~380 млн + AVB ~142 млн
+  # × 2.793 ≈ 397 млн) ~777 млн акции × ~$66. Бившите AVB държатели ~51%.
+  # Насрещната страна на сделката е `px_avb_daily` (RETIRE, merge_ratio 2.793).
+  # ⚠️ Дупка в архива, отбелязана нарочно: последният бар с реален обем е
+  # 2026-08-14 (65.97); дните 17/18/19.08 липсват, а 20 и 21.08 са закотвени на
+  # 63.66 с ОБЕМ 0 — фантоми на доставчика, докато тикерът се сменяше. 63.66 е
+  # първата цена на VMRK и се появява НЕЗАВИСИМО и в `px_avb_daily` на 17.08
+  # (обем 17 443 419) — двете серии сочат едно и също събитие от двете му страни.
+  # Лекувано с `run --spot VMRK --period 3mo` на 30.08.
+  px_eqr_daily: {symbol: "VMRK", name: "Vivmark Residential", category: "Real Estate", family: "stock"}
   px_eqt_daily: {symbol: "EQT", name: "EQT Corporation", category: "Energy", family: "stock"}
   px_erie_daily: {symbol: "ERIE", name: "Erie Indemnity", category: "Financials", family: "stock"}
   px_es_daily: {symbol: "ES", name: "Eversource Energy", category: "Utilities", family: "stock"}
