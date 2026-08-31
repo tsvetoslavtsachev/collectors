@@ -240,7 +240,38 @@ price:
   # quarterly approximation (AF.52 geography split). EUR-quoted Xetra UCITS ETF, same
   # branch as XDEW/VWCE -- the EUR basis is carried in the name (no machine-readable
   # currency field on the ETF family).
-  px_syba_de_daily: {symbol: "SYBA.DE", name: "SPDR Bloomberg Euro Aggregate Bond UCITS (EUR, Xetra)", category: "Fixed Income"}
+  px_syba_de_daily: {symbol: "SYBA.DE", name: "SPDR Bloomberg Euro Aggregate Bond UCITS (EUR, Xetra)", category: "EUR Fixed Income"}
+
+  # ---- EUR benchmark block (2026-08-31, INIT: BG fund-flow quarterly approximation) ----
+  # The archive was USD-only outside the F13 client-portfolio pair (XDEW/VWCE): every
+  # Fixed Income series was US paper, and the only "world equity in EUR" was FTSE
+  # All-World (EM included), not the MSCI World the consumer actually asked for.
+  # This block closes both gaps and gives each exposure a second reading where a second
+  # provider exists (MSCI World: iShares + Xtrackers; EUR govt/corp: iShares + Vanguard),
+  # so a single vendor glitch is visible instead of silent.
+  # All EUR-quoted UCITS on Xetra except ERNE.L (no Xetra line); the EUR basis is carried
+  # in the name -- the ETF branch has no machine-readable currency field.
+  # Duration anchors from the 2026-08-31 fact sheets (effective duration, years):
+  #   EUNH 6.85 | SYBA 6.15 | EUN5/IEAC 4.45 -- the govt-vs-corp gap is 1.54x, which is
+  #   why the 2022 rate shock hit the govt leg ~5pp harder than the corp leg.
+  px_eunl_de_daily: {symbol: "EUNL.DE", name: "iShares Core MSCI World UCITS Acc (EUR, Xetra)", category: "EUR Equity"}
+  px_xdwd_de_daily: {symbol: "XDWD.DE", name: "Xtrackers MSCI World UCITS 1C (EUR, Xetra)", category: "EUR Equity"}
+  px_sxr8_de_daily: {symbol: "SXR8.DE", name: "iShares Core S&P 500 UCITS Acc (EUR, Xetra)", category: "EUR Equity"}
+  px_sxrv_de_daily: {symbol: "SXRV.DE", name: "iShares Nasdaq 100 UCITS Acc (EUR, Xetra)", category: "EUR Equity"}
+  px_is3n_de_daily: {symbol: "IS3N.DE", name: "iShares Core MSCI EM IMI UCITS Acc (EUR, Xetra)", category: "EUR Equity"}
+  px_exsa_de_daily: {symbol: "EXSA.DE", name: "iShares STOXX Europe 600 UCITS (EUR, Xetra)", category: "EUR Equity"}
+  px_eunk_de_daily: {symbol: "EUNK.DE", name: "iShares Core MSCI Europe UCITS Acc (EUR, Xetra)", category: "EUR Equity"}
+  px_exw1_de_daily: {symbol: "EXW1.DE", name: "iShares Core EURO STOXX 50 UCITS (EUR, Xetra)", category: "EUR Equity"}
+
+  px_eunh_de_daily: {symbol: "EUNH.DE", name: "iShares Core EUR Govt Bond UCITS Dist (EUR, Xetra)", category: "EUR Fixed Income"}
+  px_ibca_de_daily: {symbol: "IBCA.DE", name: "iShares EUR Govt Bond 1-3yr UCITS Dist (EUR, Xetra)", category: "EUR Fixed Income"}
+  px_ibci_de_daily: {symbol: "IBCI.DE", name: "iShares EUR Inflation Linked Govt Bond UCITS (EUR, Xetra)", category: "EUR Fixed Income"}
+  px_eun5_de_daily: {symbol: "EUN5.DE", name: "iShares Core EUR Corp Bond UCITS Dist (EUR, Xetra)", category: "EUR Fixed Income"}
+  px_ibcx_de_daily: {symbol: "IBCX.DE", name: "iShares EUR Corp Bond Large Cap UCITS (EUR, Xetra)", category: "EUR Fixed Income"}
+  px_eunw_de_daily: {symbol: "EUNW.DE", name: "iShares EUR High Yield Corp Bond UCITS (EUR, Xetra)", category: "EUR Fixed Income"}
+  px_erne_l_daily: {symbol: "ERNE.L", name: "iShares EUR Ultrashort Bond UCITS Dist (EUR, LSE)", category: "EUR Fixed Income"}
+  px_vgea_de_daily: {symbol: "VGEA.DE", name: "Vanguard EUR Eurozone Government Bond UCITS Acc (EUR, Xetra)", category: "EUR Fixed Income"}
+  px_vecp_de_daily: {symbol: "VECP.DE", name: "Vanguard EUR Corporate Bond UCITS (EUR, Xetra)", category: "EUR Fixed Income"}
 
   # ---- SP500 stock family (current members; snapshot from
   # SP500-rotationradar/data/sector_map.json, updated 2026-04-25T23:33:28; generated 2026-06-27 P7a) ----
