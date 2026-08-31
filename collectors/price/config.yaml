@@ -234,6 +234,14 @@ price:
   px_rsp_daily:    {symbol: "RSP", name: "Invesco S&P 500 Equal Weight", category: "US Equity"}
   px_eurusd_daily: {symbol: "EURUSD=X", name: "EUR/USD Spot (Yahoo FX)", category: "Currency"}
 
+  # EUR fixed-income benchmark (2026-08-31): the euro-aggregate leg the archive lacked --
+  # every other Fixed Income series is US/USD (AGG/BND/TLT/IEF/LQD/HYG/...), so a
+  # euro-denominated debt leg had to be pulled ad-hoc. Consumer: the BG fund-flow
+  # quarterly approximation (AF.52 geography split). EUR-quoted Xetra UCITS ETF, same
+  # branch as XDEW/VWCE -- the EUR basis is carried in the name (no machine-readable
+  # currency field on the ETF family).
+  px_syba_de_daily: {symbol: "SYBA.DE", name: "SPDR Bloomberg Euro Aggregate Bond UCITS (EUR, Xetra)", category: "Fixed Income"}
+
   # ---- SP500 stock family (current members; snapshot from
   # SP500-rotationradar/data/sector_map.json, updated 2026-04-25T23:33:28; generated 2026-06-27 P7a) ----
   # survivorship: current-members-only -> backtest_valid:false (machine flag).
