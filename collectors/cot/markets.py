@@ -99,6 +99,15 @@ MARKETS = [
      "family": "tff", "cohort": LEV, "query_name": "BITCOIN",
      "name_must_contain": "CHICAGO MERCANTILE", "cftc_code": None,
      "canonical": "cot_bitcoin_net"},
+    {"key": "ether", "title": "Ether Futures", "subtitle": "Crypto",
+     "family": "tff", "cohort": LEV, "query_name": "ETHER CASH SETTLED",
+     "name_must_contain": "CHICAGO MERCANTILE", "cftc_code": "146021",
+     # 146021: "ETHER CASH SETTLED - CHICAGO MERCANTILE EXCHANGE", 282 weekly
+     # reports from 2021-04-06 (verified live 2026-09-04). Code-pinned because
+     # five TFF markets carry "ETHER" in the name: MICRO ETHER (146022, from
+     # 2021-12) and three NANO ETHER (Coinbase/LMX) are DIFFERENT contracts with
+     # different sizes -- a LIKE query would splice them into one fake series.
+     "canonical": "cot_ether_net"},
     # ── FX (TFF; CME-pinned; exclude cross-rates) ───────────────────────────
     {"key": "dxy", "title": "USD Index", "subtitle": "FX",
      "family": "tff", "cohort": LEV, "query_name": "USD INDEX",
@@ -234,7 +243,10 @@ MARKETS = [
 
 # Sanity: every market has a unique key + canonical (or a reuse), so the catalog
 # and the writer never see two markets fighting over one series_id.
-assert len(MARKETS) == 38, f"expected 38 markets, got {len(MARKETS)}"
+# 39 since ETHER CASH SETTLED (CME 146021) joined the registry (KMW-2,
+# 2026-09-04): the crypto monitor reads ETH positioning from the canon,
+# one number one read, instead of fetching CFTC itself.
+assert len(MARKETS) == 39, f"expected 39 markets, got {len(MARKETS)}"
 _keys = [m["key"] for m in MARKETS]
 assert len(_keys) == len(set(_keys)), "duplicate market key"
 _canon = [m["canonical"] for m in MARKETS if m.get("canonical")]

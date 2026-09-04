@@ -36,6 +36,10 @@ def entry(m: dict) -> dict:
         "description": f"{m['title']} COT {cohort} net positioning "
                        f"({m['family']}); raw weekly spec net (contracts)",
         "source": "cftc",
+        # Fully automatic channel: CFTC Socrata, no hand-carried number. The field
+        # itself came later (ATL3); stated here so a new cot series never reaches
+        # monthly_pack as "empty field".
+        "manual_source": "none",
         "license": "CFTC publicreporting - public",
         "basis": f"{cohort} net = long - short, weekly report",
         "frequency": "weekly",
@@ -84,7 +88,15 @@ def main() -> int:
     for m in markets.migrated():
         sid = m["canonical"]
         (updated if sid in series else added).append(sid)
-        series[sid] = entry(m)            # upsert — cot_* namespace only
+        # Upsert (cot_* namespace only), field-wise: keys this registrar owns are
+        # rewritten from markets.py, keys it does not know are KEPT. A blind
+        # `series[sid] = entry(m)` silently dropped `manual_source` from all 38
+        # cot entries when that field was added to the catalog later (caught
+        # 2026-09-04, KMW-2) — and monthly_pack / m_pulse / m_money read it.
+        fresh = entry(m)
+        existing = dict(series.get(sid, {}))
+        existing.update(fresh)
+        series[sid] = existing
 
     path.write_text(json.dumps(cat, ensure_ascii=False, indent=2) + "\n",
                     encoding="utf-8")
