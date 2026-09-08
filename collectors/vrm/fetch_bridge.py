@@ -54,7 +54,7 @@ def fetch_bridge(cfg: dict) -> dict:
             out[sid] = {"ok": False, "error": f"barometer feed unreachable: {type(e).__name__}"}
         return out
 
-    as_of = feed.get("as_of")
+    feed_as_of = feed.get("as_of")
     snap = {row.get("indicator"): row for row in feed.get("snapshot", [])}
     for ind, sid in BRIDGE_MAP.items():
         if sid not in bridges:
@@ -67,11 +67,29 @@ def fetch_bridge(cfg: dict) -> dict:
         # VIX/MOVE are index levels -> always > 0; reject missing/non-positive so a
         # feed glitch (None, 'n/a', 0.0) shows not-ok in Health, never a silent zero.
         # The parse is guarded per-indicator so one bad value can't abort the run.
-        if not as_of or val is None or val <= 0:
+        if not feed_as_of or val is None or val <= 0:
             out[sid] = {"ok": False,
                         "error": f"{ind}: missing/non-positive barometer value ({row.get('value') if row else None!r})"}
             continue
-        rec = {"as_of": as_of, "value": round(val, 6),
+        # ЧИС3 казус 1: датата на СОБСТВЕНАТА серия (value_date), не общият as_of
+        # на фийда -- as_of следва ETF архива, ^VIX/^MOVE идват от yfinance в момента
+        # и в делник изостава с един ден. Липсва ли value_date (стар фийд), пада
+        # обратно на as_of -- никога по-новата от двете, винаги value_date първо.
+        rec_as_of = row.get("value_date") or feed_as_of
+        rounded = round(val, 6)
+        # ЧИС3 казус 2: пазач срещу застояла стойност от фийда (yfinance връща стар
+        # кеширан ^VIX/^MOVE): нова дата, но стойност до 0.005 от последната
+        # канонична -> записът се ПРОПУСКА, не е грешка, не спира рънa.
+        existing_records = storage.read_canonical(sid)
+        if existing_records:
+            last = max(existing_records, key=lambda r: r["as_of"])
+            if rec_as_of > last["as_of"] and abs(rounded - float(last["value"])) < 0.005:
+                print(f"  [bridge] {sid}: застояла стойност от фийда, не е записана "
+                      f"(as_of {rec_as_of}, value {rounded}, последна канонична "
+                      f"{last['as_of']} = {last['value']})")
+                out[sid] = {"ok": True, "records": existing_records}
+                continue
+        rec = {"as_of": rec_as_of, "value": rounded,
                "source": "etf-rr-barometer", "resolution": "daily"}
         out[sid] = {"ok": True, "records": _accumulate(sid, rec)}
     return out
