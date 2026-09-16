@@ -1496,3 +1496,109 @@ price:
   # WHY px_era_pa_daily: the M-FUND motivating case (Eramet cut 20.08.2026; манган/никел/
   # литий, INIT-27 lessons) -- the missing price input for the bottom-up drill.
   px_era_pa_daily: {symbol: "ERA.PA", name: "ERAMET SA", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock", origin: "curated-offindex"}
+
+  # ---- ISHARES BASKET CITIZENS, Asia + Brazil (ЦАБ1, 16.09.2026; price-archive/MANDATE-asia-brazil-prices.md) ----
+  # Членовете на кошниците *_us от М-КОНЦ (data-core/migrations/m_conc/holdings, fund_as_of 2026-09-10),
+  # които нямаха ценова серия (МКД7: 417 имена без читател). Пилот: fxi_us 50 + ewz_us 46 = 96.
+  # РЕДОВЕТЕ НЕ СЕ ПИШАТ НА РЪКА: генерира ги collectors/price/basket_symbol.py (правило по борса:
+  # HKEX ляво допълване до 4 цифри + .HK; B3 <тикер>.SA, ON и PN отделни серии; NYSE/NASDAQ без
+  # суфикс), а tests/test_basket_symbol.py b5 сверява config == правилото 1:1.
+  # currency = от holdings, quote_basis = валутата (HKD/BRL в основни единици, сверено срещу
+  # Last Price на Koyfin на 11.09.2026). Единственият читател е s8 М-FUND (подпис В3).
+  # Нови имена: месечно с holdings; отпадналите остават (survivorship), не се трият.
+  px_0939_hk_daily: {symbol: "0939.HK", name: "CHINA CONSTRUCTION BANK CORP H", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_9988_hk_daily: {symbol: "9988.HK", name: "ALIBABA GROUP HOLDING", category: "Consumer Discretionary", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_0700_hk_daily: {symbol: "0700.HK", name: "TENCENT HOLDINGS", category: "Communication", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_1398_hk_daily: {symbol: "1398.HK", name: "INDUSTRIAL AND COMMERCIAL BANK OF", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_1810_hk_daily: {symbol: "1810.HK", name: "XIAOMI", category: "Information Technology", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_3690_hk_daily: {symbol: "3690.HK", name: "MEITUAN", category: "Consumer Discretionary", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_3988_hk_daily: {symbol: "3988.HK", name: "BANK OF CHINA LTD H", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_2318_hk_daily: {symbol: "2318.HK", name: "PING AN INSURANCE (GROUP) CO OF CH", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_9999_hk_daily: {symbol: "9999.HK", name: "NETEASE", category: "Communication", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_1211_hk_daily: {symbol: "1211.HK", name: "BYD H", category: "Consumer Discretionary", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_9618_hk_daily: {symbol: "9618.HK", name: "JD.COM CLASS A", category: "Consumer Discretionary", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_2628_hk_daily: {symbol: "2628.HK", name: "CHINA LIFE INSURANCE LTD H", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_2899_hk_daily: {symbol: "2899.HK", name: "ZIJIN MINING GROUP LTD H", category: "Materials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_0857_hk_daily: {symbol: "0857.HK", name: "PETROCHINA H", category: "Energy", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_3968_hk_daily: {symbol: "3968.HK", name: "CHINA MERCHANTS BANK H", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_1288_hk_daily: {symbol: "1288.HK", name: "AGRICULTURAL BANK OF CHINA LTD H", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_9888_hk_daily: {symbol: "9888.HK", name: "BAIDU", category: "Communication", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_9961_hk_daily: {symbol: "9961.HK", name: "TRIP.COM GROUP", category: "Consumer Discretionary", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_6160_hk_daily: {symbol: "6160.HK", name: "BEONE MEDICINES AG", category: "Health Care", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_1088_hk_daily: {symbol: "1088.HK", name: "CHINA SHENHUA ENERGY LTD H", category: "Energy", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_3750_hk_daily: {symbol: "3750.HK", name: "CONTEMPORARY AMPEREX TECHNOLOGY CL", category: "Industrials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_2328_hk_daily: {symbol: "2328.HK", name: "PICC PROPERTY AND CASUALTY LTD H", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_0386_hk_daily: {symbol: "0386.HK", name: "CHINA PETROLEUM AND CHEMICAL H", category: "Energy", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_9992_hk_daily: {symbol: "9992.HK", name: "POP MART INTERNATIONAL GROUP", category: "Consumer Discretionary", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_1024_hk_daily: {symbol: "1024.HK", name: "KUAISHOU TECHNOLOGY", category: "Communication", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_2020_hk_daily: {symbol: "2020.HK", name: "ANTA SPORTS PRODUCTS LTD", category: "Consumer Discretionary", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_1109_hk_daily: {symbol: "1109.HK", name: "CHINA RESOURCES LAND", category: "Real Estate", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_2359_hk_daily: {symbol: "2359.HK", name: "WUXI APPTEC H", category: "Health Care", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_2601_hk_daily: {symbol: "2601.HK", name: "CHINA PACIFIC INSURANCE (GROUP) H", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_1378_hk_daily: {symbol: "1378.HK", name: "CHINA HONGQIAO GROUP LTD", category: "Materials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_0998_hk_daily: {symbol: "0998.HK", name: "CHINA CITIC BANK CORP LTD H", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_9633_hk_daily: {symbol: "9633.HK", name: "NONGFU SPRING LTD H", category: "Consumer Staples", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_6869_hk_daily: {symbol: "6869.HK", name: "YANGTZE OPTICAL FIBRE AND CABLE JO", category: "Information Technology", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_0267_hk_daily: {symbol: "0267.HK", name: "CITIC LTD", category: "Industrials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_3993_hk_daily: {symbol: "3993.HK", name: "CHINA MOLYBDENUM H", category: "Materials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_2338_hk_daily: {symbol: "2338.HK", name: "WEICHAI POWER LTD H", category: "Industrials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_0300_hk_daily: {symbol: "0300.HK", name: "MIDEA GROUP CLASS H", category: "Consumer Discretionary", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_3328_hk_daily: {symbol: "3328.HK", name: "BANK OF COMMUNICATIONS LTD H", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_1658_hk_daily: {symbol: "1658.HK", name: "POSTAL SAVINGS BANK OF CHINA LTD H", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_1339_hk_daily: {symbol: "1339.HK", name: "THE PEOPLES INSURANCE CO (GROUP)", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_6690_hk_daily: {symbol: "6690.HK", name: "HAIER SMART HOME CLASS H LTD H", category: "Consumer Discretionary", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_1336_hk_daily: {symbol: "1336.HK", name: "NEW CHINA LIFE INSURANCE COMPANY L", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_2611_hk_daily: {symbol: "2611.HK", name: "GUOTAI HAITONG SECURITIES CO LTD H", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_1919_hk_daily: {symbol: "1919.HK", name: "COSCO SHIPPING HOLDINGS LTD H", category: "Industrials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_6030_hk_daily: {symbol: "6030.HK", name: "CITIC SECURITIES COMPANY H", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_1816_hk_daily: {symbol: "1816.HK", name: "CGN POWER LTD H", category: "Utilities", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_1276_hk_daily: {symbol: "1276.HK", name: "JIANGSU HENGRUI PHARMACEUTICALS LT", category: "Health Care", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_3986_hk_daily: {symbol: "3986.HK", name: "GIGADEVICE SEMICONDUCTOR INC CLASS", category: "Information Technology", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_6818_hk_daily: {symbol: "6818.HK", name: "CHINA EVERBRIGHT BANK LTD H", category: "Financials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_6936_hk_daily: {symbol: "6936.HK", name: "S.F. HOLDING LTD CLASS H", category: "Industrials", currency: "HKD", quote_basis: "HKD", family: "stock", origin: "ishares-basket", basket: "fxi_us"}
+  px_vale3_sa_daily: {symbol: "VALE3.SA", name: "CIA VALE DO RIO DOCE SH", category: "Materials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_nu_daily: {symbol: "NU", name: "NU HOLDINGS CLASS A", category: "Financials", currency: "USD", quote_basis: "USD", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_itub4_sa_daily: {symbol: "ITUB4.SA", name: "ITAU UNIBANCO HOLDING PREF SA", category: "Financials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_petr4_sa_daily: {symbol: "PETR4.SA", name: "PETROLEO BRASILEIRO PREF SA", category: "Energy", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_petr3_sa_daily: {symbol: "PETR3.SA", name: "PETROLEO BRASILEIRO SA PETROBRAS", category: "Energy", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_bbdc4_sa_daily: {symbol: "BBDC4.SA", name: "BANCO BRADESCO PREF", category: "Financials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_b3sa3_sa_daily: {symbol: "B3SA3.SA", name: "B3 BRASIL BOLSA BALCAO SA", category: "Financials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_wege3_sa_daily: {symbol: "WEGE3.SA", name: "WEG", category: "Industrials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_axia3_sa_daily: {symbol: "AXIA3.SA", name: "AXIA ENERGIA SA", category: "Utilities", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_abev3_sa_daily: {symbol: "ABEV3.SA", name: "AMBEV SA", category: "Consumer Staples", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_bpac11_sa_daily: {symbol: "BPAC11.SA", name: "BCO BTG PACTUAL UNT SA", category: "Financials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_embj3_sa_daily: {symbol: "EMBJ3.SA", name: "EMBRAER", category: "Industrials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_sbsp3_sa_daily: {symbol: "SBSP3.SA", name: "COMPANHIA DE SANEAMENTO BASICO DE", category: "Utilities", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_itsa4_sa_daily: {symbol: "ITSA4.SA", name: "ITAUSA INVESTIMENTOS ITAU PREF SA", category: "Financials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_prio3_sa_daily: {symbol: "PRIO3.SA", name: "PETRO RIO", category: "Energy", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_eqtl3_sa_daily: {symbol: "EQTL3.SA", name: "EQUATORIAL SA", category: "Utilities", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_vbbr3_sa_daily: {symbol: "VBBR3.SA", name: "VIBRA ENERGIA SA", category: "Consumer Discretionary", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_xp_daily: {symbol: "XP", name: "XP CLASS A INC", category: "Financials", currency: "USD", quote_basis: "USD", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_bbas3_sa_daily: {symbol: "BBAS3.SA", name: "BANCO DO BRASIL SA", category: "Financials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_ggbr4_sa_daily: {symbol: "GGBR4.SA", name: "GERDAU PREF SA", category: "Materials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_rent3_sa_daily: {symbol: "RENT3.SA", name: "LOCALIZA RENT A CAR", category: "Industrials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_suzb3_sa_daily: {symbol: "SUZB3.SA", name: "SUZANO SA", category: "Materials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_rdor3_sa_daily: {symbol: "RDOR3.SA", name: "REDE DOR SAO LUIZ SA", category: "Health Care", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_ugpa3_sa_daily: {symbol: "UGPA3.SA", name: "ULTRAPAR PARTICIPOES SA", category: "Consumer Discretionary", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_cple3_sa_daily: {symbol: "CPLE3.SA", name: "CIA PARANAENSE DE ENERGIA COPEL", category: "Utilities", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_bbse3_sa_daily: {symbol: "BBSE3.SA", name: "BB SEGURIDADE SA", category: "Financials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_radl3_sa_daily: {symbol: "RADL3.SA", name: "RAIA DROGASIL", category: "Consumer Staples", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_vivt3_sa_daily: {symbol: "VIVT3.SA", name: "TELEFONICA BRASIL SA", category: "Communication", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_enev3_sa_daily: {symbol: "ENEV3.SA", name: "ENEVA", category: "Utilities", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_jbs_daily: {symbol: "JBS", name: "JBS N V NV CLASS A", category: "Consumer Staples", currency: "USD", quote_basis: "USD", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_bbdc3_sa_daily: {symbol: "BBDC3.SA", name: "BANCO BRADESCO", category: "Financials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_cmig4_sa_daily: {symbol: "CMIG4.SA", name: "CIA ENERGETICA DE MINAS GERAIS PRE", category: "Utilities", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_rail3_sa_daily: {symbol: "RAIL3.SA", name: "RUMO SA", category: "Industrials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_motv3_sa_daily: {symbol: "MOTV3.SA", name: "MOTIVA INFRAESTRUTURA DE MOBILIDAD", category: "Industrials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_tims3_sa_daily: {symbol: "TIMS3.SA", name: "TIM", category: "Communication", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_engi11_sa_daily: {symbol: "ENGI11.SA", name: "ENERGISA UNITS", category: "Utilities", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_klbn11_sa_daily: {symbol: "KLBN11.SA", name: "KLABIN UNITS SA", category: "Materials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_axia7_sa_daily: {symbol: "AXIA7.SA", name: "AXIA ENERGIA PRF SA", category: "Utilities", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_augo_daily: {symbol: "AUGO", name: "AURA MINERALS INC", category: "Materials", currency: "USD", quote_basis: "USD", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_egie3_sa_daily: {symbol: "EGIE3.SA", name: "ENGIE BRASIL ENERGIA SA", category: "Utilities", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_cxse3_sa_daily: {symbol: "CXSE3.SA", name: "CAIXA SEGURIDADE PARTICIPACOES SA", category: "Financials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_cpfe3_sa_daily: {symbol: "CPFE3.SA", name: "CPFL ENERGIA", category: "Utilities", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_pssa3_sa_daily: {symbol: "PSSA3.SA", name: "PORTO SEGURO SA", category: "Financials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_mbrf3_sa_daily: {symbol: "MBRF3.SA", name: "MARFRIG GLOBAL FOODS SA", category: "Consumer Staples", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_itub3_sa_daily: {symbol: "ITUB3.SA", name: "ITAU UNIBANCO HOLDING SA", category: "Financials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  px_axia15_sa_daily: {symbol: "AXIA15.SA", name: "AXIA ENERGIA PREF SA", category: "Utilities", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}

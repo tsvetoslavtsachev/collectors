@@ -108,6 +108,20 @@ def entry(m: dict, identity_map: dict | None = None) -> dict:
                 f"(P7a-3 watchlist, added on request), NOT an index member ({m['category']}); "
                 f"survivorship-flagged: backtest_valid=false. Written by collectors/price "
                 f"through datacore.archive (append-only, year-partitioned, bitemporal).")
+        # ЦАБ1 (16.09.2026): членове на кошница iShares `*_us` (Азия/Бразилия), НЕ индексни
+        # членове. survivorship остава current-members-only (текущите членове на кошницата с
+        # дата), но описанието назовава кошницата и полетата origin/basket са машинно четими.
+        # Само origin: "ishares-basket" влиза тук; всеки друг stock ред остава байт за байт.
+        if m.get("origin") == "ishares-basket":
+            out["origin"] = "ishares-basket"
+            out["basket"] = m["basket"]
+            out["description"] = (
+                f"{m['name']} ({m['symbol']}) daily price bar -- split-adjusted OHLCV + "
+                f"fully-adjusted close + split/dividend factors. Current constituent of the "
+                f"iShares basket {m['basket']} (M-KONC holdings), NOT an index member "
+                f"({m['category']}); CURRENT-MEMBERS-ONLY (survivorship-flagged: "
+                f"backtest_valid=false). Written by collectors/price through datacore.archive "
+                f"(append-only, year-partitioned, bitemporal).")
         # Multi-currency families (STOXX600, P7a-2) carry currency + quote_basis per series
         # (decision 4a: store RAW; GBX = London pence -> /100 to GBP is a CONSUMER step, NOT
         # baked into the archive, same spirit as split_factor). currency comes from the index

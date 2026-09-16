@@ -61,7 +61,7 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}/_data-core:${{ github.workspace }}
         run: |
           set -e
-          for t in test_backfill test_consumer test_daily test_identity \
+          for t in test_backfill test_basket_symbol test_consumer test_daily test_identity \
                    test_price test_reconcile test_split_heal test_stamp \
                    test_stock test_stoxx; do
             echo "::group::$t"

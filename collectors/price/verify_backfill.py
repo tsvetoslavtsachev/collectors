@@ -130,6 +130,15 @@ _QUARANTINE_DEAD_OK = {
     # ROG.SW -> ROP.SW (genussschein -> participation cert, 1:1, 2026-03-17). Config symbol swapped
     # to ROP.SW, identity continued (SEC-001113 continuation_of SEC-000840), backfilled 1510 bars.
     # Removed with the rename per the fail-closed rule.
+    #
+    # ЦАБ1 (16.09.2026, price-archive/MANDATE-asia-brazil-prices.md G2): членове на кошница,
+    # генерирани от правилото в config (basket_symbol.py, 1:1), но НЕ регистрирани, защото
+    # първият пул е под прага от 250 бара. Честна липса в доклада, не празна/къса серия в
+    # каталога. ВНИМАНИЕ: register_catalog е upsert на целия config и ще ги регистрира при
+    # следващ пуск; регистрацията им е ръчно решение заедно с backfill, никога преди.
+    "px_axia15_sa_daily": "0 бара: Yahoo няма данни за AXIA15.SA (16.09.2026)",
+    "px_3986_hk_daily": "167 бара от 2026-01-13 (H листинг тази година); преглед при >=250 бара",
+    "px_axia7_sa_daily": "181 бара от 2025-12-23 (нов клас след преименуването); преглед при >=250 бара",
 }
 
 # FRESHNESS EXEMPTIONS -- the escape hatch for v2c/v2d, and the one that ROTS ON PURPOSE.
