@@ -16,8 +16,8 @@ DTE, BA, TSCO са различни компании в два екрана).
 в каталога, тоест разминаване между двете места пада като липсваща серия, не мълчи.
 
 CLI (генератор и проверка на редовете в config.yaml, G1 „нула ръчни редове"):
-    python -m collectors.price.basket_symbol --holdings <m_conc/holdings> fxi_us ewz_us
-    python -m collectors.price.basket_symbol --holdings <...> --check fxi_us ewz_us
+    python -m collectors.price.basket_symbol --holdings <m_conc/holdings> ewj_us ewy_us ewt_us
+    python -m collectors.price.basket_symbol --holdings <...> --check fxi_us ewz_us ewj_us ewy_us ewt_us
 """
 from __future__ import annotations
 
@@ -63,9 +63,11 @@ def _tse(t: str) -> str:
 
 def _krx(suffix: str):
     def rule(t: str) -> str:
-        # KRX: 6-цифрен код; holdings пише 005930, Koyfin A005930.
-        if not re.fullmatch(r"\d{6}", t):
-            raise UnmappableHolding(f"KRX тикер {t!r} не е 6-цифрен код")
+        # KRX: 6-знаков код с цифров корен; holdings пише 005930, Koyfin A005930.
+        # Новите KRX кодове имат буква (0126Z0): Yahoo `0126Z0.KS` има серия и затварянето
+        # на 11.09.2026 (340 000) == Last Price на Koyfin (ЦАБ2, 17.09.2026).
+        if not re.fullmatch(r"\d{4}[0-9A-Z]{2}", t):
+            raise UnmappableHolding(f"KRX тикер {t!r} не е 6-знаков код с цифров корен")
         return t + suffix
     return rule
 
@@ -120,12 +122,24 @@ def last_snapshot(holdings_root, etf: str) -> dict:
     return json.loads(lines[-1])
 
 
+#: Назованите откази: (кошница, тикер, име) -> причина. Само точно този ред се прескача;
+#: друг отказ (или същият тикер с друго име) спира генератора. Решение, не таблица на символи.
+KNOWN_REFUSALS = {
+    ("ewy_us", "-", "ECOPRO BM CO LTD"):
+        "ред без тикер (0,01%); същата компания е 247540 ECOPRO BM LTD (0,37%), която има "
+        "серия 247540.KQ (ЦАБ2, 17.09.2026)",
+}
+
+
 def rows_for(holdings_root, etf: str) -> list[tuple[str, dict]]:
-    """[(series_id, config ред)] за Equity редовете на последната снимка. Отказ = стоп."""
+    """[(series_id, config ред)] за Equity редовете на последната снимка. Отказ = стоп,
+    освен точно назованите в KNOWN_REFUSALS."""
     snap = last_snapshot(holdings_root, etf)
     out = []
     for h in snap.get("holdings") or []:
         if h.get("asset_class") != "Equity":
+            continue
+        if (etf, h.get("ticker"), h.get("name")) in KNOWN_REFUSALS:
             continue
         sym = yahoo_symbol(h.get("ticker"), h.get("exchange"))
         cur = h.get("currency")

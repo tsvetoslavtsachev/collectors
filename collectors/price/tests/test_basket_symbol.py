@@ -9,9 +9,10 @@ Offline гейтове (без мрежа):
                                   хонконгски код с буква -> отказ.
   b3 series_id                  -- 0700.HK -> px_0700_hk_daily (конвенцията на каталога).
   b4 живите кошници             -- всеки Equity ред на петте *_us се картира ИЛИ отказва
-                                  с име; пилотът fxi_us + ewz_us: нула откази, 96 символа,
+                                  с име; fxi_us, ewz_us, ewj_us, ewt_us: нула откази;
+                                  ewy_us: единственият отказ е редът `-` (ЦАБ2); 416 символа,
                                   нула сблъсъка (PETR3 и PETR4 са две серии).
-  b5 config == правилото        -- всеки член на fxi_us и ewz_us е ред в config.yaml, 1:1
+  b5 config == правилото        -- всеки член на петте кошници е ред в config.yaml, 1:1
                                   с изхода на функцията (нула ръчни редове).
 
 b4/b5 четат data-core/migrations/m_conc/holdings; без него са SKIP (не PASS).
@@ -48,6 +49,14 @@ def refuses(ticker, exchange, must_contain):
     return False, got
 
 
+def _refused(h):
+    try:
+        B.yahoo_symbol(h["ticker"], h["exchange"])
+        return False
+    except B.UnmappableHolding:
+        return True
+
+
 def holdings_root():
     for p in (os.environ.get("M_CONC_HOLDINGS"),
               *[str(Path(x) / "migrations" / "m_conc" / "holdings")
@@ -68,7 +77,10 @@ for tk, ex, want in [
     ("NU", "NYSE", "NU"),
     ("XP", "NASDAQ", "XP"),
     ("7203", "Tokyo Stock Exchange", "7203.T"),
+    ("285A", "Tokyo Stock Exchange", "285A.T"),
     ("005930", "Korea Exchange (Stock Market)", "005930.KS"),
+    ("005935", "Korea Exchange (Stock Market)", "005935.KS"),
+    ("0126Z0", "Korea Exchange (Stock Market)", "0126Z0.KS"),
     ("247540", "Korea Exchange (Kosdaq)", "247540.KQ"),
     ("2330", "Taiwan Stock Exchange", "2330.TW"),
     ("6488", "Gretai Securities Market", "6488.TWO"),
@@ -81,6 +93,12 @@ ok, d = refuses("700", "Shanghai Stock Exchange", "Shanghai Stock Exchange")
 check("непозната борса -> отказ С ИМЕТО на борсата", ok, d)
 ok, d = refuses("-", "Korea Exchange (Stock Market)", "'-'")
 check("редът `-` в ewy_us -> отказ с тикера", ok, d)
+ok, d = refuses("-", "Korea Exchange (Kosdaq)", "'-'")
+check("редът `-` на KOSDAQ (както е в ewy_us) -> отказ с тикера", ok, d)
+ok, d = refuses("0126Z", "Korea Exchange (Stock Market)", "0126Z")
+check("KRX код с 5 знака -> отказ", ok, d)
+ok, d = refuses("Z126Z0", "Korea Exchange (Stock Market)", "Z126Z0")
+check("KRX код без цифров корен -> отказ", ok, d)
 ok, d = refuses("70A", "Hong Kong Exchanges And Clearing Ltd", "HKEX")
 check("хонконгски код с буква -> отказ", ok, d)
 ok, d = refuses("", "XBSP", "XBSP")
@@ -108,21 +126,31 @@ else:
         print(f"    {etf}: {len(eq)} Equity, {len(mapped)} символа, {len(refused)} отказа {refused[:3]}")
         check(f"{etf}: всеки ред е символ ИЛИ назован отказ", len(mapped) + len(refused) == len(eq))
         check(f"{etf}: нула сблъсъка на символ", len(set(mapped)) == len(mapped))
-        if etf in ("fxi_us", "ewz_us"):
-            check(f"{etf} (пилот): нула откази", not refused, refused)
-            pilot += mapped
-    check("пилотът е 96 символа (50 FXI + 46 EWZ)", len(set(pilot)) == 96, len(set(pilot)))
+        if etf == "ewy_us":
+            check("ewy_us: единственият отказ е редът `-`", len(refused) == 1 and "'-'" in refused[0],
+                  refused)
+        else:
+            check(f"{etf}: нула откази", not refused, refused)
+        pilot += mapped
+    check("назованите откази са точно KNOWN_REFUSALS (нито повече, нито по-малко)",
+          sorted((e, t, n) for e in ("fxi_us", "ewz_us", "ewj_us", "ewy_us", "ewt_us")
+                 for h in B.last_snapshot(root, e)["holdings"] if h.get("asset_class") == "Equity"
+                 for t, n in [(h["ticker"], h["name"])]
+                 if _refused(h)) == sorted(B.KNOWN_REFUSALS))
+    check("петте кошници са 416 символа (FXI 50 + EWZ 46 + EWJ 167 + EWY 77 + EWT 76)",
+          len(set(pilot)) == 416, len(set(pilot)))
 
     print("b5 config.yaml == правилото (нула ръчни редове)")
     cfg = yaml.safe_load((Path(B.__file__).resolve().parent / "config.yaml")
                          .read_text(encoding="utf-8"))["price"]
-    for etf in ("fxi_us", "ewz_us"):
+    BASKETS = ("fxi_us", "ewz_us", "ewj_us", "ewy_us", "ewt_us")
+    for etf in BASKETS:
         rows = B.rows_for(root, etf)
         diff = [sid for sid, m in rows if cfg.get(sid) != m]
         check(f"{etf}: {len(rows)} реда в config, 1:1 с функцията", not diff, diff[:5])
     extra = sorted(sid for sid, m in cfg.items()
                    if m.get("origin") == "ishares-basket"
-                   and sid not in {s for e in ("fxi_us", "ewz_us") for s, _ in B.rows_for(root, e)})
+                   and sid not in {s for e in BASKETS for s, _ in B.rows_for(root, e)})
     check("нито един ishares-basket ред извън правилото", not extra, extra[:5])
 
 print("GREEN" if not FAILS else f"RED ({len(FAILS)})")

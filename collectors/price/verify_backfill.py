@@ -139,6 +139,10 @@ _QUARANTINE_DEAD_OK = {
     "px_axia15_sa_daily": "0 бара: Yahoo няма данни за AXIA15.SA (16.09.2026)",
     "px_3986_hk_daily": "167 бара от 2026-01-13 (H листинг тази година); преглед при >=250 бара",
     "px_axia7_sa_daily": "181 бара от 2025-12-23 (нов клас след преименуването); преглед при >=250 бара",
+    # ЦАБ2 (17.09.2026, EWJ + EWY + EWT, G2): същото правило, същата причина.
+    "px_0126z0_ks_daily": "200 бара от 2025-11-25 (SAMSUNG EPIS HOLDINGS, нов KRX код с буква; затварянето на 11.09 == Koyfin); преглед при >=250 бара",
+    "px_1602_tw_daily": "0 бара: Yahoo няма данни за 1602.TW нито 1602.TWO (PACIFIC ELECTRIC WIRE; няма ред и в екрана на Koyfin) (17.09.2026)",
+    "px_2418_tw_daily": "0 бара: Yahoo няма данни за 2418.TW нито 2418.TWO (YA HSIN INDUSTRIAL; няма ред и в екрана на Koyfin) (17.09.2026)",
 }
 
 # FRESHNESS EXEMPTIONS -- the escape hatch for v2c/v2d, and the one that ROTS ON PURPOSE.

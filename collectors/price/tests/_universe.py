@@ -17,7 +17,7 @@ Families (every row must land in exactly one; an unknown family/origin FAILS):
   sp500             family stock, no origin, no currency (USD index members)
   stoxx             family stock, no origin, currency (STOXX600, multi-ccy)
   curated-offindex  family stock, origin curated-offindex (P7a-3, ERA.PA)
-  ishares-basket    family stock, origin ishares-basket (ЦАБ1 16.09.2026, FXI + EWZ baskets)
+  ishares-basket    family stock, origin ishares-basket (ЦАБ1 16.09.2026 FXI + EWZ; ЦАБ2 17.09.2026 EWJ + EWY + EWT)
 """
 from __future__ import annotations
 
@@ -26,7 +26,7 @@ FLOORS = {
     "sp500": 508,             # retire-inclusive (3 retired tombstones, CTRA among them)
     "stoxx": 609,
     "curated-offindex": 1,    # ERA.PA, 26.08.2026
-    "ishares-basket": 96,     # fxi_us 50 + ewz_us 46, ЦАБ1 16.09.2026
+    "ishares-basket": 416,    # fxi_us 50 + ewz_us 46 (ЦАБ1) + ewj_us 167 + ewy_us 77 + ewt_us 76 (ЦАБ2)
 }
 STOCK_FAMILIES = ("sp500", "stoxx", "curated-offindex", "ishares-basket")
 

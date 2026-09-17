@@ -1602,3 +1602,329 @@ price:
   px_mbrf3_sa_daily: {symbol: "MBRF3.SA", name: "MARFRIG GLOBAL FOODS SA", category: "Consumer Staples", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
   px_itub3_sa_daily: {symbol: "ITUB3.SA", name: "ITAU UNIBANCO HOLDING SA", category: "Financials", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
   px_axia15_sa_daily: {symbol: "AXIA15.SA", name: "AXIA ENERGIA PREF SA", category: "Utilities", currency: "BRL", quote_basis: "BRL", family: "stock", origin: "ishares-basket", basket: "ewz_us"}
+  # ---- ISHARES BASKET CITIZENS, Токио + Сеул + Тайпе (ЦАБ2, 17.09.2026; price-archive/MANDATE-asia-brazil-prices.md) ----
+  # ewj_us 167 (TSE .T) + ewy_us 77 (KOSPI .KS 73, KOSDAQ .KQ 4) + ewt_us 76 (TWSE .TW 70, TPEx .TWO 6),
+  # holdings fund_as_of 2026-09-10. Борсата идва от полето exchange на кошницата, никога от гадаене.
+  # Назован отказ: ewy_us `-` ECOPRO BM CO LTD (0,01%), същата компания е 247540.KQ (KNOWN_REFUSALS).
+  # РЕДОВЕТЕ НЕ СЕ ПИШАТ НА РЪКА: генерира ги collectors/price/basket_symbol.py, b5 сверява 1:1.
+  # currency = от holdings, quote_basis = валутата (JPY/KRW/TWD в основни единици, G4 срещу Koyfin 11.09.2026).
+  px_8306_t_daily: {symbol: "8306.T", name: "MITSUBISHI UFJ FINANCIAL GROUP", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7203_t_daily: {symbol: "7203.T", name: "TOYOTA MOTOR", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9984_t_daily: {symbol: "9984.T", name: "SOFTBANK GROUP", category: "Communication", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8316_t_daily: {symbol: "8316.T", name: "SUMITOMO MITSUI FINANCIAL GROUP", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6857_t_daily: {symbol: "6857.T", name: "ADVANTEST", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8035_t_daily: {symbol: "8035.T", name: "TOKYO ELECTRON", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6501_t_daily: {symbol: "6501.T", name: "HITACHI", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_285a_t_daily: {symbol: "285A.T", name: "KIOXIA HOLDINGS", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6758_t_daily: {symbol: "6758.T", name: "SONY GROUP", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6098_t_daily: {symbol: "6098.T", name: "RECRUIT HOLDINGS LTD", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8411_t_daily: {symbol: "8411.T", name: "MIZUHO FINANCIAL GROUP", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8058_t_daily: {symbol: "8058.T", name: "MITSUBISHI", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6861_t_daily: {symbol: "6861.T", name: "KEYENCE", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8766_t_daily: {symbol: "8766.T", name: "TOKIO MARINE HOLDINGS", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8001_t_daily: {symbol: "8001.T", name: "ITOCHU", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9983_t_daily: {symbol: "9983.T", name: "FAST RETAILING", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6981_t_daily: {symbol: "6981.T", name: "MURATA MANUFACTURING", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8031_t_daily: {symbol: "8031.T", name: "MITSUI", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7011_t_daily: {symbol: "7011.T", name: "MITSUBISHI HEAVY INDUSTRIES", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6752_t_daily: {symbol: "6752.T", name: "PANASONIC HOLDINGS", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6503_t_daily: {symbol: "6503.T", name: "MITSUBISHI ELECTRIC", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4063_t_daily: {symbol: "4063.T", name: "SHIN ETSU CHEMICAL", category: "Materials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4502_t_daily: {symbol: "4502.T", name: "TAKEDA PHARMACEUTICAL", category: "Health Care", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7974_t_daily: {symbol: "7974.T", name: "NINTENDO", category: "Communication", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9433_t_daily: {symbol: "9433.T", name: "KDDI", category: "Communication", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_5803_t_daily: {symbol: "5803.T", name: "FUJIKURA", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7741_t_daily: {symbol: "7741.T", name: "HOYA", category: "Health Care", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8053_t_daily: {symbol: "8053.T", name: "SUMITOMO", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_2914_t_daily: {symbol: "2914.T", name: "JAPAN TOBACCO", category: "Consumer Staples", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9434_t_daily: {symbol: "9434.T", name: "SOFTBANK", category: "Communication", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8002_t_daily: {symbol: "8002.T", name: "MARUBENI", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8591_t_daily: {symbol: "8591.T", name: "ORIX", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6702_t_daily: {symbol: "6702.T", name: "FUJITSU", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6301_t_daily: {symbol: "6301.T", name: "KOMATSU", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8750_t_daily: {symbol: "8750.T", name: "DAIICHI LIFE GROUP", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_5802_t_daily: {symbol: "5802.T", name: "SUMITOMO ELECTRIC INDUSTRIES", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7267_t_daily: {symbol: "7267.T", name: "HONDA MOTOR", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8725_t_daily: {symbol: "8725.T", name: "MS&AD INSURANCE GROUP HOLDINGS", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7182_t_daily: {symbol: "7182.T", name: "JAPAN POST BANK LTD", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6723_t_daily: {symbol: "6723.T", name: "RENESAS ELECTRONICS CORP", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6701_t_daily: {symbol: "6701.T", name: "NEC", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8630_t_daily: {symbol: "8630.T", name: "SOMPO HOLDINGS", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6954_t_daily: {symbol: "6954.T", name: "FANUC CORP", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6762_t_daily: {symbol: "6762.T", name: "TDK", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9432_t_daily: {symbol: "9432.T", name: "NTT", category: "Communication", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6367_t_daily: {symbol: "6367.T", name: "DAIKIN INDUSTRIES LTD", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8308_t_daily: {symbol: "8308.T", name: "RESONA HOLDINGS", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8604_t_daily: {symbol: "8604.T", name: "NOMURA HOLDINGS", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4578_t_daily: {symbol: "4578.T", name: "OTSUKA HOLDINGS", category: "Health Care", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4062_t_daily: {symbol: "4062.T", name: "IBIDEN LTD", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8015_t_daily: {symbol: "8015.T", name: "TOYOTA TSUSHO", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6146_t_daily: {symbol: "6146.T", name: "DISCO CORP", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4568_t_daily: {symbol: "4568.T", name: "DAIICHI SANKYO LTD", category: "Health Care", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8309_t_daily: {symbol: "8309.T", name: "SUMITOMO MITSUI TRUST GROUP", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4519_t_daily: {symbol: "4519.T", name: "CHUGAI PHARMACEUTICAL LTD", category: "Health Care", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_2802_t_daily: {symbol: "2802.T", name: "AJINOMOTO", category: "Consumer Staples", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6971_t_daily: {symbol: "6971.T", name: "KYOCERA", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_5108_t_daily: {symbol: "5108.T", name: "BRIDGESTONE", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8802_t_daily: {symbol: "8802.T", name: "MITSUBISHI ESTATE CO LTD", category: "Real Estate", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4503_t_daily: {symbol: "4503.T", name: "ASTELLAS PHARMA", category: "Health Care", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_5020_t_daily: {symbol: "5020.T", name: "ENEOS HOLDINGS", category: "Energy", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6178_t_daily: {symbol: "6178.T", name: "JAPAN POST HOLDINGS LTD", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_3382_t_daily: {symbol: "3382.T", name: "SEVEN & I HOLDINGS", category: "Consumer Staples", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8801_t_daily: {symbol: "8801.T", name: "MITSUI FUDOSAN", category: "Real Estate", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6273_t_daily: {symbol: "6273.T", name: "SMC (JAPAN) CORP", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4901_t_daily: {symbol: "4901.T", name: "FUJIFILM HOLDINGS", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7751_t_daily: {symbol: "7751.T", name: "CANON", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_1605_t_daily: {symbol: "1605.T", name: "INPEX", category: "Energy", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4661_t_daily: {symbol: "4661.T", name: "ORIENTAL LAND", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9020_t_daily: {symbol: "9020.T", name: "EAST JAPAN RAILWAY", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_5401_t_daily: {symbol: "5401.T", name: "NIPPON STEEL", category: "Materials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7269_t_daily: {symbol: "7269.T", name: "SUZUKI MOTOR", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4452_t_daily: {symbol: "4452.T", name: "KAO", category: "Consumer Staples", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6902_t_daily: {symbol: "6902.T", name: "DENSO", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4543_t_daily: {symbol: "4543.T", name: "TERUMO", category: "Health Care", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8267_t_daily: {symbol: "8267.T", name: "AEON", category: "Consumer Staples", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4004_t_daily: {symbol: "4004.T", name: "RESONAC HOLDINGS", category: "Materials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9022_t_daily: {symbol: "9022.T", name: "CENTRAL JAPAN RAILWAY", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6920_t_daily: {symbol: "6920.T", name: "LASERTEC", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9503_t_daily: {symbol: "9503.T", name: "KANSAI ELECTRIC POWER", category: "Utilities", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7936_t_daily: {symbol: "7936.T", name: "ASICS", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9101_t_daily: {symbol: "9101.T", name: "NIPPON YUSEN", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_5801_t_daily: {symbol: "5801.T", name: "FURUKAWA ELECTRIC LTD", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7832_t_daily: {symbol: "7832.T", name: "BANDAI NAMCO HOLDINGS INC", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7013_t_daily: {symbol: "7013.T", name: "IHI", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_1925_t_daily: {symbol: "1925.T", name: "DAIWA HOUSE INDUSTRY", category: "Real Estate", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6326_t_daily: {symbol: "6326.T", name: "KUBOTA", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9735_t_daily: {symbol: "9735.T", name: "SECOM", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_5713_t_daily: {symbol: "5713.T", name: "SUMITOMO METAL MINING", category: "Materials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9104_t_daily: {symbol: "9104.T", name: "MITSUI OSK LINES LTD", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8601_t_daily: {symbol: "8601.T", name: "DAIWA SECURITIES GROUP INC", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6594_t_daily: {symbol: "6594.T", name: "NIDEC", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_2502_t_daily: {symbol: "2502.T", name: "ASAHI GROUP HOLDINGS", category: "Consumer Staples", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8697_t_daily: {symbol: "8697.T", name: "JAPAN EXCHANGE GROUP", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_2503_t_daily: {symbol: "2503.T", name: "KIRIN HOLDINGS", category: "Consumer Staples", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4507_t_daily: {symbol: "4507.T", name: "SHIONOGI", category: "Health Care", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8795_t_daily: {symbol: "8795.T", name: "T&D HOLDINGS", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6988_t_daily: {symbol: "6988.T", name: "NITTO DENKO", category: "Materials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_5016_t_daily: {symbol: "5016.T", name: "JX ADVANCED METALS CORP", category: "Materials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9502_t_daily: {symbol: "9502.T", name: "CHUBU ELECTRIC POWER INC", category: "Utilities", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7733_t_daily: {symbol: "7733.T", name: "OLYMPUS", category: "Health Care", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7453_t_daily: {symbol: "7453.T", name: "RYOHIN KEIKAKU", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7735_t_daily: {symbol: "7735.T", name: "SCREEN HOLDINGS LTD", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_1928_t_daily: {symbol: "1928.T", name: "SEKISUI HOUSE", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9766_t_daily: {symbol: "9766.T", name: "KONAMI GROUP", category: "Communication", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6361_t_daily: {symbol: "6361.T", name: "EBARA", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_1812_t_daily: {symbol: "1812.T", name: "KAJIMA", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8830_t_daily: {symbol: "8830.T", name: "SUMITOMO REALTY & DEVELOPMENT", category: "Real Estate", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6525_t_daily: {symbol: "6525.T", name: "KOKUSAI ELECTRIC", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9532_t_daily: {symbol: "9532.T", name: "OSAKA GAS", category: "Utilities", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_3407_t_daily: {symbol: "3407.T", name: "ASAHI KASEI", category: "Materials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_1802_t_daily: {symbol: "1802.T", name: "OBAYASHI", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9531_t_daily: {symbol: "9531.T", name: "TOKYO GAS LTD", category: "Utilities", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7186_t_daily: {symbol: "7186.T", name: "YOKOHAMA FINANCIAL GROUP", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_1801_t_daily: {symbol: "1801.T", name: "TAISEI", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4307_t_daily: {symbol: "4307.T", name: "NOMURA RESEARCH INSTITUTE", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6383_t_daily: {symbol: "6383.T", name: "DAIFUKU", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7012_t_daily: {symbol: "7012.T", name: "KAWASAKI HEAVY INDUSTRIES", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8473_t_daily: {symbol: "8473.T", name: "SBI HOLDINGS INC", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6504_t_daily: {symbol: "6504.T", name: "FUJI ELECTRIC", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4684_t_daily: {symbol: "4684.T", name: "OBIC LTD", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7272_t_daily: {symbol: "7272.T", name: "YAMAHA MOTOR", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_3402_t_daily: {symbol: "3402.T", name: "TORAY INDUSTRIES", category: "Materials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8331_t_daily: {symbol: "8331.T", name: "CHIBA BANK", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7532_t_daily: {symbol: "7532.T", name: "PAN PACIFIC INTERNATIONAL HOLDINGS", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4188_t_daily: {symbol: "4188.T", name: "MITSUBISHI CHEMICAL GROUP", category: "Materials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4689_t_daily: {symbol: "4689.T", name: "LY CORP", category: "Communication", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_5706_t_daily: {symbol: "5706.T", name: "MITSUI KINZOKU LIMITED LTD", category: "Materials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4911_t_daily: {symbol: "4911.T", name: "SHISEIDO", category: "Consumer Staples", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7270_t_daily: {symbol: "7270.T", name: "SUBARU", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9843_t_daily: {symbol: "9843.T", name: "NITORI HOLDINGS", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7309_t_daily: {symbol: "7309.T", name: "SHIMANO INC", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9021_t_daily: {symbol: "9021.T", name: "WEST JAPAN RAILWAY", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8593_t_daily: {symbol: "8593.T", name: "MITSUBISHI HC CAPITAL INC", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_5019_t_daily: {symbol: "5019.T", name: "IDEMITSU KOSAN LTD", category: "Energy", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4523_t_daily: {symbol: "4523.T", name: "EISAI", category: "Health Care", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_1803_t_daily: {symbol: "1803.T", name: "SHIMIZU", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7202_t_daily: {symbol: "7202.T", name: "ISUZU MOTORS", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9107_t_daily: {symbol: "9107.T", name: "KAWASAKI KISEN LTD", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6586_t_daily: {symbol: "6586.T", name: "MAKITA", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8136_t_daily: {symbol: "8136.T", name: "SANRIO", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_2801_t_daily: {symbol: "2801.T", name: "KIKKOMAN CORP", category: "Consumer Staples", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7911_t_daily: {symbol: "7911.T", name: "TOPPAN HOLDINGS", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6479_t_daily: {symbol: "6479.T", name: "MINEBEA MITSUMI INC", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7912_t_daily: {symbol: "7912.T", name: "DAI NIPPON PRINTING", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9697_t_daily: {symbol: "9697.T", name: "CAPCOM LTD", category: "Communication", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7550_t_daily: {symbol: "7550.T", name: "ZENSHO HOLDINGS", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_5201_t_daily: {symbol: "5201.T", name: "AGC", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9042_t_daily: {symbol: "9042.T", name: "HANKYU HANSHIN HOLDINGS", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4612_t_daily: {symbol: "4612.T", name: "NIPPON PAINT HOLDINGS", category: "Materials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4755_t_daily: {symbol: "4755.T", name: "RAKUTEN GROUP", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_6841_t_daily: {symbol: "6841.T", name: "YOKOGAWA ELECTRIC", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8113_t_daily: {symbol: "8113.T", name: "UNICHARM", category: "Consumer Staples", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7259_t_daily: {symbol: "7259.T", name: "AISIN", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_3659_t_daily: {symbol: "3659.T", name: "NEXON", category: "Communication", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_1878_t_daily: {symbol: "1878.T", name: "DAITO TRUST CONSTRUCTION LTD", category: "Real Estate", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4091_t_daily: {symbol: "4091.T", name: "NIPPON SANSO HOLDINGS", category: "Materials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_8951_t_daily: {symbol: "8951.T", name: "NIPPON BUILDING FUND REIT", category: "Real Estate", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7181_t_daily: {symbol: "7181.T", name: "JAPAN POST INSURANCE LTD", category: "Financials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9602_t_daily: {symbol: "9602.T", name: "TOHO (TOKYO)", category: "Communication", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_3003_t_daily: {symbol: "3003.T", name: "HULIC", category: "Real Estate", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4768_t_daily: {symbol: "4768.T", name: "OTSUKA CORP", category: "Information Technology", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_7201_t_daily: {symbol: "7201.T", name: "NISSAN MOTOR", category: "Consumer Discretionary", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9435_t_daily: {symbol: "9435.T", name: "HIKARI TSUSHIN INC", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_2587_t_daily: {symbol: "2587.T", name: "SUNTORY BEVERAGE & FOOD LTD", category: "Consumer Staples", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_4151_t_daily: {symbol: "4151.T", name: "KYOWA KIRIN LTD", category: "Health Care", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_9202_t_daily: {symbol: "9202.T", name: "ANA HOLDINGS", category: "Industrials", currency: "JPY", quote_basis: "JPY", family: "stock", origin: "ishares-basket", basket: "ewj_us"}
+  px_000660_ks_daily: {symbol: "000660.KS", name: "SK HYNIX", category: "Information Technology", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_005930_ks_daily: {symbol: "005930.KS", name: "SAMSUNG ELECTRONICS LTD", category: "Information Technology", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_402340_ks_daily: {symbol: "402340.KS", name: "SK SQUARE", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_009150_ks_daily: {symbol: "009150.KS", name: "SAMSUNG ELECTRO MECHANICS LTD", category: "Information Technology", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_105560_ks_daily: {symbol: "105560.KS", name: "KB FINANCIAL GROUP", category: "Financials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_005380_ks_daily: {symbol: "005380.KS", name: "HYUNDAI MOTOR", category: "Consumer Discretionary", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_055550_ks_daily: {symbol: "055550.KS", name: "SHINHAN FINANCIAL GROUP", category: "Financials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_034020_ks_daily: {symbol: "034020.KS", name: "DOOSAN ENERBILITY LTD", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_086790_ks_daily: {symbol: "086790.KS", name: "HANA FINANCIAL GROUP", category: "Financials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_012450_ks_daily: {symbol: "012450.KS", name: "HANWHA AEROSPACE LTD", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_006400_ks_daily: {symbol: "006400.KS", name: "SAMSUNG SDI LTD", category: "Information Technology", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_028260_ks_daily: {symbol: "028260.KS", name: "SAMSUNG C&T CORP", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_035420_ks_daily: {symbol: "035420.KS", name: "NAVER", category: "Communication", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_000270_ks_daily: {symbol: "000270.KS", name: "KIA CORPORATION", category: "Consumer Discretionary", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_068270_ks_daily: {symbol: "068270.KS", name: "CELLTRION", category: "Health Care", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_032830_ks_daily: {symbol: "032830.KS", name: "SAMSUNG LIFE LTD", category: "Financials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_066570_ks_daily: {symbol: "066570.KS", name: "LG ELECTRONICS INC", category: "Consumer Discretionary", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_316140_ks_daily: {symbol: "316140.KS", name: "WOORI FINANCIAL GROUP INC", category: "Financials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_012330_ks_daily: {symbol: "012330.KS", name: "HYUNDAI MOBIS LTD", category: "Consumer Discretionary", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_005490_ks_daily: {symbol: "005490.KS", name: "POSCO", category: "Materials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_000810_ks_daily: {symbol: "000810.KS", name: "SAMSUNG FIRE & MARINE INSURANCE LT", category: "Financials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_034730_ks_daily: {symbol: "034730.KS", name: "SK INC", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_373220_ks_daily: {symbol: "373220.KS", name: "LG ENERGY SOLUTION LTD", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_207940_ks_daily: {symbol: "207940.KS", name: "SAMSUNG BIOLOGICS", category: "Health Care", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_033780_ks_daily: {symbol: "033780.KS", name: "KT&G CORP", category: "Consumer Staples", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_267260_ks_daily: {symbol: "267260.KS", name: "HD HYUNDAI ELECTRIC", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_010120_ks_daily: {symbol: "010120.KS", name: "LS ELECTRIC LTD", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_196170_kq_daily: {symbol: "196170.KQ", name: "ALTEOGEN INC", category: "Health Care", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_009540_ks_daily: {symbol: "009540.KS", name: "HD KOREA SHIPBUILDING & OFFSHORE E", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_298040_ks_daily: {symbol: "298040.KS", name: "HYOSUNG HEAVY INDUSTRIES CORP", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_329180_ks_daily: {symbol: "329180.KS", name: "HD HYUNDAI HEAVY INDUSTRIES LTD", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_010140_ks_daily: {symbol: "010140.KS", name: "SAMSUNG HEAVY INDUSTRIES LTD", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_003550_ks_daily: {symbol: "003550.KS", name: "LG", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_051910_ks_daily: {symbol: "051910.KS", name: "LG CHEM LTD", category: "Materials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_138040_ks_daily: {symbol: "138040.KS", name: "MERITZ FINANCIAL GROUP INC", category: "Financials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_267250_ks_daily: {symbol: "267250.KS", name: "HD HYUNDAI LTD", category: "Energy", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_035720_ks_daily: {symbol: "035720.KS", name: "KAKAO", category: "Communication", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_018260_ks_daily: {symbol: "018260.KS", name: "SAMSUNG SDS", category: "Information Technology", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_042700_ks_daily: {symbol: "042700.KS", name: "HANMI SEMICONDUCTOR", category: "Information Technology", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_000720_ks_daily: {symbol: "000720.KS", name: "HYUNDAI ENGINEERING & CONSTRUCTION", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_042660_ks_daily: {symbol: "042660.KS", name: "HANWHA OCEAN LTD", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_005830_ks_daily: {symbol: "005830.KS", name: "DB INSURANCE LTD", category: "Financials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_000150_ks_daily: {symbol: "000150.KS", name: "DOOSAN CORP", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_278470_ks_daily: {symbol: "278470.KS", name: "APR LTD", category: "Consumer Staples", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_047810_ks_daily: {symbol: "047810.KS", name: "KOREA AEROSPACE INDUSTRIES", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_003490_ks_daily: {symbol: "003490.KS", name: "KOREAN AIR LINES LTD", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_010950_ks_daily: {symbol: "010950.KS", name: "S-OIL", category: "Energy", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_086280_ks_daily: {symbol: "086280.KS", name: "HYUNDAI GLOVIS LTD", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_079550_ks_daily: {symbol: "079550.KS", name: "LIG DEFENSE&AEROSPACE LTD", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_071050_ks_daily: {symbol: "071050.KS", name: "KOREA INVESTMENT HOLDINGS LTD", category: "Financials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_086520_kq_daily: {symbol: "086520.KQ", name: "ECOPRO LTD", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_003670_ks_daily: {symbol: "003670.KS", name: "POSCO FUTURE M LTD", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_024110_ks_daily: {symbol: "024110.KS", name: "INDUSTRIAL BANK OF KOREA", category: "Financials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_064350_ks_daily: {symbol: "064350.KS", name: "HYUNDAI-ROTEM", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_011200_ks_daily: {symbol: "011200.KS", name: "HMM LTD", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_090430_ks_daily: {symbol: "090430.KS", name: "AMOREPACIFIC", category: "Consumer Staples", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_003230_ks_daily: {symbol: "003230.KS", name: "SAM YANG FOODS INC", category: "Consumer Staples", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_096770_ks_daily: {symbol: "096770.KS", name: "SK INNOVATION LTD", category: "Energy", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_000100_ks_daily: {symbol: "000100.KS", name: "YUHAN", category: "Health Care", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_161390_ks_daily: {symbol: "161390.KS", name: "HANKOOK TIRE & TECHNOLOGY LTD", category: "Consumer Discretionary", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_005387_ks_daily: {symbol: "005387.KS", name: "HYUNDAI MOTOR S2 PREF", category: "Consumer Discretionary", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_259960_ks_daily: {symbol: "259960.KS", name: "KRAFTON", category: "Communication", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_323410_ks_daily: {symbol: "323410.KS", name: "KAKAOBANK", category: "Financials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_017670_ks_daily: {symbol: "017670.KS", name: "SK TELECOM", category: "Communication", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_247540_kq_daily: {symbol: "247540.KQ", name: "ECOPRO BM LTD", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_272210_ks_daily: {symbol: "272210.KS", name: "HANWHA SYSTEMS LTD", category: "Industrials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_005940_ks_daily: {symbol: "005940.KS", name: "NH INVESTMENT & SECURITIES", category: "Financials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_006800_ks_daily: {symbol: "006800.KS", name: "MIRAE ASSET SECURITIES CO LTD", category: "Financials", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_352820_ks_daily: {symbol: "352820.KS", name: "HYBE", category: "Communication", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_005385_ks_daily: {symbol: "005385.KS", name: "HYUNDAI MOTOR S1 PREF", category: "Consumer Discretionary", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_015760_ks_daily: {symbol: "015760.KS", name: "KOREA ELECTRIC POWER", category: "Utilities", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_032640_ks_daily: {symbol: "032640.KS", name: "LG UPLUS", category: "Communication", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_005935_ks_daily: {symbol: "005935.KS", name: "SAMSUNG ELECTRONICS NON VOTING PRE", category: "Information Technology", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_011070_ks_daily: {symbol: "011070.KS", name: "LG INNOTEK LTD", category: "Information Technology", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_0126z0_ks_daily: {symbol: "0126Z0.KS", name: "SAMSUNG EPIS HOLDINGS LTD", category: "Health Care", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_028300_kq_daily: {symbol: "028300.KQ", name: "HLB LTD", category: "Health Care", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_023530_ks_daily: {symbol: "023530.KS", name: "LOTTE SHOPPING LTD", category: "Consumer Discretionary", currency: "KRW", quote_basis: "KRW", family: "stock", origin: "ishares-basket", basket: "ewy_us"}
+  px_2330_tw_daily: {symbol: "2330.TW", name: "TAIWAN SEMICONDUCTOR MANUFACTURING", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2454_tw_daily: {symbol: "2454.TW", name: "MEDIATEK", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2308_tw_daily: {symbol: "2308.TW", name: "DELTA ELECTRONICS", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2317_tw_daily: {symbol: "2317.TW", name: "HON HAI PRECISION INDUSTRY", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_3711_tw_daily: {symbol: "3711.TW", name: "ASE TECHNOLOGY HOLDING", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2303_tw_daily: {symbol: "2303.TW", name: "UNITED MICRO ELECTRONICS CORP", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2383_tw_daily: {symbol: "2383.TW", name: "ELITE MATERIAL", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_1303_tw_daily: {symbol: "1303.TW", name: "NAN YA PLASTICS CORP", category: "Materials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_3037_tw_daily: {symbol: "3037.TW", name: "UNIMICRON TECHNOLOGY", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_3017_tw_daily: {symbol: "3017.TW", name: "ASIA VITAL COMPONENTS", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2881_tw_daily: {symbol: "2881.TW", name: "FUBON FINANCIAL HOLDING", category: "Financials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2887_tw_daily: {symbol: "2887.TW", name: "TS FINANCIAL HOLDING", category: "Financials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2327_tw_daily: {symbol: "2327.TW", name: "YAGEO", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2345_tw_daily: {symbol: "2345.TW", name: "ACCTON TECHNOLOGY", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2891_tw_daily: {symbol: "2891.TW", name: "CTBC FINANCIAL HOLDING", category: "Financials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_6669_tw_daily: {symbol: "6669.TW", name: "WIWYNN CORPORATION", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2059_tw_daily: {symbol: "2059.TW", name: "KING SLIDE WORKS", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2882_tw_daily: {symbol: "2882.TW", name: "CATHAY FINANCIAL HOLDING", category: "Financials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_3008_tw_daily: {symbol: "3008.TW", name: "LARGAN PRECISION LTD", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2382_tw_daily: {symbol: "2382.TW", name: "QUANTA COMPUTER", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_3443_tw_daily: {symbol: "3443.TW", name: "GLOBAL UNICHIP", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2360_tw_daily: {symbol: "2360.TW", name: "CHROMA ATE INC", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2885_tw_daily: {symbol: "2885.TW", name: "YUANTA FINANCIAL HOLDING", category: "Financials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_5274_two_daily: {symbol: "5274.TWO", name: "ASPEED TECHNOLOGY", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2357_tw_daily: {symbol: "2357.TW", name: "ASUSTEK COMPUTER INC", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_3653_tw_daily: {symbol: "3653.TW", name: "JENTECH PRECISION INDUSTRIAL LTD", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_3481_tw_daily: {symbol: "3481.TW", name: "INNOLUX CORP", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2884_tw_daily: {symbol: "2884.TW", name: "E.SUN FINANCIAL HOLDING", category: "Financials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_4958_tw_daily: {symbol: "4958.TW", name: "ZHEN DING TECHNOLOGY HOLDING LTD", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2301_tw_daily: {symbol: "2301.TW", name: "LITE ON TECHNOLOGY", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2883_tw_daily: {symbol: "2883.TW", name: "KGI FINANCIAL HOLDING", category: "Financials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2890_tw_daily: {symbol: "2890.TW", name: "SINOPAC FINANCIAL HOLDINGS", category: "Financials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_6446_tw_daily: {symbol: "6446.TW", name: "PHARMAESSENTIA", category: "Health Care", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_3231_tw_daily: {symbol: "3231.TW", name: "WISTRON", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2886_tw_daily: {symbol: "2886.TW", name: "MEGA FINANCIAL HOLDING LTD", category: "Financials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_7769_tw_daily: {symbol: "7769.TW", name: "HONPRECISION INC", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2395_tw_daily: {symbol: "2395.TW", name: "ADVANTECH", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2408_tw_daily: {symbol: "2408.TW", name: "NANYA TECHNOLOGY CORP", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2880_tw_daily: {symbol: "2880.TW", name: "HUA NAN FINANCIAL HOLDINGS", category: "Financials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2412_tw_daily: {symbol: "2412.TW", name: "CHUNGHWA TELECOM LTD", category: "Communication", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2892_tw_daily: {symbol: "2892.TW", name: "FIRST FINANCIAL HOLDING LTD", category: "Financials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_6488_two_daily: {symbol: "6488.TWO", name: "GLOBALWAFERS LTD", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_6223_two_daily: {symbol: "6223.TWO", name: "MPI CORP", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2344_tw_daily: {symbol: "2344.TW", name: "WINBOND ELECTRONICS", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2379_tw_daily: {symbol: "2379.TW", name: "REALTEK SEMICONDUCTOR", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2368_tw_daily: {symbol: "2368.TW", name: "GOLD CIRCUIT ELECTRONICS", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_1326_tw_daily: {symbol: "1326.TW", name: "FORMOSA CHEMICALS & FIBRE CORP", category: "Materials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_3665_tw_daily: {symbol: "3665.TW", name: "BIZLINK HOLDING INC", category: "Industrials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_3034_tw_daily: {symbol: "3034.TW", name: "NOVATEK MICROELECTRONICS", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_1301_tw_daily: {symbol: "1301.TW", name: "FORMOSA PLASTICS CORP", category: "Materials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_1216_tw_daily: {symbol: "1216.TW", name: "UNI-PRESIDENT ENTERPRISES", category: "Consumer Staples", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_5880_tw_daily: {symbol: "5880.TW", name: "TAIWAN COOPERATIVE FINANCIAL HOLDI", category: "Financials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_3661_tw_daily: {symbol: "3661.TW", name: "ALCHIP TECHNOLOGIES", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2449_tw_daily: {symbol: "2449.TW", name: "KING YUAN ELECTRONICS", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2603_tw_daily: {symbol: "2603.TW", name: "EVERGREEN MARINE CORP (TAIWAN) LTD", category: "Industrials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2376_tw_daily: {symbol: "2376.TW", name: "GIGABYTE TECHNOLOGY LTD", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2801_tw_daily: {symbol: "2801.TW", name: "CHANG HWA COMMERCIAL BANK LTD", category: "Financials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_5347_two_daily: {symbol: "5347.TWO", name: "VANGUARD INTERNATIONAL SEMICONDUCT", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_8299_two_daily: {symbol: "8299.TWO", name: "PHISON ELECTRONICS CORP", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_5876_tw_daily: {symbol: "5876.TW", name: "SHANGHAI COMMERCIAL", category: "Financials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2002_tw_daily: {symbol: "2002.TW", name: "CHINA STEEL CORP", category: "Materials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2356_tw_daily: {symbol: "2356.TW", name: "INVENTEC", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_4938_tw_daily: {symbol: "4938.TW", name: "PEGATRON", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_3045_tw_daily: {symbol: "3045.TW", name: "TAIWAN MOBILE", category: "Communication", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_4904_tw_daily: {symbol: "4904.TW", name: "FAR EASTONE TELECOMMUNICATIONS LTD", category: "Communication", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2207_tw_daily: {symbol: "2207.TW", name: "HOTAI MOTOR LTD", category: "Consumer Discretionary", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_5871_tw_daily: {symbol: "5871.TW", name: "CHAILEASE HOLDING LTD", category: "Financials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_1590_tw_daily: {symbol: "1590.TW", name: "AIRTAC INTERNATIONAL GROUP", category: "Industrials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2618_tw_daily: {symbol: "2618.TW", name: "EVA AIRWAYS", category: "Industrials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_1519_tw_daily: {symbol: "1519.TW", name: "FORTUNE ELECTRIC", category: "Industrials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2912_tw_daily: {symbol: "2912.TW", name: "PRESIDENT CHAIN STORE CORP", category: "Consumer Staples", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_3533_tw_daily: {symbol: "3533.TW", name: "LOTES", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_8069_two_daily: {symbol: "8069.TWO", name: "E INK HOLDINGS", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2615_tw_daily: {symbol: "2615.TW", name: "WAN HAI LINES", category: "Industrials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_1602_tw_daily: {symbol: "1602.TW", name: "PACIFIC ELECTRIC WIRE", category: "Industrials", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
+  px_2418_tw_daily: {symbol: "2418.TW", name: "YA HSIN INDUSTRIAL CO. LTD.", category: "Information Technology", currency: "TWD", quote_basis: "TWD", family: "stock", origin: "ishares-basket", basket: "ewt_us"}
