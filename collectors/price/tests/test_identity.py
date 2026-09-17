@@ -11,7 +11,7 @@ Offline gates (default run) -- no network:
   t3 ETF no-regress  -- NO ETF entry gains stable_id; ETF entries are BYTE-identical
                        with vs without the identity map (verify gate 3).
   t4 dotted/suffix   -- BRK-B -> US, SAP.DE -> GR, HSBA.L -> LN; each minted + stamped.
-  t5 1249 intact     -- 137 ETF + 1112 stock = 1249 unique series_id; no re-key.
+  t5 intact          -- catalog px_* == live config rows (derived, set equality); no re-key.
   t6 invariants      -- the seeded 1112 map: unique ids, 1 active epoch/ticker, dense.
   t7 splice-refuse   -- a recycled ticker on the REAL map mints a 2nd id, flagged.
   t8 rename-continuity-- a FIGI-confirmed rename on the real map -> ONE stable_id;
@@ -40,6 +40,8 @@ from pathlib import Path
 import yaml
 
 from collectors.price import identity, register_catalog
+
+import _universe as U  # sibling helper: config-derived counts + retire-inclusive floors
 
 PRICE_DIR = Path(register_catalog.__file__).resolve().parent
 CFG = yaml.safe_load((PRICE_DIR / "config.yaml").read_text(encoding="utf-8"))
@@ -83,9 +85,17 @@ def offline(g: Gate, tmp: Path) -> None:
     g.check("t1a seed minted one epoch per stock series (== %d)" % len(STOCK_SIDS),
             minted == len(STOCK_SIDS) and len(m["epochs"]) == len(STOCK_SIDS),
             "minted=%d epochs=%d stock=%d" % (minted, len(m["epochs"]), len(STOCK_SIDS)))
-    g.check("t1b 1117 current stock members (1112 P7b + 5 index adds 2026-H1 - 1 retired CTRA "
-            "+ 1 P7a-3 curated off-index ERA.PA, 26.08.2026)",
-            len(STOCK_SIDS) == 1117, "stock=%d" % len(STOCK_SIDS))
+    # t1b: counts DERIVED from config (no constant to outgrow). Protection kept: every stock row
+    # lands in a known origin family, no family fell below its tombstone floor, and the stock
+    # membership equals the live rows of the four stock families (nothing outside them).
+    PARTS, UNKNOWN = U.partition(CFG)
+    FLOOR_BAD = U.floor_violations(PARTS)
+    stock_fam_live = set(U.live(CFG, [s for f in U.STOCK_FAMILIES for s in PARTS[f]]))
+    g.check("t1b %d current stock members = live sp500+stoxx+curated-offindex+ishares-basket, "
+            "0 unknown origin, floors hold" % len(STOCK_SIDS),
+            not UNKNOWN and not FLOOR_BAD and set(STOCK_SIDS) == stock_fam_live
+            and len(STOCK_SIDS) == len(stock_fam_live),
+            "%s floor_bad=%s unknown=%s" % (U.summary(CFG), FLOOR_BAD, UNKNOWN[:5]))
     g.check("t1c every internal_id unique", len(ids) == len(set(ids)),
             "ids=%d unique=%d" % (len(ids), len(set(ids))))
     nums = sorted(int(i[4:]) for i in ids)
@@ -141,12 +151,17 @@ def offline(g: Gate, tmp: Path) -> None:
             identity.exch_code("HSBA.L") == "LN"
             and isinstance(cat.get("px_hsba_l_daily", {}).get("stable_id"), str))
 
-    # t5 1249 series intact (no re-key) -----------------------------------------
+    # t5 series intact (no re-key) -----------------------------------------------
     sids = [s for s in cat if s.startswith("px_") and s != "px_probe_daily"]
-    g.check("t5a 141 ETF + 1117 stock = 1258 series registered (retired CTRA not re-added; "
-            "+4 F13 ETFs 22.08 · +1 P7a-3 ERA.PA 26.08)",
-            len(ETF_SIDS) == 141 and len(STOCK_SIDS) == 1117 and len(sids) == 1258,
-            "etf=%d stock=%d total=%d" % (len(ETF_SIDS), len(STOCK_SIDS), len(sids)))
+    # t5a: the catalog holds EXACTLY the live config series (retired tombstones not re-added);
+    # set equality, so one dropped or one extra series fails by name, not by a count.
+    LIVE = set(U.live(CFG))
+    g.check("t5a %d ETF + %d stock = %d live series registered, set == live config"
+            % (len(U.live(CFG, ETF_SIDS)), len(STOCK_SIDS), len(LIVE)),
+            set(sids) == LIVE and len(sids) == len(LIVE)
+            and len(U.live(CFG, ETF_SIDS)) + len(STOCK_SIDS) == len(LIVE),
+            "total=%d missing=%s extra=%s" % (len(sids), sorted(LIVE - set(sids))[:5],
+                                               sorted(set(sids) - LIVE)[:5]))
     g.check("t5b series_ids unchanged (px_<ticker>_daily; no re-key to px_<id>)",
             all(s.startswith("px_") and s.endswith("_daily") for s in sids)
             and "px_aapl_daily" in cat and "px_sap_de_daily" in cat)

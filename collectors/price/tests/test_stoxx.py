@@ -6,7 +6,7 @@ Offline gates (default run) -- no network, against a TEMPORARY archive root:
   t2 GBX rule       -- .L+GBP -> quote_basis "GBX" (pence); USD-on-LSE (IHG.L) -> "USD" not GBX;
                        a EUR name (SAP.DE) -> "EUR" (currency-driven, NOT suffix-driven)
   t3 collisions=0   -- suffix-retained series_id -> 0 dup symbol/series_id across the WHOLE union
-                       (137 ETF + 503 SP500 + ~609 STOXX); the cardinal cross-archive risk
+                       (ETF + SP500 + STOXX + off-index + baskets); the cardinal cross-archive risk
   t4 normalization  -- dashed+suffixed (NOVO-B.CO -> px_novo_b_co_daily); intra-STOXX base-dup
                        disambiguation (SAN.PA Sanofi vs SAN.MC Santander -> distinct ids/names)
   t5 entry routing  -- STOXX entry: currency+quote_basis+backtest_valid:false+survivorship;
@@ -33,6 +33,8 @@ import yaml
 
 from datacore import archive
 from collectors.price import fetch_prices, to_datacore, register_catalog
+
+import _universe as U  # sibling helper: config-derived counts + retire-inclusive floors
 
 PRICE_DIR = Path(register_catalog.__file__).resolve().parent
 CFG = yaml.safe_load((PRICE_DIR / "config.yaml").read_text(encoding="utf-8"))
@@ -103,7 +105,7 @@ def offline(g: Gate, tmp: Path) -> None:
     # t3 collisions = 0 across the WHOLE union (cardinal cross-archive risk) ------
     all_sids = list(CFG["price"].keys())
     all_syms = [m["symbol"].upper() for m in CFG["price"].values()]
-    g.check("t3a 0 duplicate series_id across union (137 ETF + 503 SP500 + ~609 STOXX)",
+    g.check("t3a 0 duplicate series_id across union (ETF + SP500 + STOXX + off-index + baskets)",
             len(all_sids) == len(set(all_sids)),
             "total=%d unique=%d" % (len(all_sids), len(set(all_sids))))
     g.check("t3b 0 duplicate symbol across union", len(all_syms) == len(set(all_syms)),
@@ -138,9 +140,21 @@ def offline(g: Gate, tmp: Path) -> None:
             "currency" not in esp and esp["backtest_valid"] is False)
 
     # t6 counts ------------------------------------------------------------------
-    g.check("t6 families: 137 ETF, stock = SP500 + STOXX",
-            len(ETF) == 137 and len(STOCK) == len(SP500_STOCK) + len(STOXX),
-            "etf=%d stock=%d sp500=%d stoxx=%d" % (len(ETF), len(STOCK), len(SP500_STOCK), len(STOXX)))
+    # Counts derived (was 137 ETF). The stock family now has four origin families; the
+    # currency-bearing set (STOXX above) is STOXX600 + curated off-index + iShares baskets, and
+    # the no-currency set is exactly the S&P 500 members. Unknown origin or a floor breach FAILS.
+    parts, unknown = U.partition(CFG)
+    floor_bad = U.floor_violations(parts)
+    ccy_fams = set(parts["stoxx"]) | set(parts["curated-offindex"]) | set(parts["ishares-basket"])
+    g.check("t6 families: %d ETF, stock = SP500 %d + STOXX %d + off-index %d + basket %d"
+            % (len(ETF), len(parts["sp500"]), len(parts["stoxx"]), len(parts["curated-offindex"]),
+               len(parts["ishares-basket"])),
+            set(ETF) == set(parts["etf"])
+            and set(SP500_STOCK) == set(parts["sp500"]) and set(STOXX) == ccy_fams
+            and len(STOCK) == len(SP500_STOCK) + len(STOXX)
+            and not unknown and not floor_bad,
+            "etf=%d stock=%d sp500=%d ccy=%d floor_bad=%s unknown=%s"
+            % (len(ETF), len(STOCK), len(SP500_STOCK), len(STOXX), floor_bad, unknown[:5]))
 
     # t8 (P8c) currency=>family defense-in-depth -- a currency-bearing entry MUST be a stock.
     # Without family:stock it would fall to the ETF branch (drop currency, stamp backtest_valid:

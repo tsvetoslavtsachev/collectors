@@ -9,7 +9,7 @@ Offline gates (default run) -- no network, against a TEMPORARY archive root:
   s3 B2/D3 control -- a programmatic reader can HARD-REFUSE a flagged series by the flag
   s4 family route  -- entry() returns the stock shape for family:stock, etf shape otherwise
   s5 dotted ticker -- BRK-B -> series_id px_brk_b_daily, symbol "BRK-B", in config + catalog
-  s6 collision     -- no dup series_id / symbol across the whole config; ~503 stock + 137 etf
+  s6 collision     -- no dup series_id / symbol across the whole config; union == live rows (derived counts)
   s7 per-family    -- fetch default period = stock "6y" / etf "max" (monkeypatched, no network)
 
 Live gate (--live, network):
@@ -33,6 +33,8 @@ import yaml
 
 from datacore import archive
 from collectors.price import fetch_prices, to_datacore, register_catalog
+
+import _universe as U  # sibling helper: config-derived counts + retire-inclusive floors
 
 PRICE_DIR = Path(register_catalog.__file__).resolve().parent
 CFG = yaml.safe_load((PRICE_DIR / "config.yaml").read_text(encoding="utf-8"))
@@ -134,12 +136,19 @@ def offline(g: Gate, tmp: Path) -> None:
             "total=%d unique=%d" % (len(sids), len(set(sids))))
     g.check("s6b no duplicate symbol across the whole config", len(syms) == len(set(syms)),
             "total=%d unique=%d" % (len(syms), len(set(syms))))
-    # 141 = 137 + 4 F13 client-group ETFs (22.08.2026). Stock floor unchanged; the union
-    # equals the whole config (P7a-3 curated off-index stocks included, 26.08.2026).
-    g.check("s6c union = 141 ETF + ~503+ stock", len(ETF_SIDS) == 141 and len(STOCK_SIDS) >= 490
-            and len(ETF_SIDS) + len(STOCK_SIDS)
-            == sum(1 for m in CFG["price"].values() if not m.get("retired")),
-            "etf=%d stock=%d" % (len(ETF_SIDS), len(STOCK_SIDS)))
+    # Counts derived from config (was 141 ETF). The union must be EXACTLY the live config rows,
+    # every row in a known family, and no family below its tombstone floor (a deleted ETF or
+    # stock fails here instead of passing silently under a derived count).
+    parts, unknown = U.partition(CFG)
+    floor_bad = U.floor_violations(parts)
+    g.check("s6c union = %d ETF + %d stock == live config, 0 unknown family, floors hold"
+            % (len(ETF_SIDS), len(STOCK_SIDS)),
+            set(ETF_SIDS) == set(parts["etf"]) and len(STOCK_SIDS) >= 490
+            and set(U.live(CFG, ETF_SIDS)) | set(STOCK_SIDS) == set(U.live(CFG))
+            and len(U.live(CFG, ETF_SIDS)) + len(STOCK_SIDS) == len(U.live(CFG))
+            and not unknown and not floor_bad,
+            "etf=%d stock=%d floor_bad=%s unknown=%s" % (len(ETF_SIDS), len(STOCK_SIDS),
+                                                         floor_bad, unknown[:5]))
 
     # s7 per-family default depth (no network -- monkeypatch fetch_one) ----------
     seen: dict[str, str] = {}

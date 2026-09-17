@@ -43,6 +43,8 @@ import yaml
 from datacore import archive
 from collectors.price import to_datacore, register_catalog, identity, fetch_prices, run
 
+import _universe as U  # sibling helper: config-derived counts + retire-inclusive floors
+
 PRICE_DIR = Path(register_catalog.__file__).resolve().parent
 CFG = yaml.safe_load((PRICE_DIR / "config.yaml").read_text(encoding="utf-8"))
 STOCK_SIDS = [s for s, m in CFG["price"].items() if m.get("family") == "stock"]
@@ -179,18 +181,25 @@ def offline(g: Gate) -> None:
     stock_only = run._family_sids(CFG, ["stock"])
     # _family_sids EXCLUDES retired entries (permanent merger/delisting -- e.g. px_ctra_daily,
     # CTRA->DVN, retired 2026-05-07), whereas ETF_SIDS/STOCK_SIDS are retire-INCLUSIVE: the config
-    # keeps a retired entry for provenance and the catalog register still upserts it (p8a6b's 1249).
+    # keeps a retired entry for provenance and the catalog register still keeps it as a tombstone (p8a6b counts only live rows).
     # So the partition invariant compares _family_sids against the retire-EXCLUDED family membership
     # -- else the stock side is off by the retired stock(s). Derived from config so it tracks a new
     # retirement, not a constant.
     etf_live = [s for s in ETF_SIDS if not CFG["price"][s].get("retired")]
     stock_live = [s for s in STOCK_SIDS if not CFG["price"][s].get("retired")]
-    g.check("p8a5a _family_sids partitions (retire-excluded): %d etf + %d stock, disjoint"
-            % (len(etf_live), len(stock_live)),
-            len(etf_only) == len(etf_live) == 141 and len(stock_only) == len(stock_live)
+    # Counts derived (no constant). The two scopes must cover EVERY live config row between them
+    # (a row in neither family would be silently never fetched) and no family may lose a row.
+    parts, unknown = U.partition(CFG)
+    floor_bad = U.floor_violations(parts)
+    g.check("p8a5a _family_sids partitions (retire-excluded): %d etf + %d stock, disjoint, "
+            "union == live config, floors hold" % (len(etf_live), len(stock_live)),
+            len(etf_only) == len(etf_live) and len(stock_only) == len(stock_live)
             and set(etf_only) == set(etf_live) and set(stock_only) == set(stock_live)
-            and set(etf_only).isdisjoint(stock_only),
-            f"etf={len(etf_only)} stock={len(stock_only)}")
+            and set(etf_only).isdisjoint(stock_only)
+            and set(etf_only) | set(stock_only) == set(U.live(CFG))
+            and not unknown and not floor_bad,
+            f"etf={len(etf_only)} stock={len(stock_only)} live={len(U.live(CFG))} "
+            f"floor_bad={floor_bad} unknown={unknown[:5]}")
     g.check("p8a5b every etf-scope sid is family etf; every stock-scope sid is family stock",
             all(CFG["price"][s].get("family", "etf") == "etf" for s in etf_only)
             and all(CFG["price"][s].get("family") == "stock" for s in stock_only))
@@ -245,10 +254,14 @@ def offline(g: Gate) -> None:
         added2, _updated2 = register_catalog.register(CFG, bare)
     finally:
         os.environ.pop("DATACORE_ALLOW_REAL", None)
-    # 1258 live series = 1259 config - 1 retired (141 ETF incl. F13 22.08 + 1117 stock incl.
-    # P7a-3 ERA.PA 26.08; register never re-stamps the retired tombstone).
-    g.check("p8a6b register is idempotent (a 2nd register adds 0 new, all upserted)",
-            added2 == [] and len(_updated2) == 1258, f"added2={len(added2)} updated2={len(_updated2)}")
+    # every LIVE config series is upserted on the 2nd pass (derived; register never re-stamps a
+    # retired tombstone). Set equality: a series register skipped or invented fails by name.
+    live_all = set(U.live(CFG))
+    g.check("p8a6b register is idempotent (a 2nd register adds 0 new, all %d live upserted)"
+            % len(live_all),
+            added2 == [] and len(_updated2) == len(live_all) and set(_updated2) == live_all,
+            f"added2={len(added2)} updated2={len(_updated2)} "
+            f"missing={sorted(live_all - set(_updated2))[:5]} extra={sorted(set(_updated2) - live_all)[:5]}")
     shutil.rmtree(bare, ignore_errors=True)
 
 
