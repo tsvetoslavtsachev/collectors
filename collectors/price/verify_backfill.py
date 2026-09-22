@@ -278,19 +278,21 @@ def _series_ids(cfg: dict) -> list[str]:
     return [sid for sid, m in cfg["price"].items() if not m.get("retired")]
 
 
-def _raw_lines(root: Path, sid: str) -> list[dict]:
+def _raw_lines(root: Path, sid: str):
     """Every stored jsonl line for a series, across all year files (NOT deduplicated to
-    a current view) -- so a bitemporal restatement shows up as >1 line for an as_of."""
+    a current view) -- so a bitemporal restatement shows up as >1 line for an as_of.
+
+    Streamed (a generator), not a list: a legacy series can carry 10k+ lines, and verify()
+    reads one series at a time, so nothing here should outlive its caller's per-series loop
+    body (see verify()'s docstring note for why that matters)."""
     d = root / "archive" / sid
-    out: list[dict] = []
     if not d.exists():
-        return out
+        return
     for yf in sorted(d.glob("*.jsonl")):
         for ln in yf.read_text(encoding="utf-8").splitlines():
             ln = ln.strip()
             if ln:
-                out.append(json.loads(ln))
-    return out
+                yield json.loads(ln)
 
 
 def _exch_group(symbol: str) -> str:
@@ -391,36 +393,112 @@ def freshness_report(cfg: dict, views: dict, sids: list, *, today: str | None = 
 
 
 def verify(root: Path, cfg: dict, g: Gate, *, daily: bool = False) -> dict:
+    """INIT-22/CAB3 memory fix (2026-09-22): this used to read every series into two
+    parallel whole-universe dicts (`views` + raw `rawlines`) that stayed resident for the
+    entire function -- fine at 132 series, but at ~1690 (post asia-brazil-prices baskets)
+    that is ~3.1M jsonl records held TWICE as Python dicts, which measured 9-12GB peak RSS
+    and is what the daily runner's 2vCPU/8GB box was silently OOM-killed for (no OOM line in
+    the log -- GitHub reports it as "the runner has received a shutdown signal"). Every gate
+    below is per-series or a simple running aggregate, so the fix is architectural, not a
+    threshold change: read ONE series at a time, fold it into each gate's aggregate, then let
+    it go before moving on. The only thing kept for the whole run is `as_of` DATES (not full
+    bars) for the freshness cross-series calendar, which is what --daily needs across series.
+    Gate outcomes and printed text are unchanged -- see collectors/price/tests/test_daily.py
+    and test_backfill.py for the byte-for-byte contract this must keep.
+    """
     sids = _series_ids(cfg)
     sym = {sid: m["symbol"] for sid, m in cfg["price"].items()}
     fresh: dict | None = None            # daily only; the deferred (post-commit) verdict
 
-    # Read every series once (current view) + raw line counts (+ raw lines for --daily,
-    # which needs each line's recorded_on to prove restatements are bitemporal).
-    views: dict[str, list] = {}
-    rawcounts: dict[str, dict] = {}
-    rawlines: dict[str, list] = {}
-    for sid in sids:
-        views[sid] = archive.read(sid, root=str(root))
-        lines = _raw_lines(root, sid)
-        rawlines[sid] = lines
-        per_asof: dict[str, int] = {}
-        for r in lines:
-            per_asof[r["as_of"]] = per_asof.get(r["as_of"], 0) + 1
-        rawcounts[sid] = per_asof
+    dead: list[str] = []
+    live_sids: set[str] = set()
+    summary_by_sid: dict[str, tuple] = {}        # sid -> (earliest, latest, n)
+    spy_earliest = None
+    thin: list[str] = []
+    split_sids: list[str] = []
+    recon_ok = pos_ok = anchor_ok = pcw_ok = True
+    fwd = rev = 0
+    bad_shape: list[tuple] = []
+    dup_sids: list[str] = []                     # seed-only (v4a)
+    mismatched: list[str] = []                   # seed-only (v4b)
+    bad_vintage: list[tuple] = []                # daily-only (v4a')
+    view_mismatch: list[str] = []                # daily-only (v4b')
+    prov_bad: list[tuple] = []                   # daily-only (v4c')
+    as_of_lists: dict[str, list[str]] = {}       # daily-only, for freshness_report
 
-    live = {sid: v for sid, v in views.items() if v}
-    dead = [sid for sid in sids if not views[sid]]
+    for sid in sids:
+        view = archive.read(sid, root=str(root))
+        n = len(view)
+        if n == 0:
+            dead.append(sid)
+            summary_by_sid[sid] = ("EMPTY", "-", 0)
+            continue
+
+        earliest, latest_ao = view[0]["as_of"], view[-1]["as_of"]
+        summary_by_sid[sid] = (earliest, latest_ao, n)
+        live_sids.add(sid)
+        if n < 5:
+            thin.append(sid)
+        if sid == "px_spy_daily":
+            spy_earliest = earliest
+
+        # ---- v3 split: as-traded reconstruction (per-series, no cross-series data) ----
+        facs = [b.get("split_factor", 1.0) for b in view]
+        if any(abs(f - 1.0) > 1e-9 for f in facs):
+            split_sids.append(sid)
+            if not all((b["close"] * b.get("split_factor", 1.0)) > 0 for b in view):
+                recon_ok = False
+            if any(f <= 0 for f in facs):
+                pos_ok = False
+            if abs(facs[-1] - 1.0) > 1e-9:
+                anchor_ok = False
+            if len(set(round(f, 6) for f in facs)) > 20:
+                pcw_ok = False
+            if max(facs) > 1.0 + 1e-9:
+                fwd += 1
+            if min(facs) < 1.0 - 1e-9:
+                rev += 1
+
+        # ---- v6 shape (per-series) ----
+        for b in view:
+            if not _SHAPE <= set(b):
+                bad_shape.append((sid, b.get("as_of"), sorted(_SHAPE - set(b))))
+                break
+
+        if daily:
+            # v4c' provisional-tip finalization invariant (per-series)
+            provs = [b["as_of"] for b in view if b.get("provisional")]
+            if len(provs) > 1 or (provs and provs[-1] != latest_ao):
+                prov_bad.append((sid, provs, latest_ao))
+            # only the as_of DATES survive past this series, for the freshness calendar
+            as_of_lists[sid] = [b["as_of"] for b in view]
+
+        del view
+
+        # ---- raw lines (conflict/bitemporal gates) -- streamed, per series ----
+        by_asof_ros: dict[str, list[str]] = {}
+        for r in _raw_lines(root, sid):
+            by_asof_ros.setdefault(r["as_of"], []).append(r.get("recorded_on", ""))
+
+        if not daily:
+            if any(len(ros) > 1 for ros in by_asof_ros.values()):
+                dup_sids.append(sid)
+            raw_total = sum(len(ros) for ros in by_asof_ros.values())
+            if raw_total != n:
+                mismatched.append(sid)
+        else:
+            for ao, ros in by_asof_ros.items():
+                if len(ros) != len(set(ros)):
+                    bad_vintage.append((sid, ao, sorted(ros)))
+            if len(by_asof_ros) != n:
+                view_mismatch.append(sid)
 
     # ---- v1 depth + per-symbol inception baseline (HARD) ----
-    spy = views.get("px_spy_daily", [])
-    spy_earliest = spy[0]["as_of"] if spy else None
     g.check("v1a SPY backfilled to its 1993 inception",
             bool(spy_earliest) and spy_earliest <= "1993-12-31",
             f"earliest={spy_earliest}")
     print("\n  -- per-symbol earliest-as_of / rows (sorted by earliest) --")
-    rows = [(views[s][0]["as_of"] if views[s] else "EMPTY",
-             views[s][-1]["as_of"] if views[s] else "-", len(views[s]), s)
+    rows = [(summary_by_sid[s][0], summary_by_sid[s][1], summary_by_sid[s][2], s)
             for s in sids]
     for earliest, latest, n, s in sorted(rows):
         print(f"     {earliest}  ->  {latest}   {n:>6}  {s}  ({sym[s]})")
@@ -429,9 +507,9 @@ def verify(root: Path, cfg: dict, g: Gate, *, daily: bool = False) -> dict:
     # HARD-FAILS, not just SPY. (Young ETFs are intentionally un-baselined.)
     incep_viol = []
     for sid, (incep, min_rows) in _INCEPTION_BASELINE.items():
-        v = views.get(sid, [])
-        if (not v) or v[0]["as_of"] > incep or len(v) < min_rows:
-            incep_viol.append((sid, v[0]["as_of"] if v else "EMPTY", len(v), f"<= {incep}", f">= {min_rows}"))
+        earliest, _latest, n = summary_by_sid.get(sid, ("EMPTY", "-", 0))
+        if earliest == "EMPTY" or earliest > incep or n < min_rows:
+            incep_viol.append((sid, earliest, n, f"<= {incep}", f">= {min_rows}"))
     g.check(f"v1b every baselined old ETF reaches its inception + depth [{len(_INCEPTION_BASELINE)} baselined]",
             not incep_viol, f"violations={incep_viol[:6]}")
 
@@ -442,7 +520,7 @@ def verify(root: Path, cfg: dict, g: Gate, *, daily: bool = False) -> dict:
     # never silently green; every OTHER dead series still HARD-FAILS.
     dead_unexpected = [s for s in dead if s not in _QUARANTINE_DEAD_OK]
     dead_quarantined = [s for s in dead if s in _QUARANTINE_DEAD_OK]
-    live_quarantined = [s for s in _QUARANTINE_DEAD_OK if s in live]
+    live_quarantined = [s for s in _QUARANTINE_DEAD_OK if s in live_sids]
     if live_quarantined:
         print(f"  !! quarantined series LIVE again -- re-backfill done? lift the "
               f"_QUARANTINE_DEAD_OK entry: {live_quarantined}")
@@ -450,7 +528,6 @@ def verify(root: Path, cfg: dict, g: Gate, *, daily: bool = False) -> dict:
             f"({len(dead_quarantined)} quarantine-allowed of {len(sids)})",
             len(dead_unexpected) == 0,
             f"dead={dead_unexpected} quarantined-dead={dead_quarantined}")
-    thin = [s for s in live if len(views[s]) < 5]
     g.check("v2b no live series truncated to < 5 bars (silent-truncation smell)",
             not thin, f"thin={thin}", hard=False)
 
@@ -470,7 +547,9 @@ def verify(root: Path, cfg: dict, g: Gate, *, daily: bool = False) -> dict:
         # for months. The verdict now travels in the freshness report, and the workflow re-reads it
         # AFTER committing (`--assert-freshness`) and fails the run there. Good bars land; the run
         # still goes red.
-        fresh = freshness_report(cfg, views, sids)
+        live_asof_views = {sid: [{"as_of": a} for a in dates] for sid, dates in as_of_lists.items()}
+        fresh = freshness_report(cfg, live_asof_views, sids)
+        del live_asof_views
         mode_asof = fresh["universe_session"]
         n_fail = sum(1 for r in fresh["stale"] + fresh["sparse"] if r["tier"] == "fail")
         if fresh["stale"] or fresh["sparse"] or fresh["expired_exempt"]:
@@ -505,29 +584,9 @@ def verify(root: Path, cfg: dict, g: Gate, *, daily: bool = False) -> dict:
     # e.g. USO 1:8 -> 0.125, common in commodity/thematic ETFs). The earlier "monotone
     # non-increasing" assumption was FALSE for reverse splits (factor rises 0.125 -> 1.0
     # over time); the citizen is correct (as-traded = close*split_factor holds either way).
-    split_syms = []
-    for sid, v in live.items():
-        facs = [b.get("split_factor", 1.0) for b in v]
-        if any(abs(f - 1.0) > 1e-9 for f in facs):
-            split_syms.append((sid, facs))
-    if split_syms:
-        recon_ok = pos_ok = anchor_ok = pcw_ok = True
-        fwd = rev = 0
-        for sid, facs in split_syms:
-            v = views[sid]
-            if not all((b["close"] * b.get("split_factor", 1.0)) > 0 for b in v):
-                recon_ok = False                 # as-traded finite/positive everywhere
-            if any(f <= 0 for f in facs):
-                pos_ok = False                   # split_factor strictly positive
-            if abs(facs[-1] - 1.0) > 1e-9:
-                anchor_ok = False                # newest bar has no future split -> factor 1.0
-            if len(set(round(f, 6) for f in facs)) > 20:
-                pcw_ok = False                   # piecewise-constant: a few split levels, not per-bar drift
-            if max(facs) > 1.0 + 1e-9:
-                fwd += 1
-            if min(facs) < 1.0 - 1e-9:
-                rev += 1
-        g.check(f"v3a as-traded = close*split_factor reconstructs on {len(split_syms)} split ETF(s)",
+    # (recon_ok/pos_ok/anchor_ok/pcw_ok/fwd/rev/split_sids were folded in per-series above.)
+    if split_sids:
+        g.check(f"v3a as-traded = close*split_factor reconstructs on {len(split_sids)} split ETF(s)",
                 recon_ok, f"forward={fwd} reverse={rev}", hard=False)
         g.check("v3b split_factor strictly positive everywhere", pos_ok, hard=False)
         g.check("v3c split_factor anchors at 1.0 on the newest bar (the immutable as-traded tip)",
@@ -540,14 +599,9 @@ def verify(root: Path, cfg: dict, g: Gate, *, daily: bool = False) -> dict:
 
     if not daily:
         # ---- v4 conflict (SEED): restatement-free -> exactly one line per as_of ----
-        dup = {sid: {ao: c for ao, c in pa.items() if c > 1}
-               for sid, pa in rawcounts.items()}
-        dup = {sid: d for sid, d in dup.items() if d}
         g.check("v4a no as_of has > 1 jsonl line (first seed is restatement-free, restated=0)",
-                not dup, f"dup_series={list(dup)[:5]}")
+                not dup_sids, f"dup_series={dup_sids[:5]}")
         # current view line-count must equal raw line-count when there are no restatements
-        mismatched = [sid for sid in live
-                      if len(views[sid]) != sum(rawcounts[sid].values())]
         g.check("v4b current view == raw lines (no hidden extra vintages)",
                 not mismatched, f"mismatched={mismatched[:5]}")
     else:
@@ -557,30 +611,16 @@ def verify(root: Path, cfg: dict, g: Gate, *, daily: bool = False) -> dict:
         # honest daily invariant: every restatement is AUDITABLE (distinct, advancing recorded_on
         # -> the prior line stays reachable point-in-time, never silently overwritten), the view
         # still resolves to one bar per as_of, and the finalization (provisional-tip) holds.
-        bad_vintage = []   # an as_of whose lines SHARE a recorded_on -> a prior value is unreachable
-        for sid in live:
-            by_asof: dict[str, list] = {}
-            for r in rawlines[sid]:
-                by_asof.setdefault(r["as_of"], []).append(r.get("recorded_on", ""))
-            for ao, ros in by_asof.items():
-                if len(ros) != len(set(ros)):
-                    bad_vintage.append((sid, ao, sorted(ros)))
+        # (bad_vintage/view_mismatch/prov_bad were folded in per-series above.)
         g.check("v4a' restatements are bitemporal: distinct recorded_on per as_of (no silent overwrite)",
                 not bad_vintage, f"violations={bad_vintage[:5]}")
         # current view collapses to exactly ONE bar per DISTINCT as_of (read picks latest vintage);
         # a mismatch = a bar lost or a stale vintage leaking into the view.
-        view_mismatch = [sid for sid in live
-                         if len(views[sid]) != len(rawcounts[sid])]
         g.check("v4b' current view == one bar per distinct as_of (read dedup is vintage-correct)",
                 not view_mismatch, f"mismatched={view_mismatch[:5]}")
         # Provisional-tip finalization invariant: at most ONE provisional bar per series, and it
         # is the TIP (latest as_of). A finalized bar left provisional, or a stale mid-history
         # provisional bar, is look-ahead corruption (the prior tip did not freeze).
-        prov_bad = []
-        for sid, v in live.items():
-            provs = [b["as_of"] for b in v if b.get("provisional")]
-            if len(provs) > 1 or (provs and provs[-1] != v[-1]["as_of"]):
-                prov_bad.append((sid, provs, v[-1]["as_of"]))
         g.check("v4c' at most one provisional bar per series and it is the tip (finalization OK)",
                 not prov_bad, f"violations={prov_bad[:5]}")
 
@@ -590,16 +630,11 @@ def verify(root: Path, cfg: dict, g: Gate, *, daily: bool = False) -> dict:
             True, f"dead={dead}" if dead else "none", hard=False)
 
     # ---- v6 shape: full record shape on every bar ----
-    bad_shape = []
-    for sid, v in live.items():
-        for b in v:
-            if not _SHAPE <= set(b):
-                bad_shape.append((sid, b.get("as_of"), sorted(_SHAPE - set(b))))
-                break
+    # (bad_shape was folded in per-series above.)
     g.check("v6a every bar carries the full record shape + recorded_on",
             not bad_shape, f"missing={bad_shape[:3]}")
 
-    return {"live": len(live), "dead": dead, "split_syms": split_syms,
+    return {"live": len(live_sids), "dead": dead, "split_syms": split_sids,
             "spy_earliest": spy_earliest, "freshness": fresh}
 
 
