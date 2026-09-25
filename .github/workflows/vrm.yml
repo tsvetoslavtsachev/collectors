@@ -120,6 +120,15 @@ jobs:
           ROTATION_DATA_JSON: ${{ github.workspace }}/_rotation-radar/docs/data.json
         run: python _data-core/migrations/vrm_brain/run_brain.py
 
+      - name: Export signals/current.json for signals-registry (reads state only)
+        # M2 на signals-registry (25.09.2026): три обекта (vrm-core, vrm-mid, kill-switch) от
+        # data/state/vrm_overlay.json + vrm_ks_state.json -> _data-core/signals/current.json.
+        # Само чете state, не пише числа в канона. При грешка печата ::warning:: и НЕ проваля
+        # рън-а на храната (старият файл остава; регистърът го отчита като stale след 10 дни).
+        env:
+          DATACORE_ROOT: ${{ github.workspace }}/_data-core
+        run: python -m collectors.vrm.export_signals
+
       - name: Commit canonical + state + health + registries -> data-core (private)
         working-directory: _data-core
         run: |
@@ -136,5 +145,8 @@ jobs:
             migrations/m_atlas migrations/m_breadth \
             migrations/m_amp migrations/m_inter migrations/e2_dashboard \
             migrations/f13_portfolio
+          # signals/ (за signals-registry) влиза в същия commit; липсва ли (exporter-ът е
+          # предупредил), commit-ът на храната не спира заради него.
+          if [ -d signals ]; then git add signals; fi
           git diff --cached --quiet || git commit -m "vrm: $(date -u +%Y-%m-%d) canonical + state + registries write"
           git push
