@@ -127,6 +127,10 @@ jobs:
         # рън-а на храната (старият файл остава; регистърът го отчита като stale след 10 дни).
         env:
           DATACORE_ROOT: ${{ github.workspace }}/_data-core
+          # Четвъртият обект (dollar-correlation, решение на Ц. 25.09 по SR1) чете дневните
+          # px_dxy_daily и px_spy_daily от checkout-а на price-archive по-горе; при проблем
+          # exporter-ът пише трите VRM обекта и предупреждава.
+          PRICE_ARCHIVE_ROOT: ${{ github.workspace }}/_price-archive
         run: python -m collectors.vrm.export_signals
 
       - name: Commit canonical + state + health + registries -> data-core (private)
