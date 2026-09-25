@@ -47,7 +47,7 @@ verdict-ключове (PROVEN/WAIT/DEAD) остават за цвят/логи�
 - `oil.yml` — oil серии (Ср + Пт)
 - `cot.yml` — COT серии (съб, staggered след vrm)
 - `vrm.yml` — VRM серии + brain M-модулите (съб)
-  - след мозъка пише и `signals/current.json` в data-core за signals-registry (vrm-core, vrm-mid, kill-switch; `collectors/vrm/export_signals.py`, само чете state)
+  - след мозъка пише и `signals/current.json` в data-core за signals-registry (vrm-core, vrm-mid, kill-switch и dollar-correlation от дневните DXY/SPY в price-archive; `collectors/vrm/export_signals.py`, само чете state и цени)
 - `alfred-vintage.yml` — ALFRED PIT vintage (месечно, 5-о число)
 
 Нужни secrets (по workflow): `DATACORE_PAT` (push в private data-core) ·
