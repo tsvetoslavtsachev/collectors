@@ -69,3 +69,41 @@ def test_new_value_beyond_deadband_is_recorded(monkeypatch):
         "as_of": "2026-09-06", "value": 19.2,
         "source": "etf-rr-barometer", "resolution": "daily",
     }
+
+
+# ── 27.09.2026 · VIX W39: съвпадение срещу рециклиран отпечатък ───────────────
+# CBOE: 21.09 = 14,87 и 25.09 = 14,87, между тях 14,21 / 15,18 / 15,67. Пазачът изхвърли
+# истинското 25.09. Фийдът вече носи value_since (откога стойността стои същата).
+
+_W39 = {"mkt_vix": [{"as_of": "2026-09-21", "value": 14.87,
+                     "source": "etf-rr-barometer", "resolution": "daily"}]}
+
+
+def _w39_feed(value_since):
+    feed = _feed(as_of="2026-09-25", vix_value_date="2026-09-25",
+                 move_value_date="2026-09-25", vix=14.87, move=96.0)
+    feed["snapshot"][0]["value_since"] = value_since
+    return feed
+
+
+def test_coincidence_with_a_new_print_is_recorded(monkeypatch, capsys):
+    _patch(monkeypatch, _w39_feed(value_since="2026-09-25"), _W39)
+    out = fetch_bridge.fetch_bridge(_cfg())
+    assert out["mkt_vix"]["records"][-1] == {
+        "as_of": "2026-09-25", "value": 14.87,
+        "source": "etf-rr-barometer", "resolution": "daily"}
+    assert "нов отпечатък" in capsys.readouterr().out
+
+
+def test_flat_since_last_canonical_is_still_skipped(monkeypatch, capsys):
+    _patch(monkeypatch, _w39_feed(value_since="2026-09-21"), _W39)
+    out = fetch_bridge.fetch_bridge(_cfg())
+    assert out["mkt_vix"]["records"] == _W39["mkt_vix"]
+    assert "застояла стойност" in capsys.readouterr().out
+
+
+def test_repeat_of_previous_session_is_still_skipped(monkeypatch):
+    # стойността стои от вчера: днешният ред повтаря предния -> може да е рециклиран
+    _patch(monkeypatch, _w39_feed(value_since="2026-09-24"), _W39)
+    out = fetch_bridge.fetch_bridge(_cfg())
+    assert out["mkt_vix"]["records"] == _W39["mkt_vix"]

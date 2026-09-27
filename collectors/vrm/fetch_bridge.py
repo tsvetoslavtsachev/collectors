@@ -83,7 +83,17 @@ def fetch_bridge(cfg: dict) -> dict:
         existing_records = storage.read_canonical(sid)
         if existing_records:
             last = max(existing_records, key=lambda r: r["as_of"])
-            if rec_as_of > last["as_of"] and abs(rounded - float(last["value"])) < 0.005:
+            same = rec_as_of > last["as_of"] and abs(rounded - float(last["value"])) < 0.005
+            # 27.09.2026 (VIX W39): по CBOE 21.09 = 25.09 = 14,87 и пазачът изхвърли
+            # истинското 25.09. Изключението е тясно: фийдът доказва, че днешният
+            # отпечатък е различен от предния в собствената серия (value_since ==
+            # value_date). Рециклиран отпечатък по дефиниция повтаря предния, значи пак
+            # се пропуска; стар фийд без value_since -> старото поведение.
+            new_print = row.get("value_since") == rec_as_of
+            if same and new_print:
+                print(f"  [bridge] {sid}: същото число като {last['as_of']}, но нов отпечатък "
+                      f"в серията (value_since {rec_as_of}) -> записано")
+            if same and not new_print:
                 print(f"  [bridge] {sid}: застояла стойност от фийда, не е записана "
                       f"(as_of {rec_as_of}, value {rounded}, последна канонична "
                       f"{last['as_of']} = {last['value']})")
