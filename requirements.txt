@@ -2,5 +2,6 @@ pyyaml>=6.0
 requests>=2.31
 pandas>=2.0
 yfinance>=0.2.40
+openpyxl>=3.1   # collectors.gold: reads the SPDR GLD .xlsx archive (ЗЛТ2)
 # datacore (the writer lib) is installed separately in CI from the private
 # data-core checkout:  pip install -e ./_data-core

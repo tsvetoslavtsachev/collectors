@@ -1,0 +1,20 @@
+# Gold citizen (ЗЛТ2, 28.09.2026): LBMA spot (USD/EUR/GBP) + SPDR GLD tonnage.
+# Sources verified 28.09.2026, no login. See collectors/gold/README.md for the two
+# scope decisions (IAU excluded, LBMA AM fix not collected).
+
+lbma:
+  pm_url: "https://prices.lbma.org.uk/json/gold_pm.json"
+  # index into each row's "v": [USD, GBP, EUR] -> canonical series_id
+  series:
+    mkt_gold_usd: 0
+    mkt_gold_gbp: 1
+    mkt_gold_eur: 2
+
+gld:
+  url: "https://api.spdrgoldshares.com/api/v1/historical-archive?product=gld&exchange=NYSE&lang=en"
+  sheet: "US GLD Historical Archive"
+  series:
+    etf_gld_tonnes: "Tonnes of Gold"
+    etf_gld_oz: "Total Ounces of Gold in the Trust"
+  # kept for the Г3 cross-check only, never written to canonical (no declared consumer)
+  nav_column: "Total Net Asset Value in the Trust"

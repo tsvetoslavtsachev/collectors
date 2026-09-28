@@ -8,6 +8,7 @@ dependencies = [
   "requests>=2.31",
   "pandas>=2.0",
   "yfinance>=0.2.40",
+  "openpyxl>=3.1",
   "datacore @ git+https://github.com/tsvetoslavtsachev/data-core@v0.1.3",
 ]
 
@@ -16,4 +17,4 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["collectors", "collectors.oil", "collectors.cot", "collectors.price"]
+packages = ["collectors", "collectors.oil", "collectors.cot", "collectors.price", "collectors.gold"]
