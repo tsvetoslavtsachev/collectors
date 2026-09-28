@@ -98,7 +98,10 @@ fred:
   macro_core_cpi:          {ticker: "CPILFESL",     transform: level, model_freq: monthly, source_freq: monthly, frontier_anchor: false}
   liq_tga_level:           {ticker: "WTREGEN",      transform: level, model_freq: monthly, source_freq: daily,   downsample: mean_of_month, frontier_anchor: false}
   liq_anfci:               {ticker: "ANFCI",        transform: level, model_freq: monthly, source_freq: weekly,  downsample: mean_of_month, frontier_anchor: false}
-  mkt_hy_oas:              {ticker: "BAMLH0A0HYM2", transform: level, model_freq: daily,   source_freq: daily}
+  # rolling_window: true = the source serves only a sliding window (ICE data in FRED, 3y
+  # back from today). ONLY such series carry their head over and are measured on the
+  # overlap (to_datacore.push, ЗЛТ1/ЗЛТ2 Ф.0б); every other series is refused on a short answer.
+  mkt_hy_oas:              {ticker: "BAMLH0A0HYM2", transform: level, model_freq: daily,   source_freq: daily, rolling_window: true}
   mkt_breakeven_10y:       {ticker: "T10YIE",       transform: level, model_freq: daily,   source_freq: daily}
   mkt_curve_10y2y:         {ticker: "T10Y2Y",       transform: level, model_freq: daily,   source_freq: daily}
   # Лихвените серии на златото (ЗЛТ1, 28.09.2026): номинална, реална 10г и срочна

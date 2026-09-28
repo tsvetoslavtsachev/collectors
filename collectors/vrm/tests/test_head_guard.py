@@ -48,12 +48,13 @@ def _rows(first, last, valfn=_val):
 class Store:
     """In-memory canon: push() reads it and writes back the FULL file (overwrite)."""
 
-    def __init__(self, records):
+    def __init__(self, records, sid=SID):
         self.records = list(records)
         self.writes = []
+        self.sid = sid
 
     def read(self, series_id):
-        return list(self.records) if series_id == SID else []
+        return list(self.records) if series_id == self.sid else []
 
     def write(self, series_id, records, schema_version):
         stamped = [{**r, "series_id": series_id, "schema_version": schema_version}
@@ -67,8 +68,8 @@ class Store:
 
 @pytest.fixture
 def store(monkeypatch):
-    def install(records):
-        s = Store(records)
+    def install(records, sid=SID):
+        s = Store(records, sid)
         monkeypatch.setattr(td, "assert_safe_root", lambda: None)
         monkeypatch.setattr(td.storage, "read_canonical", s.read)
         monkeypatch.setattr(td.datacore, "write", s.write)
@@ -200,3 +201,62 @@ def test_lihvenite_serii_are_wired_in_config():
         assert not m.get("computed")
         assert sid in vrm_run.expected_series(cfg)
     assert len(vrm_run.expected_series(cfg)) == 56
+
+
+# ── ЗЛТ2 Фаза 0б: пренасянето на главата е само за обявените подвижни прозорци ──────
+FULL = "mkt_ust_10y"        # DGS10: източник с ПЪЛНА история от 1962, не е подвижен прозорец
+
+
+def _run_full(source_records):
+    return td.push({FULL: {"ok": True, "records": source_records}})
+
+
+def test_rolling_window_is_declared_only_for_hy():
+    # ключът е в config.yaml; днес само ICE серията в FRED е подвижен прозорец
+    assert td.rolling_window_series() == {SID}
+    assert FULL not in td.rolling_window_series()
+
+
+def test_g0_full_history_series_answering_with_last_month_is_refused(store):
+    # Г0: източник с пълна история внезапно връща само последния месец (23 реда).
+    # Преди Фаза 0б подът се мереше върху припокриването (23), отказ нямаше и се
+    # пренасяха ~6 000 реда тихо; сега подът е върху всички съществуващи редове.
+    canon = store(_rows("2003-01-02", "2026-09-24"), sid=FULL)
+    before = list(canon.records)
+    month = _rows("2026-08-25", "2026-09-24")
+    assert len(month) == 23
+    res = _run_full(month)[0]
+    assert "refused" in res["skipped"]
+    assert res["skipped"].startswith(f"refused: would truncate {len(before)}->")
+    assert canon.records == before              # каноничният файл е непроменен
+    assert canon.writes == []                   # и не е имало опит за запис
+
+
+def test_undeclared_series_never_carries_a_head(store):
+    # малко по-къс отговор, който минава прага (губи ~40 от ~6 000 реда): главата НЕ
+    # се пренася (не е обявен подвижен прозорец) -> старото поведение: пише се
+    # отговорът и се вдига предупреждение „head shorter", видимо, не тихо
+    canon = store(_rows("2003-01-02", "2026-09-24"), sid=FULL)
+    res = _run_full(_rows("2003-03-03", "2026-09-25"))[0]
+    assert "retained_head" not in res
+    assert canon.records[0]["as_of"] == "2003-03-03"
+    assert any(w.startswith("head shorter") for w in res["warnings"])
+
+
+def test_declared_hy_still_carries_its_head(store):
+    # пазачът на ЗЛТ1 за обявения прозорец остава същият (главата се пренася)
+    canon = store(_rows("2023-09-26", "2026-09-24"))
+    res = _run(_rows("2023-09-29", "2026-09-25"))[0]
+    assert res["retained_head"] == 3
+    assert canon.records[0]["as_of"] == "2023-09-26"
+
+
+def test_mutation_without_the_key_check_the_short_answer_lands(store, monkeypatch):
+    # ФАЛШИФИКАТОР на Г0: махната проверка на ключа (всяка серия минава като подвижен
+    # прозорец) -> същият къс отговор се приема и се пренасят ~6 000 реда. Ако този
+    # тест някога мине без Г0 да е паднал в същата мутация, тестът Г0 не различава пазача.
+    monkeypatch.setattr(td, "rolling_window_series", lambda cfg=None: {FULL})
+    canon = store(_rows("2003-01-02", "2026-09-24"), sid=FULL)
+    res = _run_full(_rows("2026-08-25", "2026-09-24"))[0]
+    assert "skipped" not in res and res["retained_head"] > 5000
+

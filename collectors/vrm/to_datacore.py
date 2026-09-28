@@ -16,6 +16,7 @@ Gate 1 routes DATACORE_ROOT to a TEMP base — the real canonical is untouched.
 from __future__ import annotations
 import os
 from pathlib import Path
+import yaml
 import datacore
 from datacore import storage
 from datacore.schema import SCHEMA_VERSION
@@ -33,6 +34,21 @@ from collectors import price_guard
 # pull (a broken fetch returning 49.6% of the rows) land silently; 0.9 catches that
 # while never false-refusing a real run.
 MIN_RETAIN_RATIO = 0.9
+
+HERE = Path(__file__).resolve().parent
+
+
+def rolling_window_series(cfg: dict | None = None) -> set:
+    """Series whose source is declared, in config.yaml `fred:`, as serving only a
+    rolling window (`rolling_window: true`; today mkt_hy_oas -- ICE data in FRED).
+    ONLY these get head retention and the overlap-measured floor (ЗЛТ2 Фаза 0б). Every
+    other series is a full-history source: its floor is measured on ALL existing rows,
+    so a short answer (a source that suddenly returns one month) is refused, not
+    absorbed by carrying the head over."""
+    if cfg is None:
+        cfg = yaml.safe_load((HERE / "config.yaml").read_text(encoding="utf-8"))
+    return {sid for sid, m in (cfg.get("fred") or {}).items()
+            if isinstance(m, dict) and m.get("rolling_window") is True}
 
 
 def assert_safe_root() -> None:
@@ -84,7 +100,11 @@ def _retain_head(existing: list, records: list) -> tuple:
     as before). Returns (merged records, number of carried head rows).
 
     Sources that serve their full history (first served date <= our first date) are
-    untouched: nothing precedes their first date, so nothing is carried."""
+    untouched: nothing precedes their first date, so nothing is carried.
+
+    Only called for series declared `rolling_window: true` in config.yaml (ЗЛТ2 Ф.0б):
+    for any other series a source answering with a shorter window is a broken pull and
+    is refused by the floor in push(), not repaired here."""
     if not existing or not records:
         return records, 0
     first_new = min(r["as_of"] for r in records)
@@ -126,12 +146,14 @@ def push(raw: dict, ledger: bool = True) -> list:
 
     Write-time history guards (the cardinal rule must not rest on the fetch layer's
     good behavior): window preservation (no backward extension), head retention (a
-    source that serves a shorter window never moves the series' first date forward --
-    ЗЛТ1, the ICE/HY case), the anti-truncation floor (hard refuse on catastrophic
+    declared rolling-window source never moves the series' first date forward --
+    ЗЛТ1, the ICE/HY case; ONLY series with `rolling_window: true` in config.yaml,
+    ЗЛТ2 Ф.0б), the anti-truncation floor (hard refuse on catastrophic
     shrink), and edge/gap detection (loud warn on tail regression, or interior holes
     a live source gap introduces)."""
     assert_safe_root()   # structural cardinal-rule guard at the write path itself
     results = []
+    rolling = rolling_window_series()      # ЗЛТ2 Ф.0б: only these may carry a head
     revisions = {}       # мандат №44: {series_id: declaration} -> health ledger
     for series_id in sorted(raw):
         block = raw[series_id]
@@ -146,17 +168,21 @@ def push(raw: dict, ledger: bool = True) -> list:
         if existing:
             start = _window_start(existing)
             records = [r for r in records if r["as_of"] >= start]   # forward-only
-            # The floor is measured where the source actually speaks: existing rows at
-            # or after its first served date (the head before it is carried, not
-            # rewritten). For a full-history source that is every existing row, as before.
-            first_new = min((r["as_of"] for r in records), default=None)
-            overlap = sum(1 for r in existing
-                          if first_new is None or r["as_of"] >= first_new)
+            if series_id in rolling:
+                # A declared rolling-window source: the floor is measured where the
+                # source actually speaks -- existing rows at or after its first served
+                # date (the head before it is carried, not rewritten).
+                first_new = min((r["as_of"] for r in records), default=None)
+                overlap = sum(1 for r in existing
+                              if first_new is None or r["as_of"] >= first_new)
+            else:
+                overlap = len(existing)      # full-history source: every existing row
             if len(records) < overlap * MIN_RETAIN_RATIO:
                 results.append({"series_id": series_id, "skipped":
                                 f"refused: would truncate {overlap}->{len(records)} rows"})
                 continue
-            records, carried = _retain_head(existing, records)      # ЗЛТ1: no head erosion
+            if series_id in rolling:                                # ЗЛТ1: no head erosion
+                records, carried = _retain_head(existing, records)
             warnings = _edge_warnings(existing, records)
         records = price_guard.round_records(records)          # №44: write хигиена
         records = price_guard.apply_deadband(existing, records)  # №44: епсилон джитър
