@@ -18,3 +18,19 @@ gld:
     etf_gld_oz: "Total Ounces of Gold in the Trust"
   # kept for the Г3 cross-check only, never written to canonical (no declared consumer)
   nav_column: "Total Net Asset Value in the Trust"
+
+# ЗЛТ5а (28.09.2026): control series for etf_gld_tonnes, not the main line.
+gldm:
+  url: "https://api.spdrgoldshares.com/api/v1/historical-archive?product=gldm&exchange=NYSE&lang=en"
+  sheet: "US GLDM Historical Archive"
+  series:
+    etf_gldm_tonnes: "Tonnes of Gold"
+    etf_gldm_oz: "Total Ounces of Gold in the Trust"
+  nav_column: "Total Net Asset Value in the Trust"
+
+silver:
+  pm_url: "https://prices.lbma.org.uk/json/silver.json"
+  series:
+    mkt_silver_usd: 0
+    mkt_silver_gbp: 1
+    mkt_silver_eur: 2

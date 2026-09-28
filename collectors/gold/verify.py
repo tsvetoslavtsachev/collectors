@@ -21,7 +21,7 @@ import json
 import os
 from pathlib import Path
 
-from . import fetch_gld
+from . import fetch_gld, fetch_gldm
 
 
 def _load_canonical(canon_dir: Path, series_id: str) -> dict:
@@ -89,6 +89,63 @@ def gate3_tonnage_cross(canon_dir: Path, xlsx_bytes: bytes) -> dict:
     return _relative_error_stats(pairs)
 
 
+def gate_gldm_tonnage_cross(canon_dir: Path, xlsx_bytes: bytes) -> dict:
+    """ЗЛТ5а Г4: Total Ounces (GLDM) x LBMA USD vs the trust's own Total NAV
+    (GLDM) -- same shape as gate3_tonnage_cross, GLDM instead of GLD."""
+    usd = _load_canonical(canon_dir, "mkt_gold_usd")
+    df = fetch_gldm.parse_archive(xlsx_bytes)
+    pairs = []
+    for _, row in df.iterrows():
+        d = row["as_of"]
+        if d not in usd:
+            continue
+        oz, nav = row["Total Ounces of Gold in the Trust"], row[fetch_gldm.NAV_COLUMN]
+        if not oz or not nav:
+            continue
+        implied_nav = oz * usd[d]
+        rel = abs(implied_nav - nav) / nav
+        pairs.append((rel, d, implied_nav, nav))
+    return _relative_error_stats(pairs)
+
+
+def gate5_silver_eur_cross(canon_dir: Path, eurusd_glob: str) -> dict:
+    """ЗЛТ5а Г5: LBMA silver EUR vs (LBMA silver USD / EURUSD), from 2003
+    (EURUSD price-archive coverage) -- same shape as gate2_eur_cross, silver
+    instead of gold."""
+    usd = _load_canonical(canon_dir, "mkt_silver_usd")
+    eur = _load_canonical(canon_dir, "mkt_silver_eur")
+    eurusd = {}
+    for fp in glob.glob(eurusd_glob):
+        for line in Path(fp).read_text(encoding="utf-8").splitlines():
+            row = json.loads(line)
+            eurusd[row["as_of"]] = row["value"]
+    dates = sorted(d for d in eur if d >= "2003-01-01" and d in usd and d in eurusd)
+    pairs = []
+    for d in dates:
+        implied = usd[d] / eurusd[d]
+        rel = abs(implied - eur[d]) / eur[d]
+        pairs.append((rel, d, implied, eur[d]))
+    return _relative_error_stats(pairs)
+
+
+def gate6_gld_gldm_correlation(canon_dir: Path) -> dict:
+    """ЗЛТ5а Г6 (само измерване, праг няма): корелация на седмичните %
+    промени в тоновете GLD и GLDM за общия период -- информация за ЗЛТ4."""
+    gld = _load_canonical(canon_dir, "etf_gld_tonnes")
+    gldm = _load_canonical(canon_dir, "etf_gldm_tonnes")
+    common = sorted(set(gld) & set(gldm))
+    if len(common) < 10:
+        return {"n_weeks": 0, "correlation": None}
+    # sample weekly: every 5th trading day, like gate4's GLD-cadence sampling
+    weekly = common[::5]
+    gld_chg, gldm_chg = [], []
+    for i in range(1, len(weekly)):
+        d, d0 = weekly[i], weekly[i - 1]
+        gld_chg.append((gld[d] - gld[d0]) / gld[d0])
+        gldm_chg.append((gldm[d] - gldm[d0]) / gldm[d0])
+    return {"n_weeks": len(gld_chg), "correlation": correlation(gld_chg, gldm_chg)}
+
+
 def gate4_spot_vs_fund(canon_dir: Path, etf_gld_path: str) -> dict:
     """Correlation of weekly %-changes: LBMA USD (daily, sampled on-or-before each
     GLD date) vs the GLD fund price (etf_gld.json, weekly)."""
@@ -149,6 +206,24 @@ def main() -> int:
     print(f"  n_weeks={g4['n_weeks']} correlation={g4['correlation']:.4f} "
          f"median_abs_diff={g4['abs_diff']['median']:.5f} "
          f"p99_abs_diff={g4['abs_diff']['p99']:.5f}")
+
+    # ЗЛТ5а (28.09.2026) -- gate numbering below is the SESSION brief's (Г4/Г5/Г6),
+    # a separate namespace from ЗЛТ2's own Г1-Г4 above.
+    gldm_xlsx_path = os.environ.get("GLDM_XLSX_PATH")
+    if gldm_xlsx_path:
+        print("== ЗЛТ5а Г4: GLDM тоновете срещу NAV ==")
+        g4b = gate_gldm_tonnage_cross(canon_dir, Path(gldm_xlsx_path).read_bytes())
+        print(f"  n={g4b['n']} median_rel={g4b['median']:.5f} p99_rel={g4b['p99']:.5f} "
+             f"max_rel={g4b['max'][0]:.5f} ({g4b['max'][1]})")
+
+    print("== ЗЛТ5а Г5: среброто еврото ==")
+    g5 = gate5_silver_eur_cross(canon_dir, eurusd_glob)
+    print(f"  n={g5['n']} median_rel={g5['median']:.5f} p99_rel={g5['p99']:.5f} "
+         f"max_rel={g5['max'][0]:.5f} ({g5['max'][1]})")
+
+    print("== ЗЛТ5а Г6: GLD-GLDM корелация (само измерване) ==")
+    g6 = gate6_gld_gldm_correlation(canon_dir)
+    print(f"  n_weeks={g6['n_weeks']} correlation={g6['correlation']}")
     return 0
 
 

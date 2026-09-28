@@ -101,6 +101,101 @@ ENTRIES = {
         "source_kind": "automated",
         "note": "Full history from 2004-11-18.",
     },
+    "etf_gldm_tonnes": {
+        "description": "Tonnes of gold held in the SPDR Gold MiniShares (GLDM) "
+                       "trust (ЗЛТ5а, 28.09.2026) -- CONTROL series for "
+                       "etf_gld_tonnes, not the main line (Ц. 28.09: GLD stays "
+                       "primary; GLDM catches a fund-switch 'rabbit' -- GLD "
+                       "outflow paired with a GLDM inflow means fee-driven "
+                       "switching, not a real exit from gold).",
+        "source": "SPDR (State Street)",
+        "manual_source": "none",
+        "license": "SPDR historical archive - public, no login",
+        "basis": "Daily trust holdings, tonnes (lower-fee sibling of GLD, 0.10% "
+                "vs 0.40%)",
+        "frequency": "daily",
+        "window": "open",
+        "unit": "tonnes",
+        "schema_version": 1,
+        "vrm_role": ["market-context", "behavioral"],
+        "role": "control",
+        "control_of": "etf_gld_tonnes",
+        "provisional": False,
+        "source_kind": "automated",
+        "note": "Full history from 2018-06-26. Reading only in ЗЛТ5а -- the "
+               "GLD-vs-GLDM verdict (fee-switch or not) is ЗЛТ4's job, not this "
+               "collector's.",
+    },
+    "etf_gldm_oz": {
+        "description": "Total troy ounces of gold held in the SPDR GLDM trust "
+                       "(ЗЛТ5а, 28.09.2026) -- same trust as etf_gldm_tonnes, "
+                       "SPDR's own unit.",
+        "source": "SPDR (State Street)",
+        "manual_source": "none",
+        "license": "SPDR historical archive - public, no login",
+        "basis": "Daily trust holdings, troy ounces",
+        "frequency": "daily",
+        "window": "open",
+        "unit": "troy oz",
+        "schema_version": 1,
+        "vrm_role": ["market-context"],
+        "role": "control",
+        "control_of": "etf_gld_tonnes",
+        "provisional": False,
+        "source_kind": "automated",
+        "note": "Full history from 2018-06-26.",
+    },
+    "mkt_silver_usd": {
+        "description": "LBMA Silver Price, USD per troy ounce (ЗЛТ5а, "
+                       "28.09.2026) -- control-group context for the gold "
+                       "observatory: a decoupling from gold spot flags a "
+                       "metals-wide vs. gold-specific move.",
+        "source": "LBMA",
+        "manual_source": "none",
+        "license": "LBMA Silver Price JSON feed - free, no login",
+        "basis": "LBMA Silver Price daily auction fix",
+        "frequency": "daily",
+        "window": "open",
+        "unit": "USD/oz",
+        "schema_version": 1,
+        "vrm_role": ["market-context"],
+        "provisional": False,
+        "source_kind": "automated",
+        "note": "19 historical null days omitted, never written as null. Full "
+               "history from 1968-01-02.",
+    },
+    "mkt_silver_gbp": {
+        "description": "LBMA Silver Price, GBP per troy ounce (ЗЛТ5а, 28.09.2026).",
+        "source": "LBMA",
+        "manual_source": "none",
+        "license": "LBMA Silver Price JSON feed - free, no login",
+        "basis": "LBMA Silver Price daily auction fix",
+        "frequency": "daily",
+        "window": "open",
+        "unit": "GBP/oz",
+        "schema_version": 1,
+        "vrm_role": ["market-context"],
+        "provisional": False,
+        "source_kind": "automated",
+        "note": "No historical null days (unlike mkt_gold_gbp's 11 closure "
+               "gaps). Full history from 1968-01-02.",
+    },
+    "mkt_silver_eur": {
+        "description": "LBMA Silver Price, EUR per troy ounce (ЗЛТ5а, 28.09.2026).",
+        "source": "LBMA",
+        "manual_source": "none",
+        "license": "LBMA Silver Price JSON feed - free, no login",
+        "basis": "LBMA Silver Price daily auction fix",
+        "frequency": "daily",
+        "window": "open",
+        "unit": "EUR/oz",
+        "schema_version": 1,
+        "vrm_role": ["market-context"],
+        "provisional": False,
+        "source_kind": "automated",
+        "note": "Null before 1999-01-04 (pre-euro) -- history starts there, "
+               "not 1968, same cutoff as mkt_gold_eur.",
+    },
 }
 
 

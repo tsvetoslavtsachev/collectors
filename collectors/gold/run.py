@@ -10,7 +10,7 @@ from __future__ import annotations
 import datetime as dt
 import sys
 
-from . import fetch_lbma, fetch_gld, to_datacore
+from . import fetch_lbma, fetch_gld, fetch_gldm, fetch_silver, to_datacore
 from .register_catalog import ENTRIES
 
 # LBMA/SPDR are business-day sources publishing same-day or next-day; a full
@@ -23,6 +23,8 @@ def assemble() -> dict:
     raw = {}
     raw.update(fetch_lbma.fetch())
     raw.update(fetch_gld.fetch())
+    raw.update(fetch_gldm.fetch())
+    raw.update(fetch_silver.fetch())
     return raw
 
 
