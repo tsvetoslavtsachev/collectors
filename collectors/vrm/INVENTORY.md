@@ -58,6 +58,10 @@ mkt_* dailies). (34)
 - `mkt_hy_oas` BAMLH0A0HYM2 (level / daily)
 - `mkt_breakeven_10y` T10YIE (level / daily)
 - `mkt_curve_10y2y` T10Y2Y (level / daily)
+- `mkt_ust_10y` DGS10, `mkt_real_10y` DFII10, `mkt_term_premium_10y` THREEFYTP10 (level / daily;
+  ЗЛТ1 28.09.2026 — the interest-rate legs of gold vs rates; not VRM regime inputs. Identity
+  DGS10 − DFII10 = T10YIE. THREEFYTP10 = Kim-Wright model estimate, lags ~6 days.
+  Backfilled with `python -m collectors.vrm.backfill <series_id> …`)
 - `macro_ahe_yoy` CES0500000003 (**computed: 12m YoY %** / monthly) → compute.py
 
 `mean_of_month` is the VERIFIED downsample for **TGA/ANFCI** (S6b threshold_baseline:
@@ -117,9 +121,17 @@ rule must not rest on operator memory):**
   data-core repo when unset, so a forgotten env var would let even `--mock`
   overwrite the frozen canonical. The collector now REFUSES to run unless a TEMP
   root is set, or `DATACORE_ALLOW_REAL=1` is explicit (Gate 5).
-- **Truncation floor** (`to_datacore MIN_RETAIN_RATIO=0.5`): full-replace overwrites
+- **Truncation floor** (`to_datacore MIN_RETAIN_RATIO=0.9`): full-replace overwrites
   the whole file, so a short live pull would silently truncate 19y of history.
-  A write that would drop a series below half its existing rows is REFUSED.
+  A write that covers less than 90% of the existing rows at or after the source's own
+  first date is REFUSED.
+- **Head retention** (`to_datacore._retain_head`, ЗЛТ1 28.09.2026): a source that serves a
+  rolling window (ICE series in FRED: BAMLH0A0HYM2 = last 3 years, sliding a day per day)
+  never moves a series' first date forward. Existing rows BEFORE the source's first served
+  date are carried over verbatim; from that date on the source is the truth. Without it
+  `mkt_hy_oas` (canon from 2023-09-26, FRED from 2023-09-29) lost its head every week and
+  the old ratio floor would have frozen the series after ~1 year. Tests:
+  `tests/test_head_guard.py` (incl. a 78-week sliding-window run and the guard-removed mutation).
 
 > Faithfulness note: FRED/computed records carry `resolution` but deliberately
 > **not** `bloomberg_era`. With `full_replace` decided, a live FRED re-pull is

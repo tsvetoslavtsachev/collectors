@@ -1,7 +1,8 @@
 # collectors/vrm — VRM weekly collector
 
 Third citizen of data-core (INIT-22 E4/E5). Un-freezes the 51 VRM canonical series
-(+ fx_usdjpy, the direct USD/JPY pair — mandate ORGANISM-v1 F6, not a VRM regime input)
+(+ fx_usdjpy, the direct USD/JPY pair — mandate ORGANISM-v1 F6, not a VRM regime input;
++ mkt_ust_10y / mkt_real_10y / mkt_term_premium_10y, the rate legs for gold — ЗЛТ1, likewise not VRM inputs)
 the regime/overlay engines read. See `INVENTORY.md` for the full series contract.
 
 ## Modules

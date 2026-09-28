@@ -83,7 +83,7 @@ def main() -> int:
     root = os.environ.get("DATACORE_ROOT", "(data-core repo default)")
     exp = expected_series(cfg)
     print(f"VRM collector -> DATACORE_ROOT = {root}")
-    print(f"expected series: {len(exp)}  (wiring check: {'OK' if len(exp) == 53 else 'MISMATCH'})")  # 53 = 51 VRM + fx_usdjpy (мандат ORGANISM-v1 Ф6) + macro_mn_ore_cny (INIT-27 план А)
+    print(f"expected series: {len(exp)}  (wiring check: {'OK' if len(exp) == 56 else 'MISMATCH'})")  # 56 = 51 VRM + fx_usdjpy (мандат ORGANISM-v1 Ф6) + macro_mn_ore_cny (INIT-27 план А) + mkt_ust_10y/mkt_real_10y/mkt_term_premium_10y (ЗЛТ1)
 
     if "--mock" in sys.argv:
         from . import mockdata
@@ -100,7 +100,8 @@ def main() -> int:
           f"(of {len(exp)} expected)")
     for r in wrote:
         warn = f"  [WARN: {'; '.join(r['warnings'])}]" if r.get("warnings") else ""
-        print(f"  + {r['series_id']}: {r['rows']} rows, as_of {r['as_of']}{warn}")
+        kept = f"  [kept head: {r['retained_head']} rows]" if r.get("retained_head") else ""
+        print(f"  + {r['series_id']}: {r['rows']} rows, as_of {r['as_of']}{kept}{warn}")
     for r in skipped:
         print(f"  - {r['series_id']}: SKIP ({r.get('skipped')})")
     # ISM is the licensed manual holdout: its slot (ism_manual.json) is gitignored, so

@@ -101,6 +101,12 @@ fred:
   mkt_hy_oas:              {ticker: "BAMLH0A0HYM2", transform: level, model_freq: daily,   source_freq: daily}
   mkt_breakeven_10y:       {ticker: "T10YIE",       transform: level, model_freq: daily,   source_freq: daily}
   mkt_curve_10y2y:         {ticker: "T10Y2Y",       transform: level, model_freq: daily,   source_freq: daily}
+  # Лихвените серии на златото (ЗЛТ1, 28.09.2026): номинална, реална 10г и срочна
+  # премия (Kim-Wright, изостава ~6 дни). Тъждество: DGS10 - DFII10 = T10YIE.
+  # Дневни като mkt_* — извън месечната кохорта, не са VRM режимен вход.
+  mkt_ust_10y:             {ticker: "DGS10",        transform: level, model_freq: daily,   source_freq: daily}
+  mkt_real_10y:            {ticker: "DFII10",       transform: level, model_freq: daily,   source_freq: daily}
+  mkt_term_premium_10y:    {ticker: "THREEFYTP10",  transform: level, model_freq: daily,   source_freq: daily}
   # USD/JPY директно в канона (мандат ORGANISM-v1 Ф6): дрилът четеше двойката
   # само през UUP×FXY прокси-та. Дневна серия като mkt_* — не участва в
   # месечната кохорта/frontier (carry_forward гледа само monthly), не е

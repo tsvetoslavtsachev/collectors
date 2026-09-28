@@ -71,6 +71,28 @@ def _window_start(existing: list):
     return min((r["as_of"] for r in existing), default=None) if existing else None
 
 
+def _retain_head(existing: list, records: list) -> tuple:
+    """Accumulation guard (ЗЛТ1): a series' first date never moves forward because a
+    source answered with a SHORTER window.
+
+    Some sources serve only a rolling window -- ICE series in FRED (BAMLH0A0HYM2)
+    start 3 years back from today and slide a week per week. write_canonical
+    overwrites the whole file, so without this the canon (which already holds 3 days
+    more than FRED does: 2023-09-26 vs 2023-09-29) would lose its head on every run.
+    Rows of the established series that lie BEFORE the source's first served date are
+    carried over verbatim; from that date on the source is the truth (fresh values,
+    as before). Returns (merged records, number of carried head rows).
+
+    Sources that serve their full history (first served date <= our first date) are
+    untouched: nothing precedes their first date, so nothing is carried."""
+    if not existing or not records:
+        return records, 0
+    first_new = min(r["as_of"] for r in records)
+    head = sorted((r for r in existing if r["as_of"] < first_new),
+                  key=lambda r: r["as_of"])
+    return head + records, len(head)
+
+
 def _edge_warnings(existing: list, records: list) -> list:
     """Surface (never silence) the ways a full_replace pull can quietly shrink an
     established series vs. just refresh it. The row-count floor alone misses these:
@@ -96,13 +118,18 @@ def _edge_warnings(existing: list, records: list) -> list:
     return w
 
 
-def push(raw: dict) -> list:
+def push(raw: dict, ledger: bool = True) -> list:
     """Write each ok series; return per-series results (written / skipped / warned).
 
+    ledger=False: a partial run (backfill.py) must not overwrite the ledger face of the
+    last FULL weekly run with its own (empty) declarations.
+
     Write-time history guards (the cardinal rule must not rest on the fetch layer's
-    good behavior): window preservation (no backward extension), the anti-truncation
-    floor (hard refuse on catastrophic shrink), and edge/gap detection (loud warn on
-    head erosion, tail regression, or interior holes a live source gap introduces)."""
+    good behavior): window preservation (no backward extension), head retention (a
+    source that serves a shorter window never moves the series' first date forward --
+    ЗЛТ1, the ICE/HY case), the anti-truncation floor (hard refuse on catastrophic
+    shrink), and edge/gap detection (loud warn on tail regression, or interior holes
+    a live source gap introduces)."""
     assert_safe_root()   # structural cardinal-rule guard at the write path itself
     results = []
     revisions = {}       # мандат №44: {series_id: declaration} -> health ledger
@@ -114,14 +141,22 @@ def push(raw: dict) -> list:
                             "skipped": block.get("error", "no data")})
             continue
         warnings = []
+        carried = 0
         existing = storage.read_canonical(series_id)
         if existing:
             start = _window_start(existing)
             records = [r for r in records if r["as_of"] >= start]   # forward-only
-            if len(records) < len(existing) * MIN_RETAIN_RATIO:
+            # The floor is measured where the source actually speaks: existing rows at
+            # or after its first served date (the head before it is carried, not
+            # rewritten). For a full-history source that is every existing row, as before.
+            first_new = min((r["as_of"] for r in records), default=None)
+            overlap = sum(1 for r in existing
+                          if first_new is None or r["as_of"] >= first_new)
+            if len(records) < overlap * MIN_RETAIN_RATIO:
                 results.append({"series_id": series_id, "skipped":
-                                f"refused: would truncate {len(existing)}->{len(records)} rows"})
+                                f"refused: would truncate {overlap}->{len(records)} rows"})
                 continue
+            records, carried = _retain_head(existing, records)      # ЗЛТ1: no head erosion
             warnings = _edge_warnings(existing, records)
         records = price_guard.round_records(records)          # №44: write хигиена
         records = price_guard.apply_deadband(existing, records)  # №44: епсилон джитър
@@ -133,11 +168,14 @@ def push(raw: dict) -> list:
             res = datacore.write(series_id, records, SCHEMA_VERSION)
             if warnings:
                 res["warnings"] = warnings
+            if carried:
+                res["retained_head"] = carried
             if decl:
                 res["revisions"] = price_guard.summarize(decl)
             results.append(res)
         except datacore.WriteRejected as e:
             results.append({"series_id": series_id, "skipped": f"rejected: {e}"})
-    ledger = price_guard.write_ledger("vrm", revisions)
-    print("  [LEDGER] {} series with revisions -> {}".format(len(revisions), ledger))
+    if ledger:
+        path = price_guard.write_ledger("vrm", revisions)
+        print("  [LEDGER] {} series with revisions -> {}".format(len(revisions), path))
     return results
