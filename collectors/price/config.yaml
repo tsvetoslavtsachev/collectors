@@ -1496,6 +1496,11 @@ price:
   # WHY px_era_pa_daily: the M-FUND motivating case (Eramet cut 20.08.2026; манган/никел/
   # литий, INIT-27 lessons) -- the missing price input for the bottom-up drill.
   px_era_pa_daily: {symbol: "ERA.PA", name: "ERAMET SA", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock", origin: "curated-offindex"}
+  # WHY px_lyft_daily: УБР3 (29.09.2026). Клиентският анализ на Uber иска директния конкурент в
+  # пътуванията (решение на Ц., 29.09.2026); LYFT не е в S&P 500, тоест няма ценова серия. CIK 1759509
+  # (SEC submissions: Lyft, Inc., FYE 31.12), Nasdaq, USD. category = GICS секторът на Uber в universe.csv
+  # (Industrials), същият, който дава екранът на Koyfin за LYFT.
+  px_lyft_daily: {symbol: "LYFT", name: "Lyft", category: "Industrials", currency: "USD", quote_basis: "USD", family: "stock", origin: "curated-offindex"}
 
   # ---- ISHARES BASKET CITIZENS, Asia + Brazil (ЦАБ1, 16.09.2026; price-archive/MANDATE-asia-brazil-prices.md) ----
   # Членовете на кошниците *_us от М-КОНЦ (data-core/migrations/m_conc/holdings, fund_as_of 2026-09-10),

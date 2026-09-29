@@ -25,7 +25,7 @@ FLOORS = {
     "etf": 159,               # 137 + 4 F13 (22.08) + 18 later
     "sp500": 508,             # retire-inclusive (3 retired tombstones, CTRA among them)
     "stoxx": 609,
-    "curated-offindex": 1,    # ERA.PA, 26.08.2026
+    "curated-offindex": 2,    # ERA.PA, 26.08.2026 + LYFT, 29.09.2026 (УБР3: директен конкурент на Uber, решение на Ц.)
     "ishares-basket": 416,    # fxi_us 50 + ewz_us 46 (ЦАБ1) + ewj_us 167 + ewy_us 77 + ewt_us 76 (ЦАБ2)
 }
 STOCK_FAMILIES = ("sp500", "stoxx", "curated-offindex", "ishares-basket")
