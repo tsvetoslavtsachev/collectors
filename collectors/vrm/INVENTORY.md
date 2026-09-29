@@ -62,6 +62,14 @@ mkt_* dailies). (34)
   ЗЛТ1 28.09.2026 — the interest-rate legs of gold vs rates; not VRM regime inputs. Identity
   DGS10 − DFII10 = T10YIE. THREEFYTP10 = Kim-Wright model estimate, lags ~6 days.
   Backfilled with `python -m collectors.vrm.backfill <series_id> …`)
+- `macro_real_dpi` DSPIC96, `macro_retail_food_services` RSFSDP, `macro_air_enplanements` ENPLANE
+  (level / **model_freq monthly_native**) and `mkt_gasoline_retail` GASREGW (level / **weekly**);
+  УБР2 29.09.2026, the macro drivers of Uber; not VRM inputs. The three monthly ones are
+  DELIBERATELY not `model_freq: monthly`: carry_forward puts every monthly row into the cohort,
+  and `frontier_anchor: false` alone still leaves it in the FILL set, which invents months up
+  to the frontier (ENPLANE lags ~4 months: 3 carry_forward rows; DSPIC96: 1). `monthly_native`
+  keeps them out of cohort and anchors, with FRED-native dates (first of month) and an honest
+  tail. Record `resolution` is `monthly_native`; the catalog says monthly. Gate: `tests/test_ubr2_macro_drivers.py`.
 - `macro_ahe_yoy` CES0500000003 (**computed: 12m YoY %** / monthly) → compute.py
 
 `mean_of_month` is the VERIFIED downsample for **TGA/ANFCI** (S6b threshold_baseline:

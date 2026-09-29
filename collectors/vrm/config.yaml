@@ -110,6 +110,20 @@ fred:
   mkt_ust_10y:             {ticker: "DGS10",        transform: level, model_freq: daily,   source_freq: daily}
   mkt_real_10y:            {ticker: "DFII10",       transform: level, model_freq: daily,   source_freq: daily}
   mkt_term_premium_10y:    {ticker: "THREEFYTP10",  transform: level, model_freq: daily,   source_freq: daily}
+  # Макро двигателите на Uber (УБР2, 29.09.2026): реален разполагаем доход, бензин на
+  # дребно, ресторанти и барове, качени пътници. НЕ са вход на режима.
+  # КАПАНЪТ: carry_forward взима в кохортата всеки ред с model_freq == "monthly".
+  # frontier_anchor:false само спира местенето на фронтира, но оставя реда в множеството
+  # за запълване, а то измисля месеци до фронтира (ENPLANE изостава ~4 месеца: 3 нови реда
+  # carry_forward в канона; DSPIC96: 1). Затова трите месечни са с model_freq: monthly_native
+  # (различно от "monthly"): извън кохортата и извън котвите, без запълване, с родните
+  # дати на FRED (първо число на месеца), опашката е точно каквато я дава FRED.
+  # Бележка: полето resolution в записа е "monthly_native" (каталогът казва monthly).
+  # GASREGW е седмична: model_freq: weekly също минава без нов код (родни дати, понеделник).
+  macro_real_dpi:             {ticker: "DSPIC96", transform: level, model_freq: monthly_native, source_freq: monthly}
+  macro_retail_food_services: {ticker: "RSFSDP",  transform: level, model_freq: monthly_native, source_freq: monthly}
+  macro_air_enplanements:     {ticker: "ENPLANE", transform: level, model_freq: monthly_native, source_freq: monthly}
+  mkt_gasoline_retail:        {ticker: "GASREGW", transform: level, model_freq: weekly,         source_freq: weekly}
   # USD/JPY директно в канона (мандат ORGANISM-v1 Ф6): дрилът четеше двойката
   # само през UUP×FXY прокси-та. Дневна серия като mkt_* — не участва в
   # месечната кохорта/frontier (carry_forward гледа само monthly), не е

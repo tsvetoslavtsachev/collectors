@@ -2,7 +2,9 @@
 
 Third citizen of data-core (INIT-22 E4/E5). Un-freezes the 51 VRM canonical series
 (+ fx_usdjpy, the direct USD/JPY pair — mandate ORGANISM-v1 F6, not a VRM regime input;
-+ mkt_ust_10y / mkt_real_10y / mkt_term_premium_10y, the rate legs for gold — ЗЛТ1, likewise not VRM inputs)
++ mkt_ust_10y / mkt_real_10y / mkt_term_premium_10y, the rate legs for gold — ЗЛТ1, likewise not VRM inputs;
++ macro_real_dpi / mkt_gasoline_retail / macro_retail_food_services / macro_air_enplanements, the macro drivers of Uber (УБР2),
+outside the monthly cohort by `model_freq: monthly_native` / `weekly`, see INVENTORY.md)
 the regime/overlay engines read. See `INVENTORY.md` for the full series contract.
 
 ## Modules
