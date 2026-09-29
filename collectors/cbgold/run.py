@@ -2,15 +2,22 @@
 
 Run: python -m collectors.cbgold.run [--mock]
 
-Flow: fetch the IMF dataflow (one HTTP call, 88 country/aggregate series) ->
-WRITE each series' full history through the data-core gate -> report. Mirrors
-collectors.gold.run / collectors.cot.run.
+Flow: fetch the IMF dataflow (ounces, 88 country/aggregate series + the same
+gold's USD value as evidence) -> plausibility.repair() -> WRITE each series'
+full history through the data-core gate (write guard + plausibility gate) ->
+report. Mirrors collectors.gold.run / collectors.cot.run.
+
+Exit code: 1 on a stale/empty base (freshness) OR on any series the
+plausibility gate refused -- a refusal means a source defect repair() could
+not prove, which needs a human, not next week's retry.
 """
 from __future__ import annotations
 import datetime as dt
 import sys
 
-from . import fetch_imf, to_datacore
+import requests
+
+from . import fetch_imf, plausibility, to_datacore
 from .register_catalog import ENTRIES
 
 # IMF IRFCL is monthly with a 2-3 month reporting lag (ЗЛТ3) -- unlike gold's
@@ -20,8 +27,18 @@ from .register_catalog import ENTRIES
 STALE_DAYS = 120
 
 
-def assemble() -> dict:
-    return fetch_imf.fetch()
+def assemble() -> tuple[dict, list[str]]:
+    """Live pull -> (tonnage records, repair notes)."""
+    oz = fetch_imf.parse(fetch_imf.fetch_json(fetch_imf.URL))
+    notes = []
+    try:
+        usd = fetch_imf.parse(fetch_imf.fetch_json(fetch_imf.URL_USD))
+    except requests.RequestException as e:
+        # No evidence -> no slip repairs; a slipped series then fails the gate.
+        usd = {}
+        notes.append(f"USD value field unavailable ({e}) -- no slip repairs this run")
+    fixed, repaired = plausibility.repair(oz, usd)
+    return fetch_imf.to_records(fixed), notes + repaired
 
 
 def _base_frontier(pushed: list) -> str | None:
@@ -50,10 +67,12 @@ def main() -> int:
     exp = list(ENTRIES)
     if "--mock" in sys.argv:
         from . import mockdata
-        raw = mockdata.raw()
+        raw, notes = mockdata.raw(), []
     else:
-        raw = assemble()
+        raw, notes = assemble()
 
+    for n in notes:
+        print(f"  ~ repair: {n}")
     pushed = to_datacore.push(raw)
 
     wrote = [r for r in pushed if r.get("rows") is not None]
@@ -72,6 +91,12 @@ def main() -> int:
 
     code, msg = freshness_verdict(pushed)
     print(("FAIL: " if code else "OK: ") + msg)
+    refused = [r["series_id"] for r in pushed if r.get("implausible")]
+    if refused:
+        print(f"FAIL: plausibility gate refused {len(refused)} series: {refused}")
+        code = 1
+    else:
+        print("OK: plausibility gate -- every written series passed")
     return code
 
 

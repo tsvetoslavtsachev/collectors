@@ -6,11 +6,19 @@ IMF dataflow serves each country's FULL history on every pull (no rolling
 window declared here either), so the anti-truncation floor is measured
 unconditionally on every existing row, every run: a short answer (an API
 hiccup that returns only the latest few months) is refused, never absorbed.
+
+Plausibility gate (29.09.2026, after ЗЛТ4 О2): the records that survive the
+floor are checked last by plausibility.check() -- no country level above the
+US, no 0 between non-zero months, no x10^3/x10^6 month-to-month step. Any
+violation refuses the whole series ("refused: implausible ..."); the canon
+keeps its previous file. run.py turns such a refusal into a red exit.
 """
 from __future__ import annotations
 import datacore
 from datacore.schema import SCHEMA_VERSION
 from datacore import storage
+
+from . import plausibility
 
 # Same floor as collectors.gold.to_datacore.MIN_RETAIN_RATIO.
 MIN_RETAIN_RATIO = 0.9
@@ -40,6 +48,7 @@ def _edge_warnings(existing: list, records: list) -> list:
 def push(raw: dict) -> list[dict]:
     """raw: {series_id: {"ok": bool, "records": [{as_of, value, source}], "error": str}}."""
     results = []
+    ceiling = plausibility.us_ceiling(raw)
     for series_id in sorted(raw):
         block = raw[series_id]
         records = block.get("records") if block.get("ok") else None
@@ -57,6 +66,11 @@ def push(raw: dict) -> list[dict]:
                                 f"refused: would truncate {len(existing)}->{len(records)} rows"})
                 continue
             warnings = _edge_warnings(existing, records)
+        bad = plausibility.check(series_id, records, ceiling)
+        if bad:
+            results.append({"series_id": series_id, "implausible": bad,
+                            "skipped": "refused: implausible -- " + "; ".join(bad)})
+            continue
         try:
             res = datacore.write(series_id, records, SCHEMA_VERSION)
             if warnings:

@@ -56,11 +56,12 @@ COUNTRY сегмент (wildcard) дава всички 88 страни/агре
 | `countries.py` | COUNTRY dimension snapshot (id -> display name), 88 entries, generated from the live IMF codelist 28.09.2026 -- used only for catalog descriptions |
 | `config.yaml` | dataflow URL + naming template |
 | `fetch_imf.py` | SDMX-JSON -> {country: [(as_of, oz)]}, ordered by mapped TIME_PERIOD (not by dict/index order -- see its docstring for the trap) |
-| `to_datacore.py` | citizen step + write-time guard (forward-only, anti-truncation floor), mirrors `collectors.gold.to_datacore` |
+| `to_datacore.py` | citizen step + write-time guard (forward-only, anti-truncation floor, plausibility gate), mirrors `collectors.gold.to_datacore` |
+| `plausibility.py` | `repair()` (x10^3 decimal slip proven by the USD value field; 0 between non-zero months = gap) + `check()`/`gate()` (no country above the US, no sandwiched 0, no x10^3/x10^6 step) -- see its docstring |
 | `register_catalog.py` | declares the 88 series in `catalog.json` (upsert, own keys only) |
 | `run.py` | orchestration + `--mock` + freshness check (120d threshold -- monthly data with normal 2-3 month lag, not gold's daily cadence) |
 | `mockdata.py` | offline synthetic raw (24 months x 88 series) for `--mock` smoke |
-| `verify.py` | live Г1 (five-country availability) + Г2 (USA vs Treasury) gate runner |
+| `verify.py` | live Г1 (five-country availability) + Г2 (USA vs Treasury) + Г4 (BRA vs BCB SGS 3553) gate runner |
 | `tests/` | offline unit tests (SDMX ordering mutation, write-guard mutation, wiring, Г2 math mutation) |
 
 Run: `python -m collectors.cbgold.run [--mock]`
@@ -99,3 +100,26 @@ Run: `python -m collectors.cbgold.run [--mock]`
   `TIME_PERIOD` списък в `structure.dimensions.observation` не е хронологичен
   (проверено 28.09.2026: индекси 0-4 бяха 2020-M10..2021-M02, опашката беше
   2000-M07..2000-M02) -- виж `fetch_imf.py` docstring.
+
+## Правдоподобност (29.09.2026, след ЗЛТ4 О2)
+
+Четецът `s9_gold` (data-core, отклонение О2) трябваше да изхвърли 86 точки.
+Причината НЕ е в `parse()`: лошите стойности са в самия `OBS_VALUE`, без
+атрибут, който да ги различава (SCALE е "6" на всяка серия, UNIT_MULT няма).
+
+- **x1000 от репортера.** BRA 2026-03..08 = 5,544,278,722.99 oz след
+  5,544,278.72 през 2026-02; AGO всичките 70 месеца (592,900,000 oz =
+  18,441 t, над САЩ). Доказателство: USD стойността на същото злато от
+  същия репортер (`IRFCLDT1_IRFCL56_USD`) / унциите дава ~$2-5 за унция,
+  1000 пъти под пазара; след /1000 и двете са на 0.8-1.0x медианата на
+  всички репортери. BRA е сверена и с BCB SGS 3553 (Г4): 0.005% разлика.
+- **Нула = липсващ месец.** 10 единични нули между ненулеви месеци (CAN
+  2016-02, COL 2009-05, DNK 2002-11, HUN 2016-12, KAZ 2026-03, LUX 2026-05,
+  MLT 2023-03, MUS 2011-07, SVN 2022-12, URY 2007-05) -- изпускат се.
+  Поредици от 2+ нули не се пипат.
+
+`repair()` поправя само тези два дефекта и само с доказателство; всичко
+друго стига до `check()` непокътнато. Серия с нарушение не се записва
+(канонът пази стария файл), а `run.py` излиза с код 1. Капан: USD/oz НЕ
+може да е детектор, защото САЩ/SAU/SGP/TUN/KOR са на книжна цена (САЩ
+$42.22/oz), 10-100 пъти под пазара.

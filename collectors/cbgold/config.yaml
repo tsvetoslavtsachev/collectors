@@ -9,6 +9,8 @@ imf:
   # for this one indicator+sector+frequency (not just the 5 the ЗЛТ3 brief
   # tested with -- those are the gate floor, not the catalog ceiling).
   url: "https://api.imf.org/external/sdmx/2.1/data/IMF.STA,IRFCL/.IRFCLDT1_IRFCL56V_FTO.S1XS1311.M"
+  # same gold's USD value -- evidence for plausibility.repair(), never canon
+  url_usd: "https://api.imf.org/external/sdmx/2.1/data/IMF.STA,IRFCL/.IRFCLDT1_IRFCL56_USD.S1XS1311.M"
   indicator: "IRFCLDT1_IRFCL56V_FTO"   # monetary gold, IRFCL sector S1XS1311
   sector: "S1XS1311"                    # NOT _Z -- _Z gives an empty response
   # series_id template: cb_gold_<country code, lowercased>_tonnes

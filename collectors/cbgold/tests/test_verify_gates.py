@@ -61,3 +61,14 @@ def test_gate1_flags_stale_and_short_history(tmp_path):
     assert g1["USA"]["first_ok"] and g1["USA"]["fresh_ok"]
     assert g1["CHN"]["first_ok"] is False
     assert g1["POL"]["fresh_ok"] is False
+
+
+def test_gate4_bra_matches_bcb_and_the_x1000_slip_fails_it():
+    # 29.09.2026 live: IMF 2026-03 = 5,544,278,722.99 (x1000), repaired
+    # 5,544,278.72; BCB SGS 3553 = 5,544 thousand oz.
+    bcb = {"2026-02": 5_544_000.0, "2026-03": 5_544_000.0}
+    repaired = {"2026-02-28": 5_544_278.72, "2026-03-31": 5_544_278.72}
+    slipped = {"2026-02-28": 5_544_278.72, "2026-03-31": 5_544_278_722.99}
+    assert v.gate4_compare(repaired, bcb)["ok"]
+    assert not v.gate4_compare(slipped, bcb)["ok"]
+    assert not v.gate4_compare(repaired, {})["ok"]     # no overlap = not verified

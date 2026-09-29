@@ -8,6 +8,7 @@ from .register_catalog import ENTRIES
 
 SERIES = list(ENTRIES)
 BASE = 500.0   # tonnes, arbitrary but > 0 for every series
+US_BASE = 8000.0   # arbitrary too, only has to exceed every other mock country
 
 
 def _month_ends(n: int, end: dt.date | None = None) -> list[str]:
@@ -27,7 +28,8 @@ def raw(n: int = 24) -> dict:
     dates = _month_ends(n)
     out = {}
     for i, sid in enumerate(SERIES):
-        base = BASE + 10.0 * (i % 7)
+        # USA on top -- the plausibility gate bounds every country by it.
+        base = US_BASE if sid == "cb_gold_usa_tonnes" else BASE + 10.0 * (i % 7)
         recs = [{"as_of": d, "value": round(base * (1 + 0.001 * j), 6),
                 "source": "mock"} for j, d in enumerate(dates)]
         out[sid] = {"ok": True, "records": recs}

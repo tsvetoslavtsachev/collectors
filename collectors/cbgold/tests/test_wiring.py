@@ -28,6 +28,7 @@ def test_config_prefix_suffix_match_fetch_imf():
     assert cfg["imf"]["series_prefix"] == fetch_imf.SERIES_PREFIX
     assert cfg["imf"]["series_suffix"] == fetch_imf.SERIES_SUFFIX
     assert cfg["imf"]["url"] == fetch_imf.URL
+    assert cfg["imf"]["url_usd"] == fetch_imf.URL_USD
 
 
 def test_every_entry_has_the_required_catalog_fields():

@@ -36,6 +36,11 @@ import requests
 
 URL = ("https://api.imf.org/external/sdmx/2.1/data/IMF.STA,IRFCL/"
        ".IRFCLDT1_IRFCL56V_FTO.S1XS1311.M")
+# The same gold's USD value, same reporters/sector/frequency (29.09.2026). Never
+# written to canon -- only the evidence plausibility.repair() needs to prove a
+# decimal slip in the ounces (USD / oz must come out at a gold price).
+URL_USD = ("https://api.imf.org/external/sdmx/2.1/data/IMF.STA,IRFCL/"
+           ".IRFCLDT1_IRFCL56_USD.S1XS1311.M")
 SOURCE = "IMF IRFCL"
 OZ_TO_TONNES = 31.1034768 / 1_000_000
 SERIES_PREFIX = "cb_gold_"
@@ -101,4 +106,7 @@ def to_records(parsed: dict) -> dict:
 
 
 def fetch(url: str = URL) -> dict:
+    """Raw ounces -> tonnage records, UNREPAIRED (the source's own defects
+    included). The citizen path is run.assemble(), which puts
+    plausibility.repair() between parse() and to_records()."""
     return to_records(parse(fetch_json(url)))

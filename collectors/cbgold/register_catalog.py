@@ -18,11 +18,11 @@ from pathlib import Path
 from .countries import COUNTRY_NAMES
 from .fetch_imf import SERIES_PREFIX, SERIES_SUFFIX
 
-_AGGREGATES = {"EZB", "G163"}
+AGGREGATES = {"EZB", "G163"}
 
 
 def _entry(code: str, name: str) -> dict:
-    kind = "aggregate" if code in _AGGREGATES else "country"
+    kind = "aggregate" if code in AGGREGATES else "country"
     return {
         "description": f"Official gold reserves, {name} ({code}) -- IMF "
                        "International Reserves and Foreign Currency Liquidity "
