@@ -70,6 +70,10 @@ mkt_* dailies). (34)
   to the frontier (ENPLANE lags ~4 months: 3 carry_forward rows; DSPIC96: 1). `monthly_native`
   keeps them out of cohort and anchors, with FRED-native dates (first of month) and an honest
   tail. Record `resolution` is `monthly_native`; the catalog says monthly. Gate: `tests/test_ubr2_macro_drivers.py`.
+- `mkt_pce_transport_services` DTRSRC1Q027SBEA (level / **model_freq quarterly**); УБР5б 30.09.2026,
+  nominal PCE on transportation services, the fifth link of the Uber macro bridge; not a VRM input.
+  FRED has no monthly variant. `quarterly` is not `monthly`, so it stays out of cohort, anchors and
+  fill, with FRED-native dates (first day of the quarter). Gate: `tests/test_ubr5b_transport_services.py`.
 - `macro_ahe_yoy` CES0500000003 (**computed: 12m YoY %** / monthly) → compute.py
 
 `mean_of_month` is the VERIFIED downsample for **TGA/ANFCI** (S6b threshold_baseline:
