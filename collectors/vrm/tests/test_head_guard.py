@@ -200,7 +200,7 @@ def test_lihvenite_serii_are_wired_in_config():
         assert m["transform"] == "level" and m["model_freq"] == "daily"
         assert not m.get("computed")
         assert sid in vrm_run.expected_series(cfg)
-    assert len(vrm_run.expected_series(cfg)) == 60   # +4 УБР2
+    assert len(vrm_run.expected_series(cfg)) == 61   # +4 УБР2, +1 УБР5б
 
 
 # ── ЗЛТ2 Фаза 0б: пренасянето на главата е само за обявените подвижни прозорци ──────

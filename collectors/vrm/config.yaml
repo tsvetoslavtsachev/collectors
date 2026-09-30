@@ -124,6 +124,11 @@ fred:
   macro_retail_food_services: {ticker: "RSFSDP",  transform: level, model_freq: monthly_native, source_freq: monthly}
   macro_air_enplanements:     {ticker: "ENPLANE", transform: level, model_freq: monthly_native, source_freq: monthly}
   mkt_gasoline_retail:        {ticker: "GASREGW", transform: level, model_freq: weekly,         source_freq: weekly}
+  # Личното потребление на транспортни услуги (УБР5б, 30.09.2026): номинално, млрд. $, SAAR,
+  # BEA през FRED. НЕ е вход на режима. FRED я дава само на тримесечие (месечен вариант
+  # няма); model_freq: quarterly минава без нов код като weekly: не е "monthly", значи
+  # извън кохортата и котвите, без запълване, с родните дати (първо число на тримесечието).
+  mkt_pce_transport_services: {ticker: "DTRSRC1Q027SBEA", transform: level, model_freq: quarterly, source_freq: quarterly}
   # USD/JPY директно в канона (мандат ORGANISM-v1 Ф6): дрилът четеше двойката
   # само през UUP×FXY прокси-та. Дневна серия като mkt_* — не участва в
   # месечната кохорта/frontier (carry_forward гледа само monthly), не е
