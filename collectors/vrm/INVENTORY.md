@@ -74,6 +74,10 @@ mkt_* dailies). (34)
   nominal PCE on transportation services, the fifth link of the Uber macro bridge; not a VRM input.
   FRED has no monthly variant. `quarterly` is not `monthly`, so it stays out of cohort, anchors and
   fill, with FRED-native dates (first day of the quarter). Gate: `tests/test_ubr5b_transport_services.py`.
+- `mkt_consumer_sentiment` UMCSENT (level / **model_freq monthly_native**); УЛМ1 30.09.2026,
+  University of Michigan consumer sentiment for the Walmart analysis; not a VRM input. FRED publishes it
+  with a 1-month delay at the source's request; quarterly before 1978 (missing values skipped). Same
+  protection as УБР2: out of cohort, anchors and fill. Gate: `tests/test_ulm1_consumer_sentiment.py`.
 - `macro_ahe_yoy` CES0500000003 (**computed: 12m YoY %** / monthly) → compute.py
 
 `mean_of_month` is the VERIFIED downsample for **TGA/ANFCI** (S6b threshold_baseline:

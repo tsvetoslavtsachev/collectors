@@ -129,6 +129,11 @@ fred:
   # няма); model_freq: quarterly минава без нов код като weekly: не е "monthly", значи
   # извън кохортата и котвите, без запълване, с родните дати (първо число на тримесечието).
   mkt_pce_transport_services: {ticker: "DTRSRC1Q027SBEA", transform: level, model_freq: quarterly, source_freq: quarterly}
+  # Потребителското доверие, Мичиган (УЛМ1, 30.09.2026, анализът на Walmart): индекс 1966:Q1=100.
+  # НЕ е вход на режима. FRED я дава с 1 месец забавяне по искане на източника; до 1977 е
+  # през тримесечие (празните "." се прескачат). model_freq: monthly_native като УБР2:
+  # извън кохортата и котвите, без запълване, с родните дати (първо число на месеца).
+  mkt_consumer_sentiment:     {ticker: "UMCSENT", transform: level, model_freq: monthly_native, source_freq: monthly}
   # USD/JPY директно в канона (мандат ORGANISM-v1 Ф6): дрилът четеше двойката
   # само през UUP×FXY прокси-та. Дневна серия като mkt_* — не участва в
   # месечната кохорта/frontier (carry_forward гледа само monthly), не е
