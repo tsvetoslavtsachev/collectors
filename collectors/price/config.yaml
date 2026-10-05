@@ -439,7 +439,7 @@ price:
   # History frozen (1472 real bars, kept). DVN is a SEPARATE identity (SEC-000330, its own 6y
   # history) -- NEVER spliced; the 0.70 ratio is a consumer-side holder-view only, not an archive
   # mutation. TEMPLATE for a merged/delisted constituent (symbol will not return). See
-  # C:/Projects/P8b-HON-case-to-resolve.md (CTRA merger case).
+  # C:/Projects/companies/valuation-organ/inbox/P8b-HON-case-to-resolve.md (CTRA merger case).
   px_ctra_daily: {symbol: "CTRA", name: "Coterra", category: "Energy", family: "stock", retired: true, retired_on: "2026-05-07", merged_into: "DVN", merge_ratio: 0.70}
   px_ctsh_daily: {symbol: "CTSH", name: "Cognizant", category: "Information Technology", family: "stock"}
   px_ctva_daily: {symbol: "CTVA", name: "Corteva", category: "Materials", family: "stock"}
@@ -1322,7 +1322,7 @@ price:
   # break); stable identity continues via identity continuation_of SEC-000840 (ROG.SW->ROP.SW,
   # the FB->META pattern). New ISIN breaks apply_snapshot's ISIN/FIGI auto-link -> linked MANUALLY.
   # Yahoo stitches full 6y history under ROP.SW (economically continuous). TEMPLATE for an
-  # index-driven symbol change. See C:/Projects/P8b-HON-case-to-resolve.md (ROG.SW->ROP.SW case).
+  # index-driven symbol change. See C:/Projects/companies/valuation-organ/inbox/P8b-HON-case-to-resolve.md (ROG.SW->ROP.SW case).
   px_rog_sw_daily: {symbol: "ROP.SW", name: "ROCHE PS PAR AG", category: "Healthcare", currency: "CHF", quote_basis: "CHF", family: "stock"}
   px_ror_l_daily: {symbol: "ROR.L", name: "ROTORK PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
   px_rr_l_daily: {symbol: "RR.L", name: "ROLLS-ROYCE HOLDINGS PLC", category: "Industrials", currency: "GBP", quote_basis: "GBX", family: "stock"}
