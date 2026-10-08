@@ -144,11 +144,13 @@ jobs:
           # "generated == replay" verify gates run red on every clone. So the runner
           # commits exactly the brain-written registry paths. ks_long stays OUT (a static
           # vendored dataset, no weekly write step -- run_brain only verifies it).
+          # m_bridge + m_conc added 2026-10-08: the brain writes them too, but they were
+          # missing here, so origin kept stale copies (m-conc verify red on every clone).
           git add data health \
             migrations/s6e_ks migrations/e1_organism_cards \
             migrations/m_atlas migrations/m_breadth \
             migrations/m_amp migrations/m_inter migrations/e2_dashboard \
-            migrations/f13_portfolio
+            migrations/f13_portfolio migrations/m_bridge migrations/m_conc
           # signals/ (за signals-registry) влиза в същия commit; липсва ли (exporter-ът е
           # предупредил), commit-ът на храната не спира заради него.
           if [ -d signals ]; then git add signals; fi
