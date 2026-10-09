@@ -1,26 +1,27 @@
-"""mkt_gold_usd fallback when LBMA refuses -- the PM fix read back out of SPDR GLD (ЗЛТ6).
+"""mkt_gold_usd -- the LBMA Gold Price PM read back out of SPDR GLD (ЗЛТ6, 10.10.2026).
 
-Why: from 03.10.2026 prices.lbma.org.uk answers 403 (Cloudflare "Sorry, you have been
-blocked", from GitHub Actions and from a home line alike), and LBMA's own page now
-says a licence from IBA is required to obtain, use or redistribute the benchmark
-data. Nothing here touches LBMA or its bot wall.
+Why: from 03.10.2026 prices.lbma.org.uk answers 403 to every caller (Cloudflare block)
+and LBMA's page says an IBA licence is required to obtain, use or redistribute the
+benchmark. Ц. closed that door for good ("който затваря врати, не го прави, за да ги
+отвори"): the collector no longer calls LBMA at all, and the GBP/EUR gold and all
+silver series are frozen at 2026-09-25 (register_catalog.RETIRED).
 
 What: the SPDR GLD trust values its bullion at the LBMA Gold Price PM, and its public
 archive (already pulled by fetch_gld) carries NAV/Share and Ounces of Gold per Share.
-Their ratio, rounded to the cent, equals the canonical LBMA PM USD on 2630/2630 days
-2016-01..2026-09 (ЗЛТ6 cross-check, 10.10.2026). Same price, same 15:00 London clock.
+Their ratio, rounded to the cent, equals the LBMA PM USD on 2630/2630 days
+2016-01..2026-09 (ЗЛТ6 cross-check). Same price, same 15:00 London clock. Analyses
+cite the source as "SPDR GLD (NAV/oz = LBMA Gold Price PM)".
 
-Where it differs from LBMA, and how that is handled:
+Where the GLD calendar differs from LBMA's, and how that is handled:
   * UK bank holidays: no LBMA fix, but GLD (NYSE open) carries the previous price ->
     dropped via the gov.uk England-and-Wales calendar (keyless, OGL).
   * Half days (last business day before 25 Dec / 1 Jan): LBMA runs only the AM
     auction and GLD values at it -> dropped, the PM series has no row there.
   * US holidays: LBMA fixes, GLD is closed -> no row (a known gap, ~6 days/year).
-With those two drops, 2019-01..2026-09 shows 0 extra rows vs canonical.
+With those two drops, 2019-01..2026-09 shows 0 extra rows vs the LBMA history.
 
-Only rows AFTER the newest canonical row are appended; the LBMA history already in
-data-core is carried unchanged. USD only -- GBP/EUR would need an FX rate at another
-clock, and silver has no keyless equivalent (both left to Ц., ZLT6 report).
+Only rows AFTER the newest canonical row are appended; the LBMA history (1968-04-01 ..
+2026-09-25) is carried unchanged.
 """
 from __future__ import annotations
 import datetime as dt
@@ -70,10 +71,10 @@ def implied_rows(df, holidays: set[str]) -> list[dict]:
 def extend(existing: list[dict], df, holidays: set[str]) -> dict:
     """Canonical rows (carried as-is) + GLD-implied rows strictly after the newest one."""
     if not existing:
-        return {"ok": False, "error": "fallback: no canonical LBMA history to extend"}
+        return {"ok": False, "error": "no canonical history to extend"}
     carried = [{"as_of": r["as_of"], "value": r["value"], "source": r["source"]}
                for r in existing]
     last = max(r["as_of"] for r in carried)
     new = [r for r in implied_rows(df, holidays) if r["as_of"] > last]
     return {"ok": True, "records": carried + new,
-            "note": f"fallback {SOURCE}: +{len(new)} row(s) after {last}"}
+            "note": f"{SOURCE}: +{len(new)} row(s) after {last}"}

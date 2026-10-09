@@ -1,13 +1,13 @@
-"""Wiring checks: config.yaml, register_catalog.ENTRIES and fetch_* agree on the
-same five series_id's -- no key drifts silently out of sync.
+"""Wiring checks: config.yaml, register_catalog.ENTRIES/ACTIVE/RETIRED and the
+fetchers agree on the same series_id's -- no key drifts silently out of sync.
 
 Run: python -m pytest collectors/gold/tests/test_wiring.py
 """
 from pathlib import Path
 import yaml
 
-from collectors.gold import fetch_lbma, fetch_gld, fetch_gldm, fetch_silver
-from collectors.gold.register_catalog import ENTRIES
+from collectors.gold import fetch_gld, fetch_gldm, gld_fix, mockdata
+from collectors.gold.register_catalog import ACTIVE, ENTRIES, RETIRED
 
 HERE = Path(__file__).resolve().parent.parent
 
@@ -26,10 +26,31 @@ def test_catalog_has_ten_series():
     }
 
 
-def test_config_lbma_series_match_fetch_index():
-    cfg = _cfg()
-    assert cfg["lbma"]["series"] == fetch_lbma.CCY_INDEX
-    assert set(cfg["lbma"]["series"]) <= set(ENTRIES)
+def test_active_and_retired_split_the_catalog():
+    assert set(ACTIVE) == {"mkt_gold_usd", "etf_gld_tonnes", "etf_gld_oz",
+                           "etf_gldm_tonnes", "etf_gldm_oz"}
+    assert set(ACTIVE) | set(RETIRED) == set(ENTRIES)
+    assert not set(ACTIVE) & set(RETIRED)
+
+
+def test_retired_series_are_marked_frozen_in_the_catalog():
+    for sid in RETIRED:
+        assert ENTRIES[sid]["window"] == "closed"
+        assert ENTRIES[sid]["source_kind"] == "frozen"
+        assert "FROZEN at 2026-09-25" in ENTRIES[sid]["note"]
+
+
+def test_nothing_fetches_a_retired_series():
+    fetched = set(fetch_gld.COLUMNS) | set(fetch_gldm.COLUMNS) | {gld_fix.SERIES}
+    assert fetched == set(ACTIVE)
+    assert set(mockdata.SERIES) == set(ACTIVE)
+    assert "lbma" not in _cfg() and "silver" not in _cfg()
+
+
+def test_config_gld_fix_matches_module():
+    cfg = _cfg()["gld_fix"]
+    assert cfg["series"] == gld_fix.SERIES
+    assert cfg["uk_holidays_url"] == gld_fix.HOLIDAYS_URL
 
 
 def test_config_gld_series_match_fetch_columns():
@@ -42,12 +63,6 @@ def test_config_gldm_series_match_fetch_columns():
     cfg = _cfg()
     assert cfg["gldm"]["series"] == fetch_gldm.COLUMNS
     assert set(cfg["gldm"]["series"]) <= set(ENTRIES)
-
-
-def test_config_silver_series_match_fetch_index():
-    cfg = _cfg()
-    assert cfg["silver"]["series"] == fetch_silver.CCY_INDEX
-    assert set(cfg["silver"]["series"]) <= set(ENTRIES)
 
 
 def test_control_series_are_labelled_as_controls():

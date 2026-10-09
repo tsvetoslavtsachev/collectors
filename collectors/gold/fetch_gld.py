@@ -32,7 +32,7 @@ NAV_COLUMN = "Total Net Asset Value in the Trust"
 CLOSE_COLUMN = "Closing Price"
 # the trust values its gold at the LBMA Gold Price PM, so NAV/Share / oz-per-Share
 # IS that fix (2630/2630 days exact to the cent 2016-01..2026-09, ЗЛТ6 10.10.2026);
-# read by fallback_usd only, when LBMA itself refuses
+# read by gld_fix -- the source of mkt_gold_usd since LBMA closed
 NAV_SHARE_COLUMN = "NAV/Share at 10:30am NYT"
 OZ_SHARE_COLUMN = "Ounces of Gold per Share"
 
@@ -40,7 +40,7 @@ OZ_SHARE_COLUMN = "Ounces of Gold per Share"
 def fetch_bytes(url: str = URL, timeout: int = 60) -> bytes:
     # 28.09.2026 SPDR 403'd a bare-UA request and a browser UA was sent; on 10.10.2026
     # (ЗЛТ6) the endpoint answers 200 to python-requests and to this honest bot UA, so
-    # no browser is impersonated -- the fallback_usd path must not rest on one.
+    # no browser is impersonated -- mkt_gold_usd (gld_fix) must not rest on one.
     r = requests.get(url, timeout=timeout, headers={"User-Agent": "collectors-bot/1.0"})
     r.raise_for_status()
     return r.content

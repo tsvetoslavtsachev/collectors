@@ -2,13 +2,12 @@
 from __future__ import annotations
 import datetime as dt
 
-from .register_catalog import ENTRIES
+from .register_catalog import ACTIVE
 
-SERIES = list(ENTRIES)
-BASE = {"mkt_gold_usd": 2650.0, "mkt_gold_gbp": 2100.0, "mkt_gold_eur": 2450.0,
+SERIES = list(ACTIVE)
+BASE = {"mkt_gold_usd": 2650.0,
         "etf_gld_tonnes": 880.0, "etf_gld_oz": 28_300_000.0,
-        "etf_gldm_tonnes": 230.0, "etf_gldm_oz": 7_400_000.0,
-        "mkt_silver_usd": 31.0, "mkt_silver_gbp": 24.5, "mkt_silver_eur": 28.5}
+        "etf_gldm_tonnes": 230.0, "etf_gldm_oz": 7_400_000.0}
 
 
 def _bdays(n: int, end: dt.date | None = None) -> list[str]:

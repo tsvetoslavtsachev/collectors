@@ -1,14 +1,13 @@
-# Gold citizen (ЗЛТ2, 28.09.2026): LBMA spot (USD/EUR/GBP) + SPDR GLD tonnage.
+# Gold citizen (ЗЛТ2, 28.09.2026; ЗЛТ6, 10.10.2026): gold spot USD + SPDR GLD/GLDM tonnage.
 # Sources verified 28.09.2026, no login. See collectors/gold/README.md for the two
 # scope decisions (IAU excluded, LBMA AM fix not collected).
 
-lbma:
-  pm_url: "https://prices.lbma.org.uk/json/gold_pm.json"
-  # index into each row's "v": [USD, GBP, EUR] -> canonical series_id
-  series:
-    mkt_gold_usd: 0
-    mkt_gold_gbp: 1
-    mkt_gold_eur: 2
+# ЗЛТ6 (10.10.2026): LBMA is no longer called (IBA licence, 403 to every caller).
+# mkt_gold_usd is read out of the GLD archive below (gld_fix.py); GBP/EUR gold and
+# silver are frozen at 2026-09-25 (register_catalog.RETIRED).
+gld_fix:
+  series: mkt_gold_usd
+  uk_holidays_url: "https://www.gov.uk/bank-holidays.json"
 
 gld:
   url: "https://api.spdrgoldshares.com/api/v1/historical-archive?product=gld&exchange=NYSE&lang=en"
@@ -28,9 +27,3 @@ gldm:
     etf_gldm_oz: "Total Ounces of Gold in the Trust"
   nav_column: "Total Net Asset Value in the Trust"
 
-silver:
-  pm_url: "https://prices.lbma.org.uk/json/silver.json"
-  series:
-    mkt_silver_usd: 0
-    mkt_silver_gbp: 1
-    mkt_silver_eur: 2

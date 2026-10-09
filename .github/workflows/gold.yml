@@ -3,9 +3,11 @@ name: gold-weekly
 # Needs repo secrets:
 #   DATACORE_PAT  - PAT (repo scope) to checkout + push the private data-core
 #
-# Refreshes the 5 gold canonical series (LBMA spot USD/GBP/EUR + SPDR GLD tonnage/oz)
-# in data-core -- the gold citizen (ЗЛТ2, 28.09.2026). Both sources are keyless, no
-# login. Mirrors cot.yml / oil.yml: fetch -> write canonical through the gate -> commit.
+# Refreshes the 5 active gold canonical series (gold spot USD + SPDR GLD/GLDM tonnage/oz)
+# in data-core -- the gold citizen (ЗЛТ2, 28.09.2026). Since ЗЛТ6 (10.10.2026) LBMA is
+# not called (IBA licence): USD is the PM fix read out of the GLD archive, GBP/EUR gold
+# and silver are frozen. All sources keyless, no login. Mirrors cot.yml / oil.yml:
+# fetch -> write canonical through the gate -> commit.
 #
 # Scheduled BETWEEN cot (04:23 UTC) and the vrm brain (05:23 UTC) -- gold has no
 # vrm-side consumer yet (ЗЛТ4 is the reader, a later session), but this keeps the

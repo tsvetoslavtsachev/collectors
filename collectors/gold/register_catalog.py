@@ -21,9 +21,10 @@ ENTRIES = {
         "description": "LBMA Gold Price PM fix, USD per troy ounce (ЗЛТ2, 28.09.2026) "
                        "-- the observatory's first independent gold spot series "
                        "(previously only the GLD fund price via yfinance).",
-        "source": "LBMA",
+        "source": "LBMA to 2026-09-25; SPDR GLD archive from 2026-09-28 (ЗЛТ6)",
         "manual_source": "none",
-        "license": "LBMA Gold Price JSON feed - free, no login",
+        "license": "public SPDR GLD archive, no login (LBMA's own feed is behind an "
+                   "IBA licence since 10.2026); cite as SPDR GLD (NAV/oz = LBMA Gold Price PM)",
         "basis": "LBMA Gold Price PM auction fix",
         "frequency": "daily",
         "window": "open",
@@ -32,8 +33,9 @@ ENTRIES = {
         "vrm_role": ["market-context"],
         "provisional": False,
         "source_kind": "automated",
-        "note": "AM fix (gold_am.json) not collected -- PM is LBMA's own headline "
-               "fix, a scope decision, not a gap. Full history from 1968-04-01.",
+        "note": "Full history from 1968-04-01. From 2026-09-28 the same PM fix is read "
+               "as GLD NAV/Share / oz/Share (exact to the cent 2630/2630 days "
+               "2016-2026, ЗЛТ6); no row on US holidays (GLD closed, ~6 days/year).",
     },
     "mkt_gold_gbp": {
         "description": "LBMA Gold Price PM fix, GBP per troy ounce (ЗЛТ2, 28.09.2026).",
@@ -197,6 +199,20 @@ ENTRIES = {
                "not 1968, same cutoff as mkt_gold_eur.",
     },
 }
+
+
+# ЗЛТ6 (10.10.2026): LBMA put its prices behind an IBA licence and blocks every caller
+# (403). Ц.: "който затваря врати, не го прави, за да ги отвори" -- these five are frozen
+# at their last LBMA row and never fetched again; their history stays in canonical.
+# Silver context comes from etf_slv; prices are discussed in USD.
+RETIRED = ("mkt_gold_gbp", "mkt_gold_eur",
+           "mkt_silver_usd", "mkt_silver_gbp", "mkt_silver_eur")
+FROZEN_NOTE = (" FROZEN at 2026-09-25 (ЗЛТ6, 10.10.2026): LBMA requires an IBA licence, "
+               "no longer collected; silver context -> etf_slv.")
+for _sid in RETIRED:
+    ENTRIES[_sid].update({"window": "closed", "source_kind": "frozen",
+                          "note": ENTRIES[_sid]["note"] + FROZEN_NOTE})
+ACTIVE = tuple(sid for sid in ENTRIES if sid not in RETIRED)
 
 
 def main() -> int:

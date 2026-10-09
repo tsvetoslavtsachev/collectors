@@ -10,6 +10,13 @@ Extended by ЗЛТ5а Част 2 (28.09.2026, "контролата"): GLDM tonn
 series for `etf_gld_tonnes` — same trust family, lower fee, catches a
 fund-switch masquerading as a gold exit) and LBMA spot silver (USD/GBP/EUR).
 Both feed the same `run.py`/`gold.yml` — no new collector, per the brief.
+
+**ЗЛТ6 (10.10.2026): LBMA closed.** LBMA put its prices behind an IBA licence and
+answers 403 to every caller. The collector no longer calls it. `mkt_gold_usd`
+continues from the GLD archive (`gld_fix.py`, the same PM fix to the cent). GBP/EUR
+gold and the three silver series are **frozen at 2026-09-25**
+(`register_catalog.RETIRED`, catalog `window: closed`). Prices are discussed in USD,
+and silver context comes from `etf_slv`.
 The central-bank gold reserves half of ЗЛТ5а lives in its own package,
 `collectors/cbgold/` — see its README for why.
 
@@ -17,31 +24,29 @@ The central-bank gold reserves half of ЗЛТ5а lives in its own package,
 
 | series_id | source | unit | history |
 |---|---|---|---|
-| `mkt_gold_usd` | LBMA Gold Price PM fix | USD/oz | 1968-04-01 |
-| `mkt_gold_gbp` | LBMA Gold Price PM fix | GBP/oz | 1968-04-01 (11 closure-day gaps) |
-| `mkt_gold_eur` | LBMA Gold Price PM fix | EUR/oz | 1999-01-04 (pre-euro) |
+| `mkt_gold_usd` | LBMA Gold Price PM fix (to 2026-09-25), then the same fix as SPDR GLD NAV/oz (ЗЛТ6) | USD/oz | 1968-04-01 |
+| `mkt_gold_gbp` | LBMA Gold Price PM fix | GBP/oz | 1968-04-01 (11 closure-day gaps) **frozen 2026-09-25** |
+| `mkt_gold_eur` | LBMA Gold Price PM fix | EUR/oz | 1999-01-04 (pre-euro) **frozen 2026-09-25** |
 | `etf_gld_tonnes` | SPDR GLD historical archive | tonnes | 2004-11-18 |
 | `etf_gld_oz` | SPDR GLD historical archive | troy oz | 2004-11-18 |
 | `etf_gldm_tonnes` | SPDR GLDM historical archive | tonnes | 2018-06-26 -- **control of `etf_gld_tonnes`** (ЗЛТ5а) |
 | `etf_gldm_oz` | SPDR GLDM historical archive | troy oz | 2018-06-26 -- control |
-| `mkt_silver_usd` | LBMA Silver Price | USD/oz | 1968-01-02 (ЗЛТ5а) |
-| `mkt_silver_gbp` | LBMA Silver Price | GBP/oz | 1968-01-02, no gaps (ЗЛТ5а) |
-| `mkt_silver_eur` | LBMA Silver Price | EUR/oz | 1999-01-04 (pre-euro, ЗЛТ5а) |
+| `mkt_silver_usd` | LBMA Silver Price | USD/oz | 1968-01-02 (ЗЛТ5а) **frozen 2026-09-25** |
+| `mkt_silver_gbp` | LBMA Silver Price | GBP/oz | 1968-01-02, no gaps (ЗЛТ5а) **frozen 2026-09-25** |
+| `mkt_silver_eur` | LBMA Silver Price | EUR/oz | 1999-01-04 (pre-euro, ЗЛТ5а) **frozen 2026-09-25** |
 
 ## Modules
 
 | File | Role |
 |---|---|
-| `config.yaml` | series map: LBMA gold/silver currency index, SPDR GLD/GLDM archive columns |
-| `fetch_lbma.py` | LBMA `gold_pm.json` -> per-currency gold records |
+| `config.yaml` | series map: `gld_fix`, SPDR GLD/GLDM archive columns |
 | `fetch_gld.py` | SPDR GLD `.xlsx` archive -> tonnage/ounces records (+ NAV/close kept for Г3) |
 | `fetch_gldm.py` | SPDR GLDM `.xlsx` archive -> tonnage/ounces records (ЗЛТ5а, reuses `fetch_gld.parse_archive`/`fetch_bytes`, own `to_records` for the source label + series_id's) |
-| `fetch_silver.py` | LBMA `silver.json` -> per-currency silver records (ЗЛТ5а, same shape as `fetch_lbma.py`) |
 | `to_datacore.py` | citizen step + write-time guard (forward-only, anti-truncation floor, edge warnings — "upsert, не презапис", mirrors `collectors.vrm.to_datacore`) |
-| `register_catalog.py` | declares the 10 series in `catalog.json` (upsert, own keys only) |
-| `fallback_usd.py` | ЗЛТ6: when LBMA refuses, `mkt_gold_usd` continues from SPDR GLD NAV/Share ÷ oz/Share (= the PM fix to the cent), UK bank holidays (gov.uk) and AM-only half days dropped |
+| `register_catalog.py` | declares the 10 series in `catalog.json` (upsert, own keys only); `ACTIVE` (5 collected) / `RETIRED` (5 frozen) |
+| `gld_fix.py` | ЗЛТ6: `mkt_gold_usd` = SPDR GLD NAV/Share ÷ oz/Share (= the LBMA PM fix to the cent), UK bank holidays (gov.uk) and AM-only half days dropped, appended after the LBMA history |
 | `run.py` | orchestration (each source isolated -- one down never takes the run down) + `--mock` + freshness check |
-| `mockdata.py` | offline synthetic raw (all 10 series) for `--mock` smoke |
+| `mockdata.py` | offline synthetic raw (the 5 active series) for `--mock` smoke |
 | `verify.py` | live gate runner: ЗЛТ2's Г1-Г4 (LBMA gold/GLD) + ЗЛТ5а's Г4/Г5/Г6 (GLDM/silver/correlation) -- separate numbering namespaces, see the module docstring |
 | `tests/` | offline unit tests (parsers, write-guard + mutation, verify-gate math) |
 
@@ -82,15 +87,15 @@ Run: `python -m collectors.gold.run [--mock]`
     PDF-only. Same category as the already-excluded SLV/IAU (iShares): no
     machine-readable ounces feed.
 
-- **LBMA 403 (ЗЛТ6, 10.10.2026).** From 03.10.2026 `prices.lbma.org.uk` answers
+- **LBMA closed (ЗЛТ6, 10.10.2026).** From 03.10.2026 `prices.lbma.org.uk` answers
   a Cloudflare block (403) to every caller, and LBMA's page says an IBA licence
-  is required to obtain, use or redistribute the data. The collector does not
-  work around the block. Each source is isolated: GLD/GLDM still write, while the
-  LBMA series SKIP with a `::warning::` on the run page. `mkt_gold_usd` continues
-  from `fallback_usd.py`, which matched exactly to the cent on 2630/2630 days in
-  2016-01..2026-09. Its gap is US holidays (GLD closed, ~6 days a year).
-  `mkt_gold_gbp`/`eur` and all three silver series have no clean substitute
-  (FX at another clock, or no keyless silver source); that decision is for Ц.
+  is required to obtain, use or redistribute the data. Ц.: "който затваря врати,
+  не го прави, за да ги отвори". LBMA is not called any more and its block is not
+  worked around. `mkt_gold_usd` continues from `gld_fix.py`, which matched exactly
+  to the cent on 2630/2630 days in 2016-01..2026-09. Its only gap is US holidays
+  (GLD closed, ~6 days a year). Analyses cite it as "SPDR GLD (NAV/oz = LBMA Gold
+  Price PM)". GBP/EUR gold and silver are frozen at 2026-09-25: prices are
+  discussed in USD, and silver context comes from `etf_slv`.
 
 ## Гейтове (виж verify.py за живите числа)
 
