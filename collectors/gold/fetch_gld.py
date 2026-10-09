@@ -38,9 +38,10 @@ OZ_SHARE_COLUMN = "Ounces of Gold per Share"
 
 
 def fetch_bytes(url: str = URL, timeout: int = 60) -> bytes:
-    # SPDR's endpoint 403s a bare-UA request (checked 28.09.2026); a real browser UA
-    # is not a login, not a bypassed bot-check -- the file is public, no auth wall.
-    r = requests.get(url, timeout=timeout, headers={"User-Agent": "Mozilla/5.0"})
+    # 28.09.2026 SPDR 403'd a bare-UA request and a browser UA was sent; on 10.10.2026
+    # (ЗЛТ6) the endpoint answers 200 to python-requests and to this honest bot UA, so
+    # no browser is impersonated -- the fallback_usd path must not rest on one.
+    r = requests.get(url, timeout=timeout, headers={"User-Agent": "collectors-bot/1.0"})
     r.raise_for_status()
     return r.content
 
