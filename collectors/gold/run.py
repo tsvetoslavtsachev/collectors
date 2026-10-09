@@ -8,9 +8,12 @@ floor) -> report. Mirrors collectors.cot.run / collectors.oil.run.
 """
 from __future__ import annotations
 import datetime as dt
+import os
 import sys
 
-from . import fetch_lbma, fetch_gld, fetch_gldm, fetch_silver, to_datacore
+from datacore import storage
+
+from . import fallback_usd, fetch_lbma, fetch_gld, fetch_gldm, fetch_silver, to_datacore
 from .register_catalog import ENTRIES
 
 # LBMA/SPDR are business-day sources publishing same-day or next-day; a full
@@ -19,13 +22,47 @@ from .register_catalog import ENTRIES
 STALE_DAYS = 5
 
 
+def _guarded(name: str, fn, series_ids) -> dict:
+    """One source down must not take the run down (ЗЛТ6: LBMA's 403 on 03.10.2026
+    killed GLD/GLDM with it). Its series come back ok=False, reported as SKIP."""
+    try:
+        return fn()
+    except Exception as e:  # noqa: BLE001 -- isolate per source
+        err = f"{name}: {type(e).__name__}: {e}"
+        return {sid: {"ok": False, "error": err} for sid in series_ids}
+
+
 def assemble() -> dict:
     raw = {}
-    raw.update(fetch_lbma.fetch())
-    raw.update(fetch_gld.fetch())
-    raw.update(fetch_gldm.fetch())
-    raw.update(fetch_silver.fetch())
+    raw.update(_guarded("LBMA PM", fetch_lbma.fetch, fetch_lbma.CCY_INDEX))
+    gld_df = None
+    try:
+        gld_df = fetch_gld.parse_archive(fetch_gld.fetch_bytes())
+        raw.update(fetch_gld.to_records(gld_df))
+    except Exception as e:  # noqa: BLE001
+        raw.update({sid: {"ok": False, "error": f"SPDR GLD: {type(e).__name__}: {e}"}
+                    for sid in fetch_gld.COLUMNS})
+    raw.update(_guarded("SPDR GLDM", fetch_gldm.fetch, fetch_gldm.COLUMNS))
+    raw.update(_guarded("LBMA Silver", fetch_silver.fetch, fetch_silver.CCY_INDEX))
+
+    sid = fallback_usd.SERIES
+    if not raw[sid].get("ok") and gld_df is not None:
+        primary = raw[sid]["error"]
+        try:
+            fb = fallback_usd.extend(storage.read_canonical(sid), gld_df,
+                                     fallback_usd.fetch_uk_holidays())
+        except Exception as e:  # noqa: BLE001
+            fb = {"ok": False, "error": f"fallback: {type(e).__name__}: {e}"}
+        key = "note" if fb.get("ok") else "error"
+        fb[key] = f"{fb[key]} (primary down -- {primary})"
+        raw[sid] = fb
     return raw
+
+
+def _annotate(msg: str) -> None:
+    """Surface a degraded series on the Actions run page, not only in the log."""
+    if os.environ.get("GITHUB_ACTIONS"):
+        print(f"::warning title=gold source down::{msg}")
 
 
 def _base_frontier(pushed: list) -> str | None:
@@ -66,9 +103,14 @@ def main() -> int:
           f"(of {len(exp)} expected)")
     for r in wrote:
         warn = f"  [WARN: {'; '.join(r['warnings'])}]" if r.get("warnings") else ""
-        print(f"  + {r['series_id']}: {r['rows']} rows, as_of {r['as_of']}{warn}")
+        note = raw.get(r["series_id"], {}).get("note")
+        print(f"  + {r['series_id']}: {r['rows']} rows, as_of {r['as_of']}{warn}"
+              + (f"  [{note}]" if note else ""))
+        if note:
+            _annotate(f"{r['series_id']}: {note}")
     for r in skipped:
         print(f"  - {r['series_id']}: SKIP ({r.get('skipped')})")
+        _annotate(f"{r['series_id']}: SKIP ({r.get('skipped')})")
 
     missing = sorted(set(exp) - {r["series_id"] for r in pushed})
     if missing:

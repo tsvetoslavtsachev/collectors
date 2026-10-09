@@ -39,7 +39,8 @@ The central-bank gold reserves half of ЗЛТ5а lives in its own package,
 | `fetch_silver.py` | LBMA `silver.json` -> per-currency silver records (ЗЛТ5а, same shape as `fetch_lbma.py`) |
 | `to_datacore.py` | citizen step + write-time guard (forward-only, anti-truncation floor, edge warnings — "upsert, не презапис", mirrors `collectors.vrm.to_datacore`) |
 | `register_catalog.py` | declares the 10 series in `catalog.json` (upsert, own keys only) |
-| `run.py` | orchestration + `--mock` + freshness check |
+| `fallback_usd.py` | ЗЛТ6: when LBMA refuses, `mkt_gold_usd` continues from SPDR GLD NAV/Share ÷ oz/Share (= the PM fix to the cent), UK bank holidays (gov.uk) and AM-only half days dropped |
+| `run.py` | orchestration (each source isolated -- one down never takes the run down) + `--mock` + freshness check |
 | `mockdata.py` | offline synthetic raw (all 10 series) for `--mock` smoke |
 | `verify.py` | live gate runner: ЗЛТ2's Г1-Г4 (LBMA gold/GLD) + ЗЛТ5а's Г4/Г5/Г6 (GLDM/silver/correlation) -- separate numbering namespaces, see the module docstring |
 | `tests/` | offline unit tests (parsers, write-guard + mutation, verify-gate math) |
@@ -80,6 +81,16 @@ Run: `python -m collectors.gold.run [--mock]`
     real holdings document (ICBC bar list, serial numbers + weights) is
     PDF-only. Same category as the already-excluded SLV/IAU (iShares): no
     machine-readable ounces feed.
+
+- **LBMA 403 (ЗЛТ6, 10.10.2026).** From 03.10.2026 `prices.lbma.org.uk` answers
+  a Cloudflare block (403) to every caller, and LBMA's page says an IBA licence
+  is required to obtain, use or redistribute the data. The collector does not
+  work around the block. Each source is isolated: GLD/GLDM still write, while the
+  LBMA series SKIP with a `::warning::` on the run page. `mkt_gold_usd` continues
+  from `fallback_usd.py`, which matched exactly to the cent on 2630/2630 days in
+  2016-01..2026-09. Its gap is US holidays (GLD closed, ~6 days a year).
+  `mkt_gold_gbp`/`eur` and all three silver series have no clean substitute
+  (FX at another clock, or no keyless silver source); that decision is for Ц.
 
 ## Гейтове (виж verify.py за живите числа)
 

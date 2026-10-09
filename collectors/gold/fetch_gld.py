@@ -30,6 +30,11 @@ COLUMNS = {
 # never written to canonical -- no declared consumer for a raw NAV series
 NAV_COLUMN = "Total Net Asset Value in the Trust"
 CLOSE_COLUMN = "Closing Price"
+# the trust values its gold at the LBMA Gold Price PM, so NAV/Share / oz-per-Share
+# IS that fix (2630/2630 days exact to the cent 2016-01..2026-09, ЗЛТ6 10.10.2026);
+# read by fallback_usd only, when LBMA itself refuses
+NAV_SHARE_COLUMN = "NAV/Share at 10:30am NYT"
+OZ_SHARE_COLUMN = "Ounces of Gold per Share"
 
 
 def fetch_bytes(url: str = URL, timeout: int = 60) -> bytes:
@@ -46,8 +51,10 @@ def parse_archive(xlsx_bytes: bytes, sheet: str = SHEET) -> pd.DataFrame:
     df = pd.read_excel(io.BytesIO(xlsx_bytes), sheet_name=sheet, engine="openpyxl")
     df = df[df[list(COLUMNS.values())[0]].astype(str) != HOLIDAY_MARK].copy()
     df["as_of"] = pd.to_datetime(df[DATE_COL], format="%d-%b-%Y").dt.strftime("%Y-%m-%d")
-    for col in list(COLUMNS.values()) + [NAV_COLUMN, CLOSE_COLUMN]:
-        df[col] = pd.to_numeric(df[col], errors="coerce")
+    for col in list(COLUMNS.values()) + [NAV_COLUMN, CLOSE_COLUMN,
+                                         NAV_SHARE_COLUMN, OZ_SHARE_COLUMN]:
+        if col in df:                       # GLDM shares the parser; never KeyError on it
+            df[col] = pd.to_numeric(df[col], errors="coerce")
     df = df.dropna(subset=list(COLUMNS.values()))
     return df.sort_values("as_of").reset_index(drop=True)
 
