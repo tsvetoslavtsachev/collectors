@@ -42,7 +42,9 @@ settings:
                                  # incoming batch), so the stored pre-window `close` strands at the OLD
                                  # scale -- a ~Nx cliff (e.g. NVDA 10:1) in exactly the series TA reads.
                                  # ETFs effectively never split, so this was dormant; the STOCK family
-                                 # (P7a) makes it live. P8 (stock daily CI) MUST design a split-aware
+                                 # (P7a) makes it live. CORRECTION (ПЗО1, 2026-10-20): the leveraged /
+                                 # VIX / option-income ETFs reverse-split often (UVXY 13x) -- split_heal
+                                 # now covers the ETF family too (run._heal_families). P8 (stock daily CI) MUST design a split-aware
                                  # re-heal (split_factor-tip-change -> per-symbol `run --period max`, or
                                  # a scheduled monthly full stock re-pull) BEFORE turning stock CI on.
                                  # A consumer needing an
@@ -248,6 +250,58 @@ price:
   px_jepq_daily:    {symbol: "JEPQ", name: "JPMorgan Nasdaq Equity Premium Income", category: "Client Portfolio"}
   px_jepi_daily:    {symbol: "JEPI", name: "JPMorgan Equity Premium Income", category: "US Equity"}
   px_jeqp_de_daily: {symbol: "JEQP.DE", name: "JPM Nasdaq Equity Premium Income Active UCITS USD Dist (EUR, Xetra)", category: "Client Portfolio"}
+
+  # Promise-funds block (ПЗО1, 2026-10-20): funds that sell a PROMISE (a high monthly payout,
+  # a buffer, a volatility bet, leverage, or private-credit yield) rather than plain index
+  # exposure. The promise-funds watch (passport C:\Projects\_orchestration\obeshtania\PROJECT.md,
+  # recon lab\_promise_funds_analytics\RAZUZNAVANE.md) measures downside/upside capture, NAV
+  # erosion and payout-minus-total-return, so `dividend` and `value_tr` must be right from day
+  # one. CAUTION -- unlike the core ETF universe these funds DO split, almost always REVERSE
+  # (UVXY 13x, TQQQ 8x, SVXY 5x, UVIX 4x, VXX 3x, MSTU 3x, TSLY/SOXL 2x, MSTY/ULTY/CONY 1x
+  # by 2026-10-20): the daily path heals them through split_heal (ETF family since ПЗО1).
+  # Option income (covered calls / 0DTE / put-write): Nasdaq- and S&P-based.
+  px_qqqi_daily: {symbol: "QQQI", name: "NEOS Nasdaq-100 High Income", category: "Promise Funds"}
+  px_spyi_daily: {symbol: "SPYI", name: "NEOS S&P 500 High Income", category: "Promise Funds"}
+  px_qyld_daily: {symbol: "QYLD", name: "Global X Nasdaq 100 Covered Call", category: "Promise Funds"}
+  px_xyld_daily: {symbol: "XYLD", name: "Global X S&P 500 Covered Call", category: "Promise Funds"}
+  px_gpiq_daily: {symbol: "GPIQ", name: "Goldman Sachs Nasdaq-100 Premium Income", category: "Promise Funds"}
+  px_divo_daily: {symbol: "DIVO", name: "Amplify CWP Enhanced Dividend Income", category: "Promise Funds"}
+  # Aggressive option income: single-stock / crypto-linked synthetic covered calls and 0DTE.
+  px_msty_daily: {symbol: "MSTY", name: "YieldMax MSTR Option Income Strategy", category: "Promise Funds"}
+  px_ulty_daily: {symbol: "ULTY", name: "YieldMax Ultra Option Income Strategy", category: "Promise Funds"}
+  px_tsly_daily: {symbol: "TSLY", name: "YieldMax TSLA Option Income Strategy", category: "Promise Funds"}
+  px_cony_daily: {symbol: "CONY", name: "YieldMax COIN Option Income Strategy", category: "Promise Funds"}
+  px_qdte_daily: {symbol: "QDTE", name: "Roundhill Innovation-100 0DTE Covered Call Strategy", category: "Promise Funds"}
+  px_xdte_daily: {symbol: "XDTE", name: "Roundhill S&P 500 0DTE Covered Call Strategy", category: "Promise Funds"}
+  # Buffer (defined-outcome) funds: no distributions by design.
+  px_bufr_daily: {symbol: "BUFR", name: "FT Vest Laddered Buffer", category: "Promise Funds"}
+  px_balt_daily: {symbol: "BALT", name: "Innovator Defined Wealth Shield", category: "Promise Funds"}
+  # VIX futures products (short / long vol): no distributions, frequent reverse splits.
+  px_svxy_daily: {symbol: "SVXY", name: "ProShares Short VIX Short-Term Futures", category: "Promise Funds"}
+  px_svix_daily: {symbol: "SVIX", name: "-1x Short VIX Futures", category: "Promise Funds"}
+  px_uvxy_daily: {symbol: "UVXY", name: "ProShares Ultra VIX Short-Term Futures", category: "Promise Funds"}
+  px_uvix_daily: {symbol: "UVIX", name: "2x Long VIX Futures", category: "Promise Funds"}
+  px_vxx_daily:  {symbol: "VXX", name: "iPath Series B S&P 500 VIX Short-Term Futures ETN", category: "Promise Funds"}
+  # Daily-reset leverage.
+  px_tqqq_daily: {symbol: "TQQQ", name: "ProShares UltraPro QQQ", category: "Promise Funds"}
+  px_soxl_daily: {symbol: "SOXL", name: "Direxion Daily Semiconductor Bull 3X", category: "Promise Funds"}
+  px_mstu_daily: {symbol: "MSTU", name: "T-Rex 2X Long MSTR Daily Target", category: "Promise Funds"}
+  # Private / leveraged credit: BDCs, a BDC ETF, a private-credit ETF, two leveraged CEFs.
+  px_bizd_daily: {symbol: "BIZD", name: "VanEck BDC Income", category: "Promise Funds"}
+  px_fsk_daily:  {symbol: "FSK", name: "FS KKR Capital Corp (BDC)", category: "Promise Funds"}
+  px_obdc_daily: {symbol: "OBDC", name: "Blue Owl Capital Corp (BDC)", category: "Promise Funds"}
+  px_arcc_daily: {symbol: "ARCC", name: "Ares Capital Corp (BDC)", category: "Promise Funds"}
+  px_priv_daily: {symbol: "PRIV", name: "SPDR SSGA IG Public & Private Credit", category: "Promise Funds"}
+  px_pdo_daily:  {symbol: "PDO", name: "PIMCO Dynamic Income Opportunities (CEF)", category: "Promise Funds"}
+  px_pty_daily:  {symbol: "PTY", name: "PIMCO Corporate & Income Opportunity (CEF)", category: "Promise Funds"}
+  # Volatility indices (Cboe): the gauges the VIX products and option-income funds trade
+  # against. Named px_<x>_daily like px_dxy_daily (DX-Y.NYB): register_catalog upserts only
+  # the px_ namespace. Index levels: no dividends, no splits.
+  px_vix9d_daily: {symbol: "^VIX9D", name: "Cboe S&P 500 9-Day Volatility Index", category: "Volatility Index"}
+  px_vix3m_daily: {symbol: "^VIX3M", name: "Cboe S&P 500 3-Month Volatility Index", category: "Volatility Index"}
+  px_vvix_daily:  {symbol: "^VVIX", name: "Cboe VIX of VIX Index", category: "Volatility Index"}
+  px_vxn_daily:   {symbol: "^VXN", name: "Cboe Nasdaq-100 Volatility Index", category: "Volatility Index"}
+  px_skew_daily:  {symbol: "^SKEW", name: "Cboe S&P 500 Skew Index", category: "Volatility Index"}
 
   # EUR fixed-income benchmark (2026-08-31): the euro-aggregate leg the archive lacked --
   # every other Fixed Income series is US/USD (AGG/BND/TLT/IEF/LQD/HYG/...), so a

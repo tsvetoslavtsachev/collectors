@@ -17,10 +17,13 @@ Gates:
   sh6 same-day-safe -- heal at the daily's recorded_on restates pre-window bars with NO
                        ArchiveError (in-window bars are byte-identical -> skipped)
   sh7 no-op         -- a split-free window -> detection empty (heal would be a pure no-op)
-  sh8 stock-scoped  -- an ETF is NEVER selected for heal (live ETF daily byte-identical)
+  sh8 family scope  -- ПЗО1: an ETF IS selected (stock+etf); an explicit stock-only scope and
+                       a full-depth ETF pull (run._heal_families) leave it out
   sh9 empty/missing -- heal([]) is a no-op; a heal of a series with no stored history is safe
   sh15 EU split     -- P8c: a STOXX (.DE) split is detected + healed zero-cliff exactly like a US
                        stock (the mechanism keys on split_factor, not on a US listing)
+  sh16 ETF reverse  -- ПЗО1: a UVXY-style 1:10 reverse split is real, detected and healed
+  sh17 tiny factor  -- ПЗО1: round_factor keeps a ~1e-9 cumulative factor; 8 dp for >= 0.01
 
 Run:
   PYTHONPATH=C:\\Projects\\data-core;C:\\Projects\\collectors \\
@@ -177,12 +180,20 @@ def offline(g: Gate) -> None:
             split_heal.detect_split_symbols(CFG, nosplit) == [],
             f"detected={split_heal.detect_split_symbols(CFG, nosplit)}")
 
-    # sh8: detection is STOCK-scoped -- an ETF with a (hypothetical) in-window factor is
-    # never selected, so the live ETF daily stays byte-identical.
+    # sh8 (ПЗО1): detection covers the ETF family too (reverse-splitting leveraged/VIX ETFs);
+    # an explicit stock-only scope still leaves it out; run._heal_families drops ETF only when
+    # the ETF pull was already full-depth ("max").
     etf_raw = {"px_spy_daily": {"ok": True, "records": [_bar("2026-06-25", 400.0, split_factor=2.0)]}}
-    g.check("sh8 detection is stock-scoped (an ETF is never selected for heal)",
-            split_heal.detect_split_symbols(CFG, etf_raw) == [],
+    g.check("sh8a an ETF with an in-window split IS selected for heal (PZO1)",
+            split_heal.detect_split_symbols(CFG, etf_raw) == ["px_spy_daily"],
             f"detected={split_heal.detect_split_symbols(CFG, etf_raw)}")
+    g.check("sh8b an explicit stock-only scope leaves the ETF out",
+            split_heal.detect_split_symbols(CFG, etf_raw, families=("stock",)) == [])
+    g.check("sh8c run._heal_families: short window -> stock+etf; full ETF pull -> stock only",
+            run._heal_families(CFG, "1mo") == ("stock", "etf")
+            and run._heal_families(CFG, None) == ("stock",)
+            and run._heal_families(CFG, "max") == ("stock",),
+            f"1mo={run._heal_families(CFG, '1mo')} None={run._heal_families(CFG, None)}")
 
     # sh9: heal([]) is a no-op; a heal of a series with no stored history is safe (no crash).
     g.check("sh9a heal of an empty symbol list is a no-op", split_heal.heal(CFG, []) == {})
@@ -313,6 +324,52 @@ def offline(g: Gate) -> None:
             abs(eu_astraded[hist_days[0]] - OLD) < 1e-6 and len(euv) == 61,
             f"day1 as-traded={eu_astraded[hist_days[0]]} n={len(euv)}")
     shutil.rmtree(tmp, ignore_errors=True)
+
+    # sh16 (ПЗО1): an ETF REVERSE split (UVXY-style 1:10, as-traded $10 -> $100). The daily
+    # window strands pre-window bars at the old scale (a 10x step DOWN going back in time);
+    # detection flags it and the heal restates the whole range onto the new scale.
+    ETF_SID, REV = "px_uvxy_daily", 0.1          # split_factor < 1 for pre-ex bars (reverse)
+    tmp = _seeded_root()
+    cat = to_datacore.load_catalog(tmp)
+    LOW, HIGH = 10.0, 100.0
+    e_hist = [_bar(d, LOW, split_factor=1.0, provisional=(i == 59)) for i, d in enumerate(hist_days)]
+    to_datacore.push({ETF_SID: {"ok": True, "records": e_hist}}, root=str(tmp), catalog=cat, recorded_on=R0)
+    e_window = [_bar(d, HIGH, split_factor=(REV if d < EX else 1.0), provisional=(d == win_days[-1]))
+                for d in win_days]
+    e_daily = {ETF_SID: {"ok": True, "records": e_window}}
+    to_datacore.push(e_daily, root=str(tmp), catalog=cat, recorded_on=R1)
+    ev = {r["as_of"]: r for r in archive.read(ETF_SID, root=str(tmp))}
+    step = ev[hist_days[54]]["close"] / ev[hist_days[53]]["close"]
+    g.check("sh16a ETF reverse split hazard is REAL (10x step at the window edge before heal)",
+            abs(step - 1 / REV) < 1e-6, f"day55/day54 close ratio = {step}")
+    det = split_heal.detect_split_symbols(CFG, e_daily, families=run._heal_families(CFG, "1mo"))
+    g.check("sh16b daily-window ETF reverse split is detected", det == [ETF_SID], f"detected={det}")
+
+    def fetch_etf(cfg, *, period=None, only=None):
+        recs = [_bar(d, HIGH, split_factor=(REV if d < EX else 1.0),
+                     provisional=(d == all_days[-1])) for d in all_days]
+        return {ETF_SID: {"ok": True, "records": recs}}
+
+    split_heal.heal(CFG, det, root=str(tmp), catalog=cat, recorded_on=R1, fetch=fetch_etf)
+    evh = archive.read(ETF_SID, root=str(tmp))
+    g.check("sh16c ETF reverse split heals to zero-cliff (every stored bar on the new scale)",
+            all(abs(r["close"] - HIGH) < 1e-6 for r in evh) and len(evh) == 61,
+            f"distinct closes = {sorted(set(r['close'] for r in evh))[:4]} n={len(evh)}")
+    g.check("sh16d ETF as-traded immutability (close*split_factor = pre-split $10)",
+            abs(evh[0]["close"] * evh[0]["split_factor"] - LOW) < 1e-6,
+            f"day1 as-traded={evh[0]['close'] * evh[0]['split_factor']}")
+    shutil.rmtree(tmp, ignore_errors=True)
+
+    # sh17 (PZO1): round_factor keeps a serial reverse-splitter's tiny factor (UVXY ~1e-9 was
+    # stored as 0.0 under a fixed 8 dp) and stays byte-identical to 8 dp for factors >= 0.01.
+    from collectors.price.fetch_prices import round_factor
+    tiny = 1.2345678912345e-9
+    g.check("sh17a round_factor keeps a tiny factor (10 significant digits, never 0.0)",
+            round_factor(tiny) != 0.0 and abs(round_factor(tiny) / tiny - 1) < 1e-9,
+            f"{tiny} -> {round_factor(tiny)}")
+    g.check("sh17b round_factor == round(x, 8) for factors >= 0.01 (stored series unchanged)",
+            all(round_factor(x) == round(x, 8)
+                for x in (0.01, 0.021, 1 / 6, 0.20063662, 0.25, 1.0, 2.0, 1 / 3, 4.0, 1500.0)))
 
     # sh11 (C5 backstop): push require_stamp F5 -- a REGISTERED unstamped stock is refused on
     # the forward path; the permissive default still writes it; an ETF is never affected.

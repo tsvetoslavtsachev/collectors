@@ -51,16 +51,22 @@ byte-identical to the heal's re-pull for the same day -> SKIP, never a same-day 
 genuinely-divergent intraday vendor value would raise ArchiveError -> caught as a LOUD
 per-series skip (never silent), self-healing on the next day's run.
 
-SCOPE. STOCK family only (mandate scope; keeps the live ETF daily byte-identical). An ETF
-split would heal through the identical mechanism -- left off so the ETF daily path is
-provably unchanged; flip the family filter in detect_split_symbols to extend it.
+SCOPE. STOCK and ETF families (ПЗО1, 2026-10-20). P8b shipped this stock-only on the
+premise that "ETFs effectively never split". That premise is false for the leveraged /
+inverse / VIX-futures / single-stock-option ETFs (UVXY 13 reverse splits, SVXY 5, UVIX 4,
+VXX 3, TQQQ 8, SOXL 2, MSTU 3, TSLY 2 ...): each reverse split would strand every pre-window
+bar at the old scale -- a ~Nx step in exactly the series that measure NAV erosion. The heal
+mechanism keys on split_factor, not on the family, so the ETF path heals identically. The
+caller (run.py) drops the ETF family from detection when the ETF pull is already full-depth
+("max": every bar re-pulled at the current scale -> no cliff, and every historical split
+would otherwise trigger a redundant second "max" pull).
 """
 from __future__ import annotations
 
 import bisect
 
 from . import to_datacore
-from .fetch_prices import fetch_prices
+from .fetch_prices import fetch_prices, round_factor
 
 _SPLIT_EPS = 1e-9   # matches verify_backfill's split_factor != 1.0 test
 _PRICE_FIELDS = ("value", "open", "high", "low", "close", "value_tr")
@@ -78,17 +84,21 @@ def _has_window_split(records) -> bool:
     return False
 
 
-def detect_split_symbols(cfg: dict, raw: dict) -> list[str]:
-    """STOCK series in a daily fetch result whose window holds a split (split_factor !=
-    1.0). Stock-scoped (the live ETF daily stays byte-identical). Sorted, deterministic.
+HEAL_FAMILIES = ("stock", "etf")
+
+
+def detect_split_symbols(cfg: dict, raw: dict, families=HEAL_FAMILIES) -> list[str]:
+    """Series of the given ``families`` in a daily fetch result whose window holds a split
+    (split_factor != 1.0). Sorted, deterministic. An ETF entry omits ``family`` -> "etf".
 
     ``raw`` is the {series_id: {"ok", "records", "error"}} shape from fetch_prices. A dead
-    (ok=False) or non-stock series is ignored.
+    (ok=False) or out-of-scope-family series is ignored.
     """
     price = cfg["price"]
+    fams = set(families)
     out = []
     for sid, block in raw.items():
-        if price.get(sid, {}).get("family") != "stock":
+        if price.get(sid, {}).get("family", "etf") not in fams:
             continue
         if not (isinstance(block, dict) and block.get("ok")):
             continue
@@ -145,7 +155,7 @@ def _rescale_to_new_scale(bar: dict, new_factor: float, round_dp: int):
     # is already the raw value. (value_tr IS rescaled above -- its split component must move so
     # the total-return series has no cliff; a value_tr restatement on re-inclusion is the
     # normal, accepted dividend-cascade behavior, unlike volume which must never restate.)
-    out["split_factor"] = round(new_factor, 8)
+    out["split_factor"] = round_factor(new_factor)
     return out
 
 

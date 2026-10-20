@@ -68,6 +68,18 @@ def _dedup_index(df):
     return df.groupby(level=0).agg(agg).sort_index()
 
 
+def round_factor(x: float) -> float:
+    """Store a cumulative split_factor without losing it to rounding (ПЗО1).
+
+    A fixed 8 dp kills the factor of a serial reverse-splitter: UVXY's 13 reverse splits put
+    its 2011 factor near 1e-9, so round(x, 8) stored 0.0 and as-traded = close*split_factor
+    became unrecoverable for 1327 bars. Factors >= 0.01 keep the historical 8 dp (byte-
+    identical for every series stored before ПЗО1, whose smallest factor is 0.01, and
+    split_factor is a value key -- any change would restate); smaller ones keep 10
+    significant digits."""
+    return round(x, 8) if abs(x) >= 1e-2 else float(f"{x:.10g}")
+
+
 def _split_factors(index, splits) -> dict:
     """Reverse cumulative-product of split ratios -> {date: cumulative factor}.
 
@@ -144,7 +156,7 @@ def fetch_one(symbol: str, *, period: str, round_dp: int,
             "close": round(c, round_dp),
             "value_tr": round(a if a is not None else c, round_dp),  # fully adjusted (div+split+cap-gains)
             "volume": int(num(vol, d) or 0),
-            "split_factor": round(factors[d], 8),              # as-traded = close*split_factor
+            "split_factor": round_factor(factors[d]),              # as-traded = close*split_factor
             "dividend": round(dv, round_dp),
             "source": source,
         }

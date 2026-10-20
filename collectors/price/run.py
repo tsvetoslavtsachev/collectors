@@ -108,6 +108,15 @@ def _daily_ready_scope(cfg: dict, sids: list[str], *, root=None, log=print) -> l
     return ready
 
 
+def _heal_families(cfg: dict, period) -> tuple:
+    """Families the split-heal scans after a live pull with this ``period``. ETF is dropped
+    when its pull was full-depth (period None -> settings.history_period_prices, "max"):
+    every ETF bar is then already at the current scale (ПЗО1)."""
+    etf_period = period or cfg["settings"].get("history_period_prices", "max")
+    return tuple(f for f in split_heal.HEAL_FAMILIES
+                 if not (f == "etf" and etf_period == "max"))
+
+
 def main() -> int:
     cfg = yaml.safe_load((HERE / "config.yaml").read_text(encoding="utf-8"))
     args = sys.argv[1:]
@@ -184,18 +193,20 @@ def main() -> int:
         for s in (raw if isinstance(raw, dict) else ()))
     pushed = to_datacore.push(raw, value_tol=value_tol, require_stamp=require_stamp)
 
-    # P8b SPLIT-HEAL (the blocker). A STOCK whose SHORT daily window shows a split
+    # P8b SPLIT-HEAL (the blocker). A series whose SHORT window shows a split
     # (split_factor != 1.0) has pre-window bars stranded at the OLD scale -> a coverage-
     # complete full-depth re-pull restates the whole stored range to the new scale (zero ~Nx
-    # TA cliff). Gated on a STOCK actually being in scope, so the live ETF-only daily runs
-    # ZERO split_heal code (C4); and on a live run (a --mock run's synthetic factors must not
-    # trigger a network pull).
-    if require_stamp:
-        split_sids = split_heal.detect_split_symbols(cfg, raw)
+    # cliff). STOCK since P8b; ETF since ПЗО1 (the reverse-splitting leveraged/VIX/option-
+    # income ETFs). Gated on a live run (a --mock run's synthetic factors must not trigger a
+    # network pull). The ETF family is left out when its pull was already full-depth
+    # ("max", e.g. an unscoped manual pull): every bar is then at the current scale and each
+    # historical split would only trigger a redundant second "max" pull.
+    if mode != "mock" and isinstance(raw, dict):
+        split_sids = split_heal.detect_split_symbols(cfg, raw, families=_heal_families(cfg, period))
         if split_sids:
-            print(f"  split-heal: {len(split_sids)} stock(s) split in-window "
+            print(f"  split-heal: {len(split_sids)} series split in-window "
                   f"-> coverage-complete full-depth re-pull: {split_sids}")
-            split_heal.heal(cfg, split_sids, value_tol=value_tol, require_stamp=True)
+            split_heal.heal(cfg, split_sids, value_tol=value_tol, require_stamp=require_stamp)
 
     wrote = [r for r in pushed if r.get("ok")]
     skipped = [r for r in pushed if not r.get("ok")]
