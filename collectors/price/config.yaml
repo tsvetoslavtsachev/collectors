@@ -234,6 +234,21 @@ price:
   px_rsp_daily:    {symbol: "RSP", name: "Invesco S&P 500 Equal Weight", category: "US Equity"}
   px_eurusd_daily: {symbol: "EURUSD=X", name: "EUR/USD Spot (Yahoo FX)", category: "Currency"}
 
+  # JPM equity-premium-income (covered-call) block (2026-10-20): the observatory tracked
+  # QQQ/XLK/VIX but NOT the large client's main holding (JEPQ, ~67% of the portfolio), so
+  # every check of it went to outside sources. JEPQ = JPMorgan Nasdaq Equity Premium Income
+  # (NGM, inception 2022-05-03), JEPI = JPMorgan Equity Premium Income (NYSE Arca, 2020-05-20);
+  # Yahoo's first bars are 2022-05-04 / 2020-05-21. Both pay a MONTHLY dividend, so value_tr
+  # (Adj Close) carries most of the return -- the price-only `value` understates these funds.
+  # JEQP.DE = the Irish UCITS twin (JPM Nasdaq Equity Premium Income Active UCITS ETF USD
+  # Dist, ISIN IE000U9J8HX9, WKN A40FFF), EUR line on Xetra, monthly distributing; same
+  # branch as XDEW/VWCE -- the EUR basis is carried in the name (no currency field on the
+  # ETF family). Note: JEQP is a different (active, Dist) share class from the US JEPQ, so
+  # it is a cross-check of the strategy, not of the same NAV.
+  px_jepq_daily:    {symbol: "JEPQ", name: "JPMorgan Nasdaq Equity Premium Income", category: "Client Portfolio"}
+  px_jepi_daily:    {symbol: "JEPI", name: "JPMorgan Equity Premium Income", category: "US Equity"}
+  px_jeqp_de_daily: {symbol: "JEQP.DE", name: "JPM Nasdaq Equity Premium Income Active UCITS USD Dist (EUR, Xetra)", category: "Client Portfolio"}
+
   # EUR fixed-income benchmark (2026-08-31): the euro-aggregate leg the archive lacked --
   # every other Fixed Income series is US/USD (AGG/BND/TLT/IEF/LQD/HYG/...), so a
   # euro-denominated debt leg had to be pulled ad-hoc. Consumer: the BG fund-flow
