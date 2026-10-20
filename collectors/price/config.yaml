@@ -256,9 +256,10 @@ price:
   # exposure. The promise-funds watch (passport C:\Projects\_orchestration\obeshtania\PROJECT.md,
   # recon lab\_promise_funds_analytics\RAZUZNAVANE.md) measures downside/upside capture, NAV
   # erosion and payout-minus-total-return, so `dividend` and `value_tr` must be right from day
-  # one. CAUTION -- unlike the core ETF universe these funds DO split, almost always REVERSE
-  # (UVXY 13x, TQQQ 8x, SVXY 5x, UVIX 4x, VXX 3x, MSTU 3x, TSLY/SOXL 2x, MSTY/ULTY/CONY 1x
-  # by 2026-10-20): the daily path heals them through split_heal (ETF family since ПЗО1).
+  # one. CAUTION -- unlike the core ETF universe these funds DO split, often (splits by
+  # 2026-10-20: UVXY 13, TQQQ 8, SVXY 5, UVIX 4, VXX 3, MSTU 3, TSLY/SOXL 2, MSTY/ULTY/CONY/FSK
+  # 1). The VIX and single-stock income ones split in REVERSE; TQQQ/SOXL/SVXY also forward.
+  # The daily path heals both directions through split_heal (ETF family since ПЗО1).
   # Option income (covered calls / 0DTE / put-write): Nasdaq- and S&P-based.
   px_qqqi_daily: {symbol: "QQQI", name: "NEOS Nasdaq-100 High Income", category: "Promise Funds"}
   px_spyi_daily: {symbol: "SPYI", name: "NEOS S&P 500 High Income", category: "Promise Funds"}
