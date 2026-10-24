@@ -40,6 +40,10 @@ PRICE_DIR = Path(register_catalog.__file__).resolve().parent
 CFG = yaml.safe_load((PRICE_DIR / "config.yaml").read_text(encoding="utf-8"))
 STOCK = {s: m for s, m in CFG["price"].items() if m.get("family") == "stock"}
 STOXX = {s: m for s, m in STOCK.items() if m.get("currency")}        # multi-ccy -> STOXX
+# A retired member (BEZ.L, SDR.L 24.10.2026) is a frozen catalog tombstone that
+# register_catalog never re-stamps, so the catalog gates (t1b/t1c) judge live members only;
+# membership counts (t6) keep it, like the retired SP500 names.
+STOXX_LIVE = {s: m for s, m in STOXX.items() if not m.get("retired")}
 SP500_STOCK = {s: m for s, m in STOCK.items() if not m.get("currency")}
 ETF = {s: m for s, m in CFG["price"].items() if m.get("family", "etf") == "etf"}
 
@@ -75,13 +79,13 @@ def offline(g: Gate, tmp: Path) -> None:
     # t1 currency + quote_basis on EVERY STOXX series -----------------------------
     g.check("t1a STOXX family present (~609 current members)", len(STOXX) >= 590,
             "stoxx=%d" % len(STOXX))
-    missing = [s for s in STOXX
+    missing = [s for s in STOXX_LIVE
                if not isinstance(cat.get(s, {}).get("currency"), str)
                or not isinstance(cat.get(s, {}).get("quote_basis"), str)]
     g.check("t1b EVERY STOXX series has currency + quote_basis (machine-readable str)",
             not missing, "offenders=%d e.g.%s" % (len(missing), missing[:5]))
     # and they remain survivorship-flagged like all stock
-    bad_flag = [s for s in STOXX if cat.get(s, {}).get("backtest_valid") is not False]
+    bad_flag = [s for s in STOXX_LIVE if cat.get(s, {}).get("backtest_valid") is not False]
     g.check("t1c EVERY STOXX series still backtest_valid:false (survivorship)", not bad_flag,
             "offenders=%d" % len(bad_flag))
 

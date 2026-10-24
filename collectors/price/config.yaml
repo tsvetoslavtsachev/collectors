@@ -908,7 +908,15 @@ price:
   px_vz_daily: {symbol: "VZ", name: "Verizon", category: "Communication Services", family: "stock"}
   px_wab_daily: {symbol: "WAB", name: "Wabtec", category: "Industrials", family: "stock"}
   px_wat_daily: {symbol: "WAT", name: "Waters Corporation", category: "Health Care", family: "stock"}
-  px_wbd_daily: {symbol: "WBD", name: "Warner Bros. Discovery", category: "Communication Services", family: "stock"}
+  # RETIRED 2026-10-24 (открито в съботния ритуал — freshness гейтът падаше от 14.10):
+  # Paramount Skydance пое Warner Bros. Discovery; сделката затвори на 2026-10-06.
+  # [T1 — SEC, CIK 0001437107: Form 15-12G и 15-15D от 2026-10-16, прекратена регистрация]
+  # retired_on = 2026-10-06 (затварянето, реш. Ц. 24.10). Без merged_into: дали има
+  # акционна част за притежателите НЕ е проверено; ако има, merged_into се добавя отделно.
+  # ⚠️ Историята се замразява КАКТО Е (mark-don't-clean): последният ИСТИНСКИ бар е
+  #   2026-10-05 (30.95); 06.10 е плосък provisional, а три повторни записа за 05.10
+  #   (recorded_on 08-10.10, два с open 0.0) са артефакти на доставчика след затварянето.
+  px_wbd_daily: {symbol: "WBD", name: "Warner Bros. Discovery", category: "Communication Services", family: "stock", retired: true, retired_on: "2026-10-06"}
   px_wday_daily: {symbol: "WDAY", name: "Workday, Inc.", category: "Information Technology", family: "stock"}
   px_wdc_daily: {symbol: "WDC", name: "Western Digital", category: "Information Technology", family: "stock"}
   px_wec_daily: {symbol: "WEC", name: "WEC Energy Group", category: "Utilities", family: "stock"}
@@ -1034,7 +1042,15 @@ price:
   px_bei_de_daily: {symbol: "BEI.DE", name: "BEIERSDORF AG", category: "Consumer Defensive", currency: "EUR", quote_basis: "EUR", family: "stock"}
   px_beij_b_st_daily: {symbol: "BEIJ-B.ST", name: "BEIJER REF CLASS B", category: "Industrials", currency: "SEK", quote_basis: "SEK", family: "stock"}
   px_besi_as_daily: {symbol: "BESI.AS", name: "BE SEMICONDUCTOR INDUSTRIES NV", category: "Technology", currency: "EUR", quote_basis: "EUR", family: "stock"}
-  px_bez_l_daily: {symbol: "BEZ.L", name: "BEAZLEY PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  # RETIRED 2026-10-24 (открито в съботния ритуал — freshness гейтът падаше от 14.10):
+  # Zurich пое Beazley; схемата влезе в сила на 2026-10-01, листингът в Лондон е
+  # прекратен на 2026-10-02 (кеш сделка, няма приемаща листната идентичност → без merged_into).
+  # [T1 — reinsurancene.ws/zurich-completes-8-1bn-beazley-takeover-ahead-of-lse-delisting]
+  # retired_on = 2026-10-01 (спиране на търговията, реш. Ц. 24.10).
+  # ⚠️ Историята се замразява КАКТО Е (mark-don't-clean): последният ИСТИНСКИ бар е
+  #   2026-09-30 (1308.5); 01.10 (open=high=low 1308.369019) и 02.10 (плосък, provisional)
+  #   са артефакти на доставчика след спирането.
+  px_bez_l_daily: {symbol: "BEZ.L", name: "BEAZLEY PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock", retired: true, retired_on: "2026-10-01"}
   px_bft_wa_daily: {symbol: "BFT.WA", name: "BENEFIT SYSTEMS SA", category: "Industrials", currency: "PLN", quote_basis: "PLN", family: "stock"}
   px_bg_vi_daily: {symbol: "BG.VI", name: "BAWAG GROUP AG", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
   px_bgeo_l_daily: {symbol: "BGEO.L", name: "LION FINANCE GROUP PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
@@ -1424,7 +1440,15 @@ price:
   px_scyr_mc_daily: {symbol: "SCYR.MC", name: "SACYR SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
   px_sdf_de_daily: {symbol: "SDF.DE", name: "K+S N AG", category: "Basic Materials", currency: "EUR", quote_basis: "EUR", family: "stock"}
   px_sdlf_l_daily: {symbol: "SDLF.L", name: "STANDARD LIFE PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
-  px_sdr_l_daily: {symbol: "SDR.L", name: "SCHRODERS PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
+  # RETIRED 2026-10-24 (открито в съботния ритуал — freshness гейтът падаше от 14.10):
+  # Nuveen пое Schroders на 2026-10-01; търговията спряна сутринта на 01.10, делистната
+  # от Main Market на 2026-10-02 (кеш сделка, Nuveen не е листнат → без merged_into).
+  # [T1 — scottishfinancialnews.com/articles/nuveen-completes-ps99bn-schroders-takeover-on-october-1]
+  # retired_on = 2026-10-01 (спиране на търговията, реш. Ц. 24.10).
+  # ⚠️ Историята се замразява КАКТО Е (mark-don't-clean): последният ИСТИНСКИ бар е
+  #   2026-09-30 (589.0); 01.10 (open=high=low 588.940979) и 02.10 (плосък, provisional)
+  #   са артефакти на доставчика след спирането.
+  px_sdr_l_daily: {symbol: "SDR.L", name: "SCHRODERS PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock", retired: true, retired_on: "2026-10-01"}
   px_sdz_sw_daily: {symbol: "SDZ.SW", name: "SANDOZ GROUP AG", category: "Healthcare", currency: "CHF", quote_basis: "CHF", family: "stock"}
   px_seb_a_st_daily: {symbol: "SEB-A.ST", name: "SKANDINAVISKA ENSKILDA BANKEN", category: "Financial Services", currency: "SEK", quote_basis: "SEK", family: "stock"}
   px_sect_b_st_daily: {symbol: "SECT-B.ST", name: "SECTRA CLASS B", category: "Healthcare", currency: "SEK", quote_basis: "SEK", family: "stock"}
