@@ -110,6 +110,9 @@ fred:
   mkt_ust_10y:             {ticker: "DGS10",        transform: level, model_freq: daily,   source_freq: daily}
   mkt_real_10y:            {ticker: "DFII10",       transform: level, model_freq: daily,   source_freq: daily}
   mkt_term_premium_10y:    {ticker: "THREEFYTP10",  transform: level, model_freq: daily,   source_freq: daily}
+  # Кредитният спред с дълга история (s9_tech О2, 24.10.2026): Moody's Baa минус 10г, от 1986.
+  # Пълна история (не е подвижен прозорец като ICE); дневна като mkt_*, не е VRM режимен вход.
+  mkt_baa_10y_spread:      {ticker: "BAA10Y",       transform: level, model_freq: daily,   source_freq: daily}
   # Макро двигателите на Uber (УБР2, 29.09.2026): реален разполагаем доход, бензин на
   # дребно, ресторанти и барове, качени пътници. НЕ са вход на режима.
   # КАПАНЪТ: carry_forward взима в кохортата всеки ред с model_freq == "monthly".

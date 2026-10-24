@@ -29,7 +29,7 @@ def test_series_is_wired():
     assert m["ticker"] == "UMCSENT" and m["transform"] == "level" and not m.get("computed")
     assert m["model_freq"] == "monthly_native" and m["source_freq"] == "monthly"
     exp = vrm_run.expected_series(CFG)
-    assert SID in exp and len(exp) == 62
+    assert SID in exp and len(exp) == 63
 
 
 def test_cohort_and_anchors_are_unchanged():

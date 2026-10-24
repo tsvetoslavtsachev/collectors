@@ -62,6 +62,9 @@ mkt_* dailies). (34)
   ЗЛТ1 28.09.2026 — the interest-rate legs of gold vs rates; not VRM regime inputs. Identity
   DGS10 − DFII10 = T10YIE. THREEFYTP10 = Kim-Wright model estimate, lags ~6 days.
   Backfilled with `python -m collectors.vrm.backfill <series_id> …`)
+- `mkt_baa_10y_spread` BAA10Y (level / daily; 24.10.2026, s9_tech О2: Moody's Baa minus 10y, full
+  history from 1986, the long credit spread next to `mkt_hy_oas` (ICE, 3y window only). Not a VRM
+  regime input, not a rolling window. Backfilled with `python -m collectors.vrm.backfill`)
 - `macro_real_dpi` DSPIC96, `macro_retail_food_services` RSFSDP, `macro_air_enplanements` ENPLANE
   (level / **model_freq monthly_native**) and `mkt_gasoline_retail` GASREGW (level / **weekly**);
   УБР2 29.09.2026, the macro drivers of Uber; not VRM inputs. The three monthly ones are

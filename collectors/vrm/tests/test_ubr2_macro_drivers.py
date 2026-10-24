@@ -44,7 +44,7 @@ def test_four_series_are_wired():
         assert m["ticker"] == tkr and m["transform"] == "level" and not m.get("computed")
         assert sid in exp
     assert CFG["fred"]["mkt_gasoline_retail"]["model_freq"] == "weekly"
-    assert len(exp) == 62   # +1 УБР5б (mkt_pce_transport_services), +1 УЛМ1 (mkt_consumer_sentiment)
+    assert len(exp) == 63   # +1 УБР5б (mkt_pce_transport_services), +1 УЛМ1 (mkt_consumer_sentiment), +1 BAA10Y
 
 
 def test_cohort_and_anchors_are_unchanged_by_the_four():
