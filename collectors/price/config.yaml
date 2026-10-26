@@ -801,7 +801,17 @@ price:
   px_ppl_daily: {symbol: "PPL", name: "PPL Corporation", category: "Utilities", family: "stock"}
   px_pru_daily: {symbol: "PRU", name: "Prudential Financial", category: "Financials", family: "stock"}
   px_psa_daily: {symbol: "PSA", name: "Public Storage", category: "Real Estate", family: "stock"}
-  px_psky_daily: {symbol: "PSKY", name: "Paramount Skydance Corporation", category: "Communication Services", family: "stock"}
+  # RENAMED 2026-10-26: PSKY -> SKYD (реш. Ц. 26.10: „затвори PSKY на 16.10 и отвори SKYD като
+  # нова епоха с изричен шев, без тихо слепване“). SEC EDGAR: СЪЩИЯТ регистрант, CIK 2041610
+  # (името „Paramount Skydance Corp“ до 06.10, после „Skydance Corp“). 8-K от 25.09, т. 3.01(d):
+  # СЪЩИТЕ акции клас B се местят от Nasdaq на NYSE (Nasdaq до ~05.10, NYSE от ~06.10).
+  # Сверка при доставчика: PSKY и SKYD са еднакви ден по ден 05-16.10 (close и обем);
+  # последният бар под PSKY е 16.10. Скокът 13.10 -> 14.10 (9.27 -> 7.06) е раздаването на
+  # варантите (record 05.10, issue ~13.10), не шев и не сплит.
+  # Шевът: епохата SEC-000795 (PSKY) е затворена на 2026-10-16, новата SEC-001534 (SKYD) от
+  # 2026-10-17 е continuation_of SEC-000795. series_id px_psky_daily е ЗАПАЗЕН (Option-A,
+  # BK->BNY прецедент). Гейтът v7a в verify_backfill пада, ако символ се смени без такъв шев.
+  px_psky_daily: {symbol: "SKYD", name: "Skydance Corporation", category: "Communication Services", family: "stock"}
   px_psx_daily: {symbol: "PSX", name: "Phillips 66", category: "Energy", family: "stock"}
   px_ptc_daily: {symbol: "PTC", name: "PTC Inc.", category: "Information Technology", family: "stock"}
   px_pwr_daily: {symbol: "PWR", name: "Quanta Services", category: "Industrials", family: "stock"}

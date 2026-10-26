@@ -214,6 +214,29 @@ def offline(g: Gate, tmp: Path) -> None:
     g.check("t10b unstamped_stocks DETECTS a closed-but-configured stock (no silent omit, LENS 3)",
             "px_aapl_daily" in identity.unstamped_stocks(CFG, mg))
 
+    # t10c-f seam: a ticker swap in config must leave a seam in the map (PSKY->SKYD 26.10.2026)
+    stamped = {sid: {"stable_id": identity.stable_id(m, mk["symbol"], identity.exch_code(mk["symbol"]))}
+               for sid, mk in identity.stock_universe(CFG)}
+    swapped = json.loads(json.dumps(CFG))
+    swapped["price"]["px_aapl_daily"]["symbol"] = "AAPLX"
+    g.check("t10c silent_splices clean on the seeded map (config symbol == stamped identity)",
+            identity.silent_splices(CFG, m, stamped) == [])
+    g.check("t10d symbol swapped with NO seam in the map -> FLAGGED (silent splice)",
+            [s[0] for s in identity.silent_splices(swapped, m, stamped)] == ["px_aapl_daily"])
+    ms = identity.load(tmp)
+    old = identity.close_epoch(ms, "AAPL", "2099-01-01")
+    new = identity.mint_or_resolve(ms, "AAPLX", "US", "2099-01-02")
+    next(e for e in ms["epochs"] if e["internal_id"] == new)["continuation_of"] = old
+    g.check("t10e closed epoch + continuation epoch (BK->BNY template) -> clean",
+            identity.silent_splices(swapped, ms, stamped) == [])
+    mx = identity.load(tmp)
+    identity.close_epoch(mx, "AAPL", "2099-01-01")
+    wrong = identity.mint_or_resolve(mx, "AAPLX", "US", "2099-01-02")
+    other = identity.active_epoch(mx, "MSFT")["internal_id"]
+    next(e for e in mx["epochs"] if e["internal_id"] == wrong)["continuation_of"] = other
+    g.check("t10f seam chained to a DIFFERENT company -> FLAGGED",
+            [s[0] for s in identity.silent_splices(swapped, mx, stamped)] == ["px_aapl_daily"])
+
     # t12 cardinal phasing: a REAL seed (DATACORE_ALLOW_REAL) is SP500-only -> 0 STOXX identity
     # leaks into the live map ahead of P8c (the audit-found leak guard). A TEMP seed stays 1112
     # (t1 above); the multi-currency STOXX600 members come in ONLY with an explicit P8c opt-in.

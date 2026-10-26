@@ -374,6 +374,26 @@ def unstamped_stocks(cfg: dict, m: dict) -> list:
             if stable_id(m, mk["symbol"], exch_code(mk["symbol"])) is None]
 
 
+def silent_splices(cfg: dict, m: dict, catalog_series: dict) -> list:
+    """Live stock series whose catalog entry is stamped with a stable_id, but whose CONFIG
+    symbol does not resolve (through an OPEN epoch) to that same stable_id -> a ticker swap
+    with no identity seam: the series would keep writing under the old identity with nobody
+    recording that the ticker changed (PSKY->SKYD, 26.10.2026). The seam is a closed epoch
+    plus a new epoch whose continuation_of chain roots at the stamped id (BK->BNY template).
+    Unstamped entries are skipped here: run.py F5 already refuses them.
+    Returns [(series_id, config_symbol, stamped_id, resolved_id_or_None)].
+    """
+    out = []
+    for sid, mk in stock_universe(cfg):
+        stamped = (catalog_series.get(sid) or {}).get("stable_id")
+        if not stamped:
+            continue
+        got = stable_id(m, mk["symbol"], exch_code(mk["symbol"]))
+        if got != stamped:
+            out.append((sid, mk["symbol"], stamped, got))
+    return out
+
+
 # --------------------------------------------------------------------------- #
 # Seed (decision b: sorted seed -> SEC-NNNNNN, ONCE; re-run appends only)
 # --------------------------------------------------------------------------- #

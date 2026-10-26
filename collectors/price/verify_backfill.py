@@ -65,6 +65,8 @@ import yaml
 
 from datacore import archive
 
+from collectors.price import identity
+
 # A series whose latest as_of lags the UNIVERSE session by more than this many calendar days
 # is surfaced by the --daily recency gate (v2c). Generous enough that a 1-2 day seed-time
 # misalignment or a single missed session does not fire; tight enough that a real partial
@@ -633,6 +635,20 @@ def verify(root: Path, cfg: dict, g: Gate, *, daily: bool = False) -> dict:
     # (bad_shape was folded in per-series above.)
     g.check("v6a every bar carries the full record shape + recorded_on",
             not bad_shape, f"missing={bad_shape[:3]}")
+
+    # ---- v7 identity seam: a ticker change must leave a seam in the identity map ----
+    # A config symbol swapped without closing the old epoch and opening a continuation
+    # epoch would keep writing under the old stable_id silently (PSKY->SKYD, 26.10.2026).
+    id_path, cat_path = root / "catalog" / "stock_identity.json", root / "catalog" / "catalog.json"
+    if id_path.exists() and cat_path.exists():
+        splices = identity.silent_splices(
+            cfg, json.loads(id_path.read_text(encoding="utf-8")),
+            json.loads(cat_path.read_text(encoding="utf-8")).get("series", {}))
+        g.check("v7a every live stock's config symbol resolves to its stamped stable_id "
+                "(no silent ticker splice)", not splices, f"splices={splices[:3]}")
+    else:
+        g.check("v7a identity seam not checked: no stock_identity.json + catalog.json at root",
+                True, hard=False)
 
     return {"live": len(live_sids), "dead": dead, "split_syms": split_sids,
             "spy_earliest": spy_earliest, "freshness": fresh}
