@@ -696,7 +696,16 @@ price:
   px_kmi_daily: {symbol: "KMI", name: "Kinder Morgan", category: "Energy", family: "stock"}
   px_ko_daily: {symbol: "KO", name: "Coca-Cola Company (The)", category: "Consumer Staples", family: "stock"}
   px_kr_daily: {symbol: "KR", name: "Kroger", category: "Consumer Staples", family: "stock"}
-  px_kvue_daily: {symbol: "KVUE", name: "Kenvue", category: "Consumer Staples", family: "stock"}
+  # RETIRED 2026-11-08 (freshness гейтът падаше от 07.11, KVUE като WARN):
+  # Kimberly-Clark пое Kenvue; сделката затвори на 2026-11-02. Срещу всяка акция KVUE:
+  # 0.14625 KMB + 3.50 USD в брой. [T1 — investor.kimberly-clark.com, „Kimberly-Clark
+  # Completes Acquisition of Kenvue“; KMB 10-Q към 30.09.2026 в SEC]
+  # retired_on = 2026-11-02 (затварянето, по шаблона WBD). merged_into KMB (SEC-000590, своя
+  # история, НИКОГА не се слепва); merge_ratio е само акционната част, holder-view метаданни,
+  # НЕ мутация на архива (правилото от CTRA). Кешът от 3.50 USD не е в merge_ratio.
+  # Историята се замразява КАКТО Е: последният бар е 2026-10-30 (19.31, обем ~66.4M, реален:
+  # последният ден на търговия преди затварянето), без артефакти на доставчика след него.
+  px_kvue_daily: {symbol: "KVUE", name: "Kenvue", category: "Consumer Staples", family: "stock", retired: true, retired_on: "2026-11-02", merged_into: "KMB", merge_ratio: 0.14625}
   px_l_daily: {symbol: "L", name: "Loews Corporation", category: "Financials", family: "stock"}
   px_ldos_daily: {symbol: "LDOS", name: "Leidos", category: "Industrials", family: "stock"}
   px_len_daily: {symbol: "LEN", name: "Lennar", category: "Consumer Discretionary", family: "stock"}
@@ -1257,7 +1266,16 @@ price:
   px_inf_l_daily: {symbol: "INF.L", name: "INFORMA PLC", category: "Communication Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
   px_ing_wa_daily: {symbol: "ING.WA", name: "ING BANK SLASKI SA", category: "Financial Services", currency: "PLN", quote_basis: "PLN", family: "stock"}
   px_inga_as_daily: {symbol: "INGA.AS", name: "ING GROEP NV", category: "Financial Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
-  px_inpst_as_daily: {symbol: "INPST.AS", name: "INPOST SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock"}
+  # RETIRED 2026-11-08 (freshness гейтът падаше от 07.11: последен бар 22.10, 15 д. изоставане):
+  # консорциумът FedEx, Advent, A&R и PPF пое InPost с кеш оферта от 15.60 EUR на акция
+  # (89.81% при затварянето на 18.09, 98.49% след допълнителния срок до 07.10); Euronext
+  # Amsterdam одобри отписването, в сила от 2026-10-23. [T1 — live.euronext.com, „FedEx,
+  # Advent-led consortium secures over 89% of InPost shares“; cep-research.com 08.10.2026]
+  # retired_on = 2026-10-23 (спиране на търговията, по шаблона BEZ.L/SDR.L). Кеш сделка,
+  # консорциумът не е листнат → без merged_into.
+  # Историята се замразява КАКТО Е: последният бар е 2026-10-22 (15.39, обем 132837, реален),
+  # без артефакти на доставчика след него.
+  px_inpst_as_daily: {symbol: "INPST.AS", name: "INPOST SA", category: "Industrials", currency: "EUR", quote_basis: "EUR", family: "stock", retired: true, retired_on: "2026-10-23"}
   px_inve_b_st_daily: {symbol: "INVE-B.ST", name: "INVESTOR CLASS B", category: "Financial Services", currency: "SEK", quote_basis: "SEK", family: "stock"}
   px_invp_l_daily: {symbol: "INVP.L", name: "INVESTEC PLC", category: "Financial Services", currency: "GBP", quote_basis: "GBX", family: "stock"}
   px_inw_mi_daily: {symbol: "INW.MI", name: "INFRASTRUTTURE WIRELESS ITALIANE", category: "Communication Services", currency: "EUR", quote_basis: "EUR", family: "stock"}
