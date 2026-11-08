@@ -108,6 +108,9 @@ fred:
   # премия (Kim-Wright, изостава ~6 дни). Тъждество: DGS10 - DFII10 = T10YIE.
   # Дневни като mkt_* — извън месечната кохорта, не са VRM режимен вход.
   mkt_ust_10y:             {ticker: "DGS10",        transform: level, model_freq: daily,   source_freq: daily}
+  # ЗАЛ2 (08.11.2026): 2г и 30г за машинния falsifier на летописа (DGS2, DGS30).
+  mkt_ust_2y:              {ticker: "DGS2",         transform: level, model_freq: daily,   source_freq: daily}
+  mkt_ust_30y:             {ticker: "DGS30",        transform: level, model_freq: daily,   source_freq: daily}
   mkt_real_10y:            {ticker: "DFII10",       transform: level, model_freq: daily,   source_freq: daily}
   mkt_term_premium_10y:    {ticker: "THREEFYTP10",  transform: level, model_freq: daily,   source_freq: daily}
   # Кредитният спред с дълга история (s9_tech О2, 24.10.2026): Moody's Baa минус 10г, от 1986.

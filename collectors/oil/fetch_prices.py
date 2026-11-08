@@ -45,6 +45,10 @@ def fetch_prices(cfg: dict) -> dict:
         bc = brent["Close"]
         if isinstance(bc, pd.DataFrame):
             bc = bc.iloc[:, 0]
+        # ЗАЛ2: нивото на Brent front-month (BZ=F), без корекция при ролване
+        bcl = bc.dropna()
+        out["brent_closes"] = [(d.strftime("%Y-%m-%d"), round(float(v), 2))
+                               for d, v in bcl.items()]
         bw = pd.concat([bc.rename("b"), closes.rename("w")], axis=1).dropna()
         bw["spr"] = bw["b"] - bw["w"]
         out["bw_spread_series"] = [(d.strftime("%Y-%m-%d"), round(float(v), 2))

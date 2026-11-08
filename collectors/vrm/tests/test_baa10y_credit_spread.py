@@ -29,7 +29,7 @@ def test_series_is_wired():
     assert m["ticker"] == "BAA10Y" and m["transform"] == "level" and not m.get("computed")
     assert m["model_freq"] == "daily" and m["source_freq"] == "daily"
     exp = vrm_run.expected_series(CFG)
-    assert SID in exp and len(exp) == 63
+    assert SID in exp and len(exp) == 65
 
 
 def test_full_history_not_a_rolling_window():
