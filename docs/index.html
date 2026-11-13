@@ -25,9 +25,9 @@ h1 { font-size:26px; letter-spacing:.02em; margin:28px 0 4px }
 .o4badge { display:inline-block; margin:0 0 20px; padding:4px 12px;
   border:1px solid var(--line); border-radius:999px; color:var(--dim);
   font-size:11.5px; font-weight:600; letter-spacing:.07em; text-transform:uppercase }
-.verdict { border:1px solid #36D67E; border-left:6px solid #36D67E; background:var(--panel);
+.verdict { border:1px solid #F6A21B; border-left:6px solid #F6A21B; background:var(--panel);
   padding:16px 20px; margin:0 0 24px; display:flex; align-items:baseline; gap:14px; flex-wrap:wrap }
-.verdict .big { font-size:19px; font-weight:700; color:#36D67E }
+.verdict .big { font-size:19px; font-weight:700; color:#F6A21B }
 .verdict .tally { color:var(--dim); font-size:13px }
 .clocks { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px }
 .clock { background:var(--panel); border:1px solid var(--line); padding:18px; text-align:center }
@@ -60,26 +60,26 @@ footer { margin-top:28px; color:var(--dim); font-size:12px; line-height:1.7 }
 </style>
 </head>
 <body>
-<div class="tape"><span>ДВА ЧАСОВНИКА</span><span>WTI <b>86.42</b></span>
-<span>BRENT M1−M2 <b>2.07</b></span><span>ОБНОВЕНО <b>2026-11-11 22:16 UTC</b></span></div>
+<div class="tape"><span>ДВА ЧАСОВНИКА</span><span>WTI <b>89.23</b></span>
+<span>BRENT M1−M2 <b>2.78</b></span><span>ОБНОВЕНО <b>2026-11-13 21:51 UTC</b></span></div>
 <div class="wrap">
 <h1>Два часовника</h1>
 <p class="subtitle">Изпразва ли се запасът по-бързо, отколкото потокът се лекува. Седмичен монитор на петролното неравновесие.</p>
 <div class="o4badge" title="Обсерваторен договор О4: дескриптивно режимно наблюдение — не сигнал за действие, не прогноза за посока.">НАБЛЮДЕНИЕ · дескриптивен режим</div>
-<div class="verdict"><span class="big">РЕЖИМ: НЕРАВНОВЕСИЕ — дисбалансът е налице (гап-риск, не тренд)</span>
-<span class="tally">✅ 3 · ❌ 0 от 5 активни серии</span></div>
+<div class="verdict"><span class="big">РЕЖИМ: ИЗЧАКВАНЕ — пружината се навива</span>
+<span class="tally">✅ 2 · ❌ 0 от 4 активни серии · без данни: 1</span></div>
 <div class="clocks"><div class="clock">
   <div class="clock-title">ЗАПАСЪТ</div>
-  <svg viewBox="0 0 200 116" class="dial" role="img" aria-label="ЗАПАСЪТ: -4.1 млн. б/седм.">
+  <svg viewBox="0 0 200 116" class="dial" role="img" aria-label="ЗАПАСЪТ: +0.0 млн. б/седм.">
     <path d="M 16 100 A 84 84 0 0 1 184 100" fill="none" stroke="#1B2330" stroke-width="10"/>
     <path d="M 100 16 A 84 84 0 0 1 184 100" fill="none" stroke="#3D2F14" stroke-width="10"/>
     <line x1="100" y1="22" x2="100" y2="30" stroke="#2A3447" stroke-width="2" transform="rotate(-90 100 100)"/><line x1="100" y1="22" x2="100" y2="30" stroke="#2A3447" stroke-width="2" transform="rotate(-75 100 100)"/><line x1="100" y1="22" x2="100" y2="30" stroke="#2A3447" stroke-width="2" transform="rotate(-60 100 100)"/><line x1="100" y1="22" x2="100" y2="30" stroke="#2A3447" stroke-width="2" transform="rotate(-45 100 100)"/><line x1="100" y1="22" x2="100" y2="30" stroke="#2A3447" stroke-width="2" transform="rotate(-30 100 100)"/><line x1="100" y1="22" x2="100" y2="30" stroke="#2A3447" stroke-width="2" transform="rotate(-15 100 100)"/><line x1="100" y1="22" x2="100" y2="30" stroke="#2A3447" stroke-width="2" transform="rotate(0 100 100)"/><line x1="100" y1="22" x2="100" y2="30" stroke="#2A3447" stroke-width="2" transform="rotate(15 100 100)"/><line x1="100" y1="22" x2="100" y2="30" stroke="#2A3447" stroke-width="2" transform="rotate(30 100 100)"/><line x1="100" y1="22" x2="100" y2="30" stroke="#2A3447" stroke-width="2" transform="rotate(45 100 100)"/><line x1="100" y1="22" x2="100" y2="30" stroke="#2A3447" stroke-width="2" transform="rotate(60 100 100)"/><line x1="100" y1="22" x2="100" y2="30" stroke="#2A3447" stroke-width="2" transform="rotate(75 100 100)"/><line x1="100" y1="22" x2="100" y2="30" stroke="#2A3447" stroke-width="2" transform="rotate(90 100 100)"/>
     <line x1="100" y1="100" x2="100" y2="30" stroke="#F6A21B" stroke-width="3"
-          stroke-linecap="round" transform="rotate(47.9 100 100)"/>
+          stroke-linecap="round" transform="rotate(-45.0 100 100)"/>
     <circle cx="100" cy="100" r="5" fill="#F6A21B"/>
   </svg>
   <div class="clock-scale"><span>пълни се</span><span>изпразва се</span></div>
-  <div class="clock-reading">-4.1 млн. б/седм.</div>
+  <div class="clock-reading">+0.0 млн. б/седм.</div>
   <div class="clock-sub">EIA: отклонение от 5-год. сезонна норма, 4-седм. средно</div>
 </div><div class="clock">
   <div class="clock-title">ПОТОКЪТ</div>
@@ -99,8 +99,8 @@ footer { margin-top:28px; color:var(--dim); font-size:12px; line-height:1.7 }
   <header><span class="lamp" style="background:#36D67E"></span>
     <span class="sid">С1</span><h2>Brent M1−M2 (бекуордейшън)</h2>
     <span class="state" style="color:#36D67E">ДОКАЗАТЕЛСТВО</span></header>
-  <div class="value">M1−M2 = +2.07 $/б (BZF27.NYM−BZG27.NYM)</div>
-  <svg class="spark" viewBox="0 0 260 44" preserveAspectRatio="none"><polyline points="0.0,37.1 4.4,35.0 8.8,34.3 13.2,36.4 17.6,40.0 22.0,39.9 26.4,36.5 30.8,37.1 35.3,33.6 39.7,27.7 44.1,25.6 48.5,25.0 52.9,26.7 57.3,25.9 61.7,21.4 66.1,11.6 70.5,16.1 74.9,14.8 79.3,11.9 83.7,16.7 88.1,18.5 92.5,23.0 96.9,27.9 101.4,29.5 105.8,26.7 110.2,22.6 114.6,28.8 119.0,28.5 123.4,33.7 127.8,29.9 132.2,20.1 136.6,23.3 141.0,30.1 145.4,27.2 149.8,30.6 154.2,25.3 158.6,23.9 163.1,23.7 167.5,28.8 171.9,26.8 176.3,25.9 180.7,22.0 185.1,20.1 189.5,17.8 193.9,16.2 198.3,5.0 202.7,4.0 207.1,5.0 211.5,9.4 215.9,13.2 220.3,12.8 224.7,10.2 229.2,19.8 233.6,24.8 238.0,27.3 242.4,16.1 246.8,24.7 251.2,32.1 255.6,32.3 260.0,31.9" fill="none" stroke="#36D67E" stroke-width="1.6"/></svg>
+  <div class="value">M1−M2 = +2.78 $/б (BZF27.NYM−BZG27.NYM)</div>
+  <svg class="spark" viewBox="0 0 260 44" preserveAspectRatio="none"><polyline points="0.0,34.3 4.4,36.4 8.8,40.0 13.2,39.9 17.6,36.5 22.0,37.1 26.4,33.6 30.8,27.7 35.3,25.6 39.7,25.0 44.1,26.7 48.5,25.9 52.9,21.4 57.3,11.6 61.7,16.1 66.1,14.8 70.5,11.9 74.9,16.7 79.3,18.5 83.7,23.0 88.1,27.9 92.5,29.5 96.9,26.7 101.4,22.6 105.8,28.8 110.2,28.5 114.6,33.7 119.0,29.9 123.4,20.1 127.8,23.3 132.2,30.1 136.6,27.2 141.0,30.6 145.4,25.3 149.8,23.9 154.2,23.7 158.6,28.8 163.1,26.8 167.5,25.9 171.9,22.0 176.3,20.1 180.7,17.8 185.1,16.2 189.5,5.0 193.9,4.0 198.3,5.0 202.7,9.4 207.1,13.2 211.5,12.8 215.9,10.2 220.3,19.8 224.7,24.8 229.2,27.3 233.6,16.1 238.0,24.7 242.4,32.1 246.8,32.3 251.2,32.1 255.6,29.2 260.0,23.3" fill="none" stroke="#36D67E" stroke-width="1.6"/></svg>
   <div class="detail">праг ✅ ≥ 1.50 устойчиво 5 дни; ❌ ≤ 0.50 устойчиво 5 дни</div>
 </article><article class="card" data-state="BULL">
   <header><span class="lamp" style="background:#36D67E"></span>
@@ -109,13 +109,13 @@ footer { margin-top:28px; color:var(--dim); font-size:12px; line-height:1.7 }
   <div class="value">7-дн. транзити: 3% от предвоенната база (37 танкера/ден)</div>
   <svg class="spark" viewBox="0 0 260 44" preserveAspectRatio="none"><polyline points="0.0,13.8 4.4,15.6 8.8,4.0 13.2,13.2 17.6,19.6 22.0,9.5 26.4,8.6 30.8,17.5 35.3,11.9 39.7,19.2 44.1,23.7 48.5,23.1 52.9,21.1 57.3,24.5 61.7,24.1 66.1,22.2 70.5,21.1 74.9,22.1 79.3,24.3 83.7,22.4 88.1,22.1 92.5,17.5 96.9,12.4 101.4,9.5 105.8,36.7 110.2,40.0 114.6,39.9 119.0,39.9 123.4,39.4 127.8,39.1 132.2,38.5 136.6,38.5 141.0,37.2 145.4,39.9 149.8,39.0 154.2,39.3 158.6,39.8 163.1,39.6 167.5,39.8 171.9,38.8 176.3,32.5 180.7,33.3 185.1,35.0 189.5,38.9 193.9,39.6 198.3,39.5 202.7,39.1 207.1,39.4 211.5,38.9 215.9,39.3 220.3,39.7 224.7,39.4 229.2,39.9 233.6,39.6 238.0,39.6 242.4,40.0 246.8,40.0 251.2,39.8 255.6,39.7 260.0,39.4" fill="none" stroke="#36D67E" stroke-width="1.6"/></svg>
   <div class="detail">✅ < 50% за 4 седм.; ❌ > 75% за 3 седм.</div>
-</article><article class="card" data-state="BULL">
-  <header><span class="lamp" style="background:#36D67E"></span>
+</article><article class="card" data-state="NODATA">
+  <header><span class="lamp" style="background:#4A5568"></span>
     <span class="sid">С3</span><h2>Запаси — EIA срещу нормата</h2>
-    <span class="state" style="color:#36D67E">ДОКАЗАТЕЛСТВО</span></header>
-  <div class="value">посл. промяна -0.9 млн.; 5 поредни изтегляния; откл. от нормата (4 седм. ср.): -4.1 млн./седм.</div>
-  <svg class="spark" viewBox="0 0 260 44" preserveAspectRatio="none"><polyline points="0.0,33.7 10.4,34.2 20.8,28.6 31.2,35.6 41.6,36.9 52.0,31.4 62.4,29.8 72.8,30.2 83.2,25.3 93.6,27.8 104.0,21.4 114.4,35.1 124.8,25.7 135.2,4.0 145.6,16.9 156.0,21.7 166.4,32.2 176.8,29.3 187.2,24.8 197.6,23.4 208.0,27.6 218.4,40.0 228.8,36.6 239.2,34.4 249.6,28.4 260.0,35.0" fill="none" stroke="#36D67E" stroke-width="1.6"/></svg>
-  <div class="detail">✅ ср. отклонение ≤ -3 млн.; ❌ 2 поредни builds над нормата. Cushing: 27.2 млн. б.</div>
+    <span class="state" style="color:#4A5568">НЯМА ДАННИ</span></header>
+  <div class="value">—</div>
+  
+  <div class="detail">ReadTimeout: HTTPSConnectionPool(host='api.eia.gov', port=443): Read timed out. (read timeout=60)</div>
 </article><article class="card" data-state="BEAR">
   <header><span class="lamp" style="background:#FF5252"></span>
     <span class="sid">С5</span><h2>COT managed money (персентил)</h2>
@@ -127,11 +127,11 @@ footer { margin-top:28px; color:var(--dim); font-size:12px; line-height:1.7 }
   <header><span class="lamp" style="background:#7E8AA0"></span>
     <span class="sid">С6</span><h2>Канарчето — Brent−WTI спред</h2>
     <span class="state" style="color:#7E8AA0">ИЗЧАКВАНЕ</span></header>
-  <div class="value">Brent−WTI = +6.21 $/б (предвоенно ~3.5; априлски пик ~11)</div>
-  <svg class="spark" viewBox="0 0 260 44" preserveAspectRatio="none"><polyline points="0.0,30.7 4.4,30.2 8.8,25.7 13.2,26.3 17.6,29.3 22.0,31.3 26.4,29.5 30.8,30.3 35.3,34.1 39.7,35.1 44.1,34.5 48.5,35.8 52.9,33.9 57.3,33.6 61.7,32.7 66.1,32.8 70.5,34.7 74.9,35.5 79.3,40.0 83.7,38.4 88.1,40.0 92.5,37.9 96.9,34.7 101.4,34.3 105.8,14.1 110.2,10.7 114.6,10.9 119.0,8.4 123.4,6.7 127.8,7.0 132.2,18.9 136.6,13.4 141.0,14.2 145.4,13.4 149.8,10.9 154.2,8.1 158.6,7.8 163.1,7.7 167.5,12.1 171.9,14.0 176.3,23.7 180.7,22.1 185.1,30.4 189.5,26.8 193.9,11.7 198.3,5.1 202.7,5.9 207.1,4.0 211.5,4.2 215.9,8.9 220.3,7.8 224.7,5.7 229.2,22.5 233.6,25.1 238.0,28.4 242.4,24.3 246.8,25.2 251.2,30.9 255.6,31.8 260.0,29.3" fill="none" stroke="#7E8AA0" stroke-width="1.6"/></svg>
+  <div class="value">Brent−WTI = +7.20 $/б (предвоенно ~3.5; априлски пик ~11)</div>
+  <svg class="spark" viewBox="0 0 260 44" preserveAspectRatio="none"><polyline points="0.0,25.7 4.4,26.3 8.8,29.3 13.2,31.3 17.6,29.5 22.0,30.3 26.4,34.1 30.8,35.1 35.3,34.5 39.7,35.8 44.1,33.9 48.5,33.6 52.9,32.7 57.3,32.8 61.7,34.7 66.1,35.5 70.5,40.0 74.9,38.4 79.3,40.0 83.7,37.9 88.1,34.7 92.5,34.3 96.9,14.1 101.4,10.7 105.8,10.9 110.2,8.4 114.6,6.7 119.0,7.0 123.4,18.9 127.8,13.4 132.2,14.2 136.6,13.4 141.0,10.9 145.4,8.1 149.8,7.8 154.2,7.7 158.6,12.1 163.1,14.0 167.5,23.7 171.9,22.1 176.3,30.4 180.7,26.8 185.1,11.7 189.5,5.1 193.9,5.9 198.3,4.0 202.7,4.2 207.1,8.9 211.5,7.8 215.9,5.7 220.3,22.5 224.7,25.1 229.2,28.4 233.6,24.3 238.0,25.2 242.4,30.9 246.8,31.8 251.2,29.3 255.6,26.5 260.0,26.1" fill="none" stroke="#7E8AA0" stroke-width="1.6"/></svg>
   <div class="detail">✅ ≥ 8 устойчиво 5 дни — вносният регион се задушава; ❌ ≤ 2 устойчиво 5 дни — атлантическият басейн се справя</div>
 </article></div>
-<div class="fals"><b>Фалсификатори:</b> WTI 86.42. Под 80: 0/15 затваряния · Над 95: 0/5 затваряния. Под 80 за 15 затваряния → тезата мъртва. Над 95 за 5 затваряния → потвърждение в ход.</div>
+<div class="fals"><b>Фалсификатори:</b> WTI 89.23. Под 80: 0/15 затваряния · Над 95: 0/5 затваряния. Под 80 за 15 затваряния → тезата мъртва. Над 95 за 5 затваряния → потвърждение в ход.</div>
 <footer>Източници: yfinance (ICE/NYMEX сетълменти) · IMF PortWatch (сателитен AIS) · EIA API v2 · CFTC Disaggregated COT.
 Серия 4 (физически диференциали, фрахт, военна застраховка) не е автоматизирана — следи се ръчно. С6 е канарчето на вносния регион: цената на нуждата от море.
 Композитно правило: 3 на ✅ от 4-те гласуващи серии (С5 = контекст, НЕ гласува — managed money слаб предиктор в енергия), задължително включващи С1 или С2 → тезата доказана; 3 на ❌ → опровергана. Не е инвестиционен съвет.</footer>
