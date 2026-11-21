@@ -105,6 +105,27 @@ def _to_model_freq(obs: list, m: dict, rdp: int) -> list:
     return [(_month_end(ym), monthly[ym]) for ym in sorted(monthly) if ym < cur]
 
 
+def _treasury_head(series_id: str, m: dict, obs: list) -> dict:
+    """ЗЛТ8: extend a daily FRED series IN PLACE with the Treasury CSV points FRED does
+    not have yet (H.15 lags a business day). Returns {date: source label} for the
+    appended rows. Best effort: any failure leaves the FRED obs as they were."""
+    th = m.get("treasury_head")
+    if not th:
+        return {}
+    from . import fetch_treasury
+    try:
+        tre = fetch_treasury.fetch(th["curve"], th["column"])
+        extended, note = fetch_treasury.extend(obs, tre)
+    except Exception as e:  # noqa: BLE001 - the head never breaks the FRED series
+        print(f"  {series_id}: treasury head skipped ({type(e).__name__}: {e})")
+        return {}
+    print(f"  {series_id}: {note}")
+    added = extended[len(obs):]
+    obs.extend(added)
+    label = fetch_treasury.SOURCE_LABEL[th["curve"]].format(col=th["column"])
+    return {d: label for d, _ in added}
+
+
 def fetch_fred(cfg: dict) -> dict:
     """{series_id: {ok, levels:[(date,val)], model_records:[...]|None, error}}.
 
@@ -116,13 +137,15 @@ def fetch_fred(cfg: dict) -> dict:
     for series_id, m in cfg["fred"].items():
         try:
             obs = fetch_observations(m["ticker"])
+            head_src = _treasury_head(series_id, m, obs)
             levels = _to_model_freq(obs, m, rdp)
             if m.get("computed"):
                 model_records = None      # compute.py builds the records (YoY)
             else:
                 src = f"FRED {m['ticker']}"
                 res = m.get("model_freq", "monthly")
-                model_records = [{"as_of": d, "value": v, "source": src,
+                model_records = [{"as_of": d, "value": v,
+                                  "source": head_src.get(d, src),
                                   "resolution": res} for d, v in levels]
             out[series_id] = {"ok": True, "levels": levels,
                               "model_records": model_records}

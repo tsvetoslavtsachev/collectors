@@ -14,6 +14,7 @@ import os
 import sys
 
 from datacore import storage
+from collectors import fresh_guard
 
 from . import fetch_gld, fetch_gldm, gld_fix, to_datacore
 from .register_catalog import ACTIVE, RETIRED
@@ -79,6 +80,18 @@ def freshness_verdict(pushed: list, today: dt.date | None = None,
                f"(<= {stale_days}d)")
 
 
+def if_newer(raw: dict, read=None) -> tuple:
+    """ЗЛТ8 daily path: write only if SPDR has a date newer than the canonical store."""
+    read = read or storage.read_canonical
+    src = [str(r["as_of"])[:10] for sid in ACTIVE if raw.get(sid, {}).get("ok")
+           for r in (raw[sid].get("records") or [])]
+    go, msg = fresh_guard.decide(max(src) if src else None,
+                                 fresh_guard.canonical_last(ACTIVE, read), "gold")
+    if not src:
+        fresh_guard.warn("gold source down", msg)
+    return go, msg
+
+
 def main() -> int:
     exp = list(ACTIVE)
     if "--mock" in sys.argv:
@@ -87,6 +100,11 @@ def main() -> int:
     else:
         raw = assemble()
 
+    if fresh_guard.wants_if_newer():      # ЗЛТ8 daily path
+        go, msg = if_newer(raw)
+        print(msg)
+        if not go:
+            return 0
     pushed = to_datacore.push(raw)
 
     wrote = [r for r in pushed if r.get("rows") is not None]

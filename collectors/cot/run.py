@@ -14,6 +14,7 @@ from pathlib import Path
 import yaml
 
 from . import to_datacore, derive, markets
+from collectors import fresh_guard
 
 HERE = Path(__file__).resolve().parent
 
@@ -61,6 +62,42 @@ def freshness_verdict(pushed: list, today: dt.date | None = None,
                f"(<= {stale_days}d)")
 
 
+def source_last(cfg: dict, get=None) -> str | None:
+    """Newest report date CFTC has across the configured datasets (one tiny query
+    each). None when every query failed."""
+    import requests
+    get = get or requests.get
+    f = cfg.get("fetch", {})
+    best = None
+    for url in cfg["endpoints"].values():
+        try:
+            r = get(url, params={"$select": "max(report_date_as_yyyy_mm_dd) AS d"},
+                    headers={"User-Agent": f.get("user_agent", "cot-citizen/1.0")},
+                    timeout=f.get("timeout", 30))
+            r.raise_for_status()
+            d = str((r.json() or [{}])[0].get("d") or "")[:10]
+        except Exception as e:  # noqa: BLE001 -- one dataset down is not a verdict
+            print(f"  probe {url}: {type(e).__name__}: {e}")
+            continue
+        if d and (best is None or d > best):
+            best = d
+    return best
+
+
+def if_newer(cfg: dict, get=None, read=None) -> tuple:
+    """ЗЛТ8 daily path: run the full fetch only if CFTC has a newer report date than
+    the newest canonical COT as_of."""
+    from datacore import storage
+    read = read or storage.read_canonical
+    src = source_last(cfg, get)
+    go, msg = fresh_guard.decide(
+        src, fresh_guard.canonical_last([m["canonical"] for m in markets.migrated()], read),
+        "cot")
+    if src is None:
+        fresh_guard.warn("cot source down", msg)
+    return go, msg
+
+
 def main() -> int:
     cfg = yaml.safe_load((HERE / "config.yaml").read_text(encoding="utf-8"))
 
@@ -68,6 +105,11 @@ def main() -> int:
         from . import mockdata
         raw = mockdata.raw(cfg)
     else:
+        if fresh_guard.wants_if_newer():  # ЗЛТ8 daily path: a 2-query probe first
+            go, msg = if_newer(cfg)
+            print(msg)
+            if not go:
+                return 0
         from .fetch_cot import fetch_cot
         raw = fetch_cot(cfg)
 

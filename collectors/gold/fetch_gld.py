@@ -37,11 +37,20 @@ NAV_SHARE_COLUMN = "NAV/Share at 10:30am NYT"
 OZ_SHARE_COLUMN = "Ounces of Gold per Share"
 
 
+def fresh_url(url: str, now: float | None = None) -> str:
+    """ЗЛТ8 (21.11.2026): the archive is served through a CDN with s-maxage=86400, so a
+    plain GET can return a copy up to 24 h old (seen: Age 35 112 s). A throwaway query
+    parameter misses the cache (x-cache: MISS) and reads the origin. Not a workaround
+    for a block: the endpoint is public and answers 200 either way."""
+    import time
+    return f"{url}{'&' if '?' in url else '?'}_ts={int(now if now is not None else time.time())}"
+
+
 def fetch_bytes(url: str = URL, timeout: int = 60) -> bytes:
     # 28.09.2026 SPDR 403'd a bare-UA request and a browser UA was sent; on 10.10.2026
     # (ЗЛТ6) the endpoint answers 200 to python-requests and to this honest bot UA, so
     # no browser is impersonated -- mkt_gold_usd (gld_fix) must not rest on one.
-    r = requests.get(url, timeout=timeout, headers={"User-Agent": "collectors-bot/1.0"})
+    r = requests.get(fresh_url(url), timeout=timeout, headers={"User-Agent": "collectors-bot/1.0"})
     r.raise_for_status()
     return r.content
 

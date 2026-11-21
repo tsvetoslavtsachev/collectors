@@ -107,11 +107,13 @@ fred:
   # Лихвените серии на златото (ЗЛТ1, 28.09.2026): номинална, реална 10г и срочна
   # премия (Kim-Wright, изостава ~6 дни). Тъждество: DGS10 - DFII10 = T10YIE.
   # Дневни като mkt_* — извън месечната кохорта, не са VRM режимен вход.
-  mkt_ust_10y:             {ticker: "DGS10",        transform: level, model_freq: daily,   source_freq: daily}
+  # ЗЛТ8 (21.11.2026): treasury_head = точките, които Treasury вече има, а FRED (H.15,
+  # с работен ден назад) още не; само при съвпадение на общите дни (fetch_treasury.py).
+  mkt_ust_10y:             {ticker: "DGS10",        transform: level, model_freq: daily,   source_freq: daily, treasury_head: {curve: par, column: "10 Yr"}}
   # ЗАЛ2 (08.11.2026): 2г и 30г за машинния falsifier на летописа (DGS2, DGS30).
   mkt_ust_2y:              {ticker: "DGS2",         transform: level, model_freq: daily,   source_freq: daily}
   mkt_ust_30y:             {ticker: "DGS30",        transform: level, model_freq: daily,   source_freq: daily}
-  mkt_real_10y:            {ticker: "DFII10",       transform: level, model_freq: daily,   source_freq: daily}
+  mkt_real_10y:            {ticker: "DFII10",       transform: level, model_freq: daily,   source_freq: daily, treasury_head: {curve: real, column: "10 YR"}}
   mkt_term_premium_10y:    {ticker: "THREEFYTP10",  transform: level, model_freq: daily,   source_freq: daily}
   # Кредитният спред с дълга история (s9_tech О2, 24.10.2026): Moody's Baa минус 10г, от 1986.
   # Пълна история (не е подвижен прозорец като ICE); дневна като mkt_*, не е VRM режимен вход.

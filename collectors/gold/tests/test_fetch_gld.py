@@ -70,3 +70,10 @@ def test_nav_and_close_kept_for_crosscheck_but_not_in_records():
     for sid in out:
         for r in out[sid]["records"]:
             assert set(r) == {"as_of", "value", "source"}
+
+
+def test_fresh_url_misses_the_cdn_cache():
+    # ЗЛТ8: CDN-ът държи архива до 24 ч (s-maxage=86400); параметърът го заобикаля
+    from collectors.gold import fetch_gld
+    assert fetch_gld.fresh_url(fetch_gld.URL, now=1763712000).endswith("&_ts=1763712000")
+    assert fetch_gld.fresh_url("https://x/y", now=5) == "https://x/y?_ts=5"

@@ -16,7 +16,19 @@ name: gold-weekly
 on:
   schedule:
     - cron: "43 4 * * 6"    # Sat 04:43 UTC -- after cot (04:23), before vrm (05:23)
+    - cron: "37 21 * * *"   # ЗЛТ8 (21.11.2026): дневният пазач, всяка вечер; пише САМО ако източникът
+                                # е напред от канона (--if-newer), иначе излиза без комит. Хваща закъснелите
+                                # отчети на CFTC (10.11 качен в пн 16.11) и петъчния ред на SPDR.
   workflow_dispatch:
+    inputs:
+      if_newer:
+        description: "Дневният път: пиши само ако източникът е напред (ЗЛТ8)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: gold-collector
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -49,7 +61,10 @@ jobs:
         env:
           DATACORE_ROOT: ${{ github.workspace }}/_data-core
           PYTHONIOENCODING: utf-8
-        run: python -m collectors.gold.run
+        run: |
+          ARGS=""
+          if [ "${{ github.event.schedule }}" = "37 21 * * *" ] || [ "${{ inputs.if_newer }}" = "true" ]; then ARGS="--if-newer"; fi
+          python -m collectors.gold.run $ARGS
 
       - name: Commit canonical + health -> data-core (private)
         working-directory: _data-core
@@ -58,4 +73,5 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add data health
           git diff --cached --quiet || git commit -m "gold: $(date -u +%Y-%m-%d) canonical write"
+          git pull --rebase --quiet   # ЗЛТ8: с дневния пуск се разминаваме по-често с oil/vrm
           git push
