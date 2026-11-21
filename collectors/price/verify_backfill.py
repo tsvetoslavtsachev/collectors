@@ -297,10 +297,25 @@ def _raw_lines(root: Path, sid: str):
                 yield json.loads(ln)
 
 
+# Foreign Yahoo index tickers carry no venue suffix, so the bare-symbol rule would judge them on
+# the US calendar: every Tokyo/Taipei/Mumbai holiday would read as a missing session, and a Lunar
+# New Year week (~5 sessions) would cross _SPARSE_FAIL_MAX and fail the daily run (ЧУЖ1,
+# 2026-11-21). Each one is mapped to the venue group of its own exchange's stocks. ^STOXX follows
+# Xetra (DE): STOXX index days are the Eurex calendar, which Xetra matches. ^NSEI maps to NS, a
+# group with no other members -> below _GROUP_MIN -> not density-checked (like 000001.SS / SS).
+_INDEX_VENUE = {
+    "^STOXX": "DE", "^GDAXI": "DE", "^FCHI": "PA", "^FTSE": "L",
+    "^N225": "T", "^KS11": "KS", "^TWII": "TW", "^HSI": "HK", "^NSEI": "NS",
+}
+
+
 def _exch_group(symbol: str) -> str:
     """Exchange-CALENDAR group. The suffix is the venue (.L London, .PA Paris, ...); a bare
-    symbol is US. Grouping by venue is what makes the density gate holiday-proof: a closed
-    venue moves its whole group's calendar together, so nothing inside it looks sparse."""
+    symbol is US, except the foreign indices in _INDEX_VENUE. Grouping by venue is what makes
+    the density gate holiday-proof: a closed venue moves its whole group's calendar together,
+    so nothing inside it looks sparse."""
+    if symbol in _INDEX_VENUE:
+        return _INDEX_VENUE[symbol]
     return symbol.rsplit(".", 1)[1] if "." in symbol else "US"
 
 

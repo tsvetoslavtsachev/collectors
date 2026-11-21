@@ -540,6 +540,28 @@ def offline(g: Gate) -> None:
     finally:
         verify_backfill._FRESHNESS_EXEMPT = saved_ex
 
+    # d10m a FOREIGN INDEX is judged on its own venue's calendar, not the US one (ЧУЖ1). A
+    # 5-session Tokyo closure (Golden-Week shape) that the whole .T group shares fires nothing
+    # for ^N225; on the bare-symbol US rule the same views would be a HARD density failure.
+    t_week = {"2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26"}
+    tokyo = [s for s in sids_all if verify_backfill._exch_group(CFG["price"][s]["symbol"]) == "T"]
+    jp = _rep({s: [d for d in DAYS if d not in t_week] for s in tokyo})
+    g.check("d10m ^N225 maps to the Tokyo group; a shared Tokyo holiday week fires nothing for it "
+            "(bare ^ symbols other than the foreign indices stay US)",
+            "px_n225_daily" in tokyo and _tier(jp, "sparse", "px_n225_daily") is None
+            and not jp["hard"] and verify_backfill._exch_group("^VIX9D") == "US",
+            f"in_tokyo={'px_n225_daily' in tokyo} tier={_tier(jp, 'sparse', 'px_n225_daily')} "
+            f"hard={jp['hard']}")
+    saved_iv = verify_backfill._INDEX_VENUE
+    try:
+        verify_backfill._INDEX_VENUE = {}           # the pre-ЧУЖ1 rule: ^N225 lands in US
+        us_rule = _rep({s: [d for d in DAYS if d not in t_week] for s in tokyo})
+    finally:
+        verify_backfill._INDEX_VENUE = saved_iv
+    g.check("d10m' control: on the bare-symbol US rule the same Tokyo week HARD-fails ^N225",
+            _tier(us_rule, "sparse", "px_n225_daily") == "fail" and us_rule["hard"],
+            f"tier={_tier(us_rule, 'sparse', 'px_n225_daily')} hard={us_rule['hard']}")
+
     # d10j the verdict survives the round-trip to disk and becomes an EXIT CODE
     tmpd = Path(tempfile.mkdtemp(prefix="fresh_"))
     try:

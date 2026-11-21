@@ -365,6 +365,28 @@ price:
   px_srln_daily: {symbol: "SRLN", name: "State Street Blackstone Senior Loan ETF", category: "Canary"}
   px_angl_daily: {symbol: "ANGL", name: "VanEck Fallen Angel High Yield Bond ETF", category: "Canary"}
 
+  # Local index block (ЧУЖ1, 2026-11-21, initiative ИЛЮ): one broad index per market in its
+  # OWN currency, so a week abroad is read without the NY-listed country ETF's dollar and
+  # NY-Friday mixed in. Yahoo index tickers (^...), no dividends/splits; names are Yahoo's
+  # longName on 2026-11-21 plus the currency. DAX is Deutsche Boerse's PERFORMANCE (total
+  # return) index, the headline DAX; the other nine are price indices. Mainland China is the
+  # SSE Composite: Yahoo's 000300.SS (CSI 300) returns a single bar. India is Nifty 50 (from
+  # 2007-09 on Yahoo; ^BSESN Sensex reaches 1997 but is 30 names). Family defaults to etf (no
+  # identity stamp, like idx_dxy); the density gate maps each ^ symbol to its venue calendar
+  # (verify_backfill._INDEX_VENUE) -- a bare symbol would be judged on the US calendar.
+  # USDJPY=X is the daily yen next to EURUSD=X; the weekly FRED canon fx_usdjpy is untouched.
+  px_stoxx_daily:     {symbol: "^STOXX",    name: "STOXX Europe 600 (EUR)", category: "Local Index"}
+  px_gdaxi_daily:     {symbol: "^GDAXI",    name: "DAX Performance (EUR)", category: "Local Index"}
+  px_fchi_daily:      {symbol: "^FCHI",     name: "CAC 40 (EUR)", category: "Local Index"}
+  px_ftse_daily:      {symbol: "^FTSE",     name: "FTSE 100 (GBP)", category: "Local Index"}
+  px_n225_daily:      {symbol: "^N225",     name: "Nikkei 225 (JPY)", category: "Local Index"}
+  px_ks11_daily:      {symbol: "^KS11",     name: "KOSPI Composite Index (KRW)", category: "Local Index"}
+  px_twii_daily:      {symbol: "^TWII",     name: "TSEC Capitalization Weighted Stock Index (TWD)", category: "Local Index"}
+  px_hsi_daily:       {symbol: "^HSI",      name: "Hang Seng Index (HKD)", category: "Local Index"}
+  px_000001_ss_daily: {symbol: "000001.SS", name: "SSE Composite Index (CNY)", category: "Local Index"}
+  px_nsei_daily:      {symbol: "^NSEI",     name: "NIFTY 50 (INR)", category: "Local Index"}
+  px_usdjpy_daily:    {symbol: "USDJPY=X",  name: "USD/JPY Spot (Yahoo FX)", category: "Currency"}
+
   # ---- SP500 stock family (current members; snapshot from
   # SP500-rotationradar/data/sector_map.json, updated 2026-04-25T23:33:28; generated 2026-06-27 P7a) ----
   # survivorship: current-members-only -> backtest_valid:false (machine flag).
