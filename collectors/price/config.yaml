@@ -475,6 +475,7 @@ price:
   px_bax_daily: {symbol: "BAX", name: "Baxter International", category: "Health Care", family: "stock"}
   px_bby_daily: {symbol: "BBY", name: "Best Buy", category: "Consumer Discretionary", family: "stock"}
   px_bdx_daily: {symbol: "BDX", name: "Becton Dickinson", category: "Health Care", family: "stock"}
+  px_be_daily: {symbol: "BE", name: "Bloom Energy", category: "Industrials", family: "stock"}  # МЕТ1 22.11.2026: член на S&P 500 без серия
   px_ben_daily: {symbol: "BEN", name: "Franklin Resources", category: "Financials", family: "stock"}
   px_bf_b_daily: {symbol: "BF-B", name: "Brown–Forman", category: "Consumer Staples", family: "stock"}
   px_bg_daily: {symbol: "BG", name: "Bunge Global", category: "Consumer Staples", family: "stock"}
@@ -652,6 +653,7 @@ price:
   px_fdx_daily: {symbol: "FDX", name: "FedEx", category: "Industrials", family: "stock"}
   px_fdxf_daily: {symbol: "FDXF", name: "FedEx Freight", category: "Industrials", family: "stock"}
   px_fe_daily: {symbol: "FE", name: "FirstEnergy", category: "Utilities", family: "stock"}
+  px_ferg_daily: {symbol: "FERG", name: "Ferguson Enterprises", category: "Industrials", family: "stock"}  # МЕТ1 22.11.2026: член на S&P 500 без серия
   px_ffiv_daily: {symbol: "FFIV", name: "F5, Inc.", category: "Information Technology", family: "stock"}
   px_fico_daily: {symbol: "FICO", name: "Fair Isaac", category: "Information Technology", family: "stock"}
   px_fis_daily: {symbol: "FIS", name: "Fidelity National Information Services", category: "Financials", family: "stock"}
@@ -710,6 +712,7 @@ price:
   px_idxx_daily: {symbol: "IDXX", name: "Idexx Laboratories", category: "Health Care", family: "stock"}
   px_iex_daily: {symbol: "IEX", name: "IDEX Corporation", category: "Industrials", family: "stock"}
   px_iff_daily: {symbol: "IFF", name: "International Flavors & Fragrances", category: "Materials", family: "stock"}
+  px_ilmn_daily: {symbol: "ILMN", name: "Illumina", category: "Health Care", family: "stock"}  # МЕТ1 22.11.2026: член на S&P 500 без серия
   px_incy_daily: {symbol: "INCY", name: "Incyte", category: "Health Care", family: "stock"}
   px_intc_daily: {symbol: "INTC", name: "Intel", category: "Information Technology", family: "stock"}
   px_intu_daily: {symbol: "INTU", name: "Intuit", category: "Information Technology", family: "stock"}
@@ -823,12 +826,14 @@ price:
   px_o_daily: {symbol: "O", name: "Realty Income", category: "Real Estate", family: "stock"}
   px_odfl_daily: {symbol: "ODFL", name: "Old Dominion", category: "Industrials", family: "stock"}
   px_oke_daily: {symbol: "OKE", name: "Oneok", category: "Energy", family: "stock"}
+  px_okta_daily: {symbol: "OKTA", name: "Okta", category: "Information Technology", family: "stock"}  # МЕТ1 22.11.2026: член на S&P 500 без серия
   px_omc_daily: {symbol: "OMC", name: "Omnicom Group", category: "Communication Services", family: "stock"}
   px_on_daily: {symbol: "ON", name: "ON Semiconductor", category: "Information Technology", family: "stock"}
   px_orcl_daily: {symbol: "ORCL", name: "Oracle Corporation", category: "Information Technology", family: "stock"}
   px_orly_daily: {symbol: "ORLY", name: "O’Reilly Automotive", category: "Consumer Discretionary", family: "stock"}
   px_otis_daily: {symbol: "OTIS", name: "Otis Worldwide", category: "Industrials", family: "stock"}
   px_oxy_daily: {symbol: "OXY", name: "Occidental Petroleum", category: "Energy", family: "stock"}
+  px_p_daily: {symbol: "P", name: "Everpure", category: "Information Technology", family: "stock"}  # МЕТ1 22.11.2026: член на S&P 500 без серия
   px_panw_daily: {symbol: "PANW", name: "Palo Alto Networks", category: "Information Technology", family: "stock"}
   px_payx_daily: {symbol: "PAYX", name: "Paychex", category: "Industrials", family: "stock"}
   px_pcar_daily: {symbol: "PCAR", name: "Paccar", category: "Industrials", family: "stock"}
@@ -872,6 +877,7 @@ price:
   px_q_daily: {symbol: "Q", name: "Qnity Electronics", category: "Information Technology", family: "stock"}
   px_qcom_daily: {symbol: "QCOM", name: "Qualcomm", category: "Information Technology", family: "stock"}
   px_rcl_daily: {symbol: "RCL", name: "Royal Caribbean Group", category: "Consumer Discretionary", family: "stock"}
+  px_rddt_daily: {symbol: "RDDT", name: "Reddit", category: "Communication Services", family: "stock"}  # МЕТ1 22.11.2026: член на S&P 500 без серия
   px_reg_daily: {symbol: "REG", name: "Regency Centers", category: "Real Estate", family: "stock"}
   px_regn_daily: {symbol: "REGN", name: "Regeneron Pharmaceuticals", category: "Health Care", family: "stock"}
   px_rf_daily: {symbol: "RF", name: "Regions Financial Corporation", category: "Financials", family: "stock"}
@@ -942,6 +948,7 @@ price:
   px_tt_daily: {symbol: "TT", name: "Trane Technologies", category: "Industrials", family: "stock"}
   px_ttd_daily: {symbol: "TTD", name: "Trade Desk (The)", category: "Communication Services", family: "stock"}
   px_ttwo_daily: {symbol: "TTWO", name: "Take-Two Interactive", category: "Communication Services", family: "stock"}
+  px_twlo_daily: {symbol: "TWLO", name: "Twilio", category: "Information Technology", family: "stock"}  # МЕТ1 22.11.2026: член на S&P 500 без серия
   px_txn_daily: {symbol: "TXN", name: "Texas Instruments", category: "Information Technology", family: "stock"}
   px_txt_daily: {symbol: "TXT", name: "Textron", category: "Industrials", family: "stock"}
   px_tyl_daily: {symbol: "TYL", name: "Tyler Technologies", category: "Information Technology", family: "stock"}
