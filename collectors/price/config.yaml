@@ -343,6 +343,28 @@ price:
   px_vgea_de_daily: {symbol: "VGEA.DE", name: "Vanguard EUR Eurozone Government Bond UCITS Acc (EUR, Xetra)", category: "EUR Fixed Income"}
   px_vecp_de_daily: {symbol: "VECP.DE", name: "Vanguard EUR Corporate Bond UCITS (EUR, Xetra)", category: "EUR Fixed Income"}
 
+  # Canary block (КАН1, 2026-11-21, initiative ИЛЮ): the "crisis recipe" read through the
+  # stress-sensitive corners of financials, cyclicals and credit -- regional/large banks,
+  # broker-dealers, insurers, software, homebuilders, transports, preferreds, converts,
+  # senior loans, fallen angels. Before this the recipe was read only through three big
+  # banks and three credit funds. Names are Yahoo's longName on 2026-11-21. The category
+  # "Canary" is NEW on purpose: no existing reader selects on it (etf-rotationradar has its
+  # own hardcoded universe; its EQUITY_CATEGORIES gate does not include it). Readers that
+  # take EVERY non-stock series (lab probe-overlap/probe-fibo, data-core m_inter "wide")
+  # pick these up regardless of category -- see the КАН1 report.
+  px_kre_daily:  {symbol: "KRE",  name: "State Street SPDR S&P Regional Banking ETF", category: "Canary"}
+  px_kbe_daily:  {symbol: "KBE",  name: "State Street SPDR S&P Bank ETF", category: "Canary"}
+  px_iai_daily:  {symbol: "IAI",  name: "iShares U.S. Broker-Dealers & Securities Exchanges ETF", category: "Canary"}
+  px_kie_daily:  {symbol: "KIE",  name: "State Street SPDR S&P Insurance ETF", category: "Canary"}
+  px_igv_daily:  {symbol: "IGV",  name: "iShares Expanded Tech-Software Sector ETF", category: "Canary"}
+  px_xhb_daily:  {symbol: "XHB",  name: "State Street SPDR S&P Homebuilders ETF", category: "Canary"}
+  px_itb_daily:  {symbol: "ITB",  name: "iShares U.S. Home Construction ETF", category: "Canary"}
+  px_iyt_daily:  {symbol: "IYT",  name: "iShares U.S. Transportation ETF", category: "Canary"}
+  px_pff_daily:  {symbol: "PFF",  name: "iShares Preferred and Income Securities ETF", category: "Canary"}
+  px_cwb_daily:  {symbol: "CWB",  name: "State Street SPDR Bloomberg Convertible Securities ETF", category: "Canary"}
+  px_srln_daily: {symbol: "SRLN", name: "State Street Blackstone Senior Loan ETF", category: "Canary"}
+  px_angl_daily: {symbol: "ANGL", name: "VanEck Fallen Angel High Yield Bond ETF", category: "Canary"}
+
   # ---- SP500 stock family (current members; snapshot from
   # SP500-rotationradar/data/sector_map.json, updated 2026-04-25T23:33:28; generated 2026-06-27 P7a) ----
   # survivorship: current-members-only -> backtest_valid:false (machine flag).
