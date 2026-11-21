@@ -69,3 +69,13 @@ jobs:
             echo "::endgroup::"
           done
           echo "All offline price-citizen gates PASSED."
+
+      - name: Run offline gold-citizen tests (ЗЛТ8)
+        # pytest suite: readers, format mutations, the daily guard and the freshness lamp.
+        # The live source test needs ZLT8_LIVE=1 and is skipped here -> no network.
+        env:
+          DATACORE_ROOT: ${{ github.workspace }}/_data-core
+          PYTHONPATH: ${{ github.workspace }}/_data-core:${{ github.workspace }}
+        run: |
+          pip install -r requirements.txt pytest
+          python -m pytest collectors/gold/tests -q

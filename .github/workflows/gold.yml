@@ -75,3 +75,11 @@ jobs:
           git diff --cached --quiet || git commit -m "gold: $(date -u +%Y-%m-%d) canonical write"
           git pull --rebase --quiet   # ЗЛТ8: с дневния пуск се разминаваме по-често с oil/vrm
           git push
+
+      # ЗЛТ8 червената лампа: след комита, за да не спира здравите серии. Червено, ако
+      # някоя серия е по-стара от своя праг (LAMP_DAYS в run.py), а не при една тиха нощ.
+      - name: Freshness lamp (every gold series within its limit)
+        env:
+          DATACORE_ROOT: ${{ github.workspace }}/_data-core
+          PYTHONIOENCODING: utf-8
+        run: python -m collectors.gold.run --lamp

@@ -145,7 +145,49 @@ def if_newer(raw: dict, read=None) -> tuple:
     return bool(keep), "; ".join(msgs)
 
 
+# ЗЛТ8 червената лампа (21.11.2026): the runs above only WARN when a source is down,
+# so a broken unofficial feed (Yahoo, Swissquote) could sit frozen for weeks behind a
+# green run. After the commit, the workflow runs `--lamp`: every active series is aged
+# against its own limit (calendar days from today, UTC, to its newest canonical as_of)
+# and the run goes red when one is past it. The limits sit above each source's normal
+# gap plus a holiday, so a one-night hiccup stays a warning, never a red light.
+LAMP_DAYS = {
+    "SPDR": 6,     # business-day source, next-day rows; Christmas/Easter clusters reach 5
+    "spot": 3,     # a quote every run, stamped today or later: 3 = two missed nights
+    "futures": 5,  # completed COMEX sessions; Thu -> Mon over a CME holiday is 4
+    "acm": 10,     # one business day behind; cadence over holidays unmeasured, wide on purpose
+}
+
+
+def lamp(today: dt.date | None = None, read=None) -> tuple[int, list]:
+    """(exit code, one line per active series). Missing series = stale."""
+    today = today or dt.datetime.now(dt.timezone.utc).date()
+    read = read or storage.read_canonical
+    code, lines = 0, []
+    for name, sids in GROUPS.items():
+        limit = LAMP_DAYS[name]
+        for sid in sids:
+            last = fresh_guard.canonical_last([sid], read)
+            age = (today - dt.date.fromisoformat(last)).days if last else None
+            stale = age is None or age > limit
+            lines.append(f"{'STALE' if stale else 'ok   '} {sid}: newest {last}, "
+                         f"{'-' if age is None else age}d (limit {limit}d, {name})")
+            if stale:
+                code = 1
+                if os.environ.get("GITHUB_ACTIONS"):
+                    print(f"::error title=gold series stale::{sid} newest {last}, "
+                          f"limit {limit}d ({name})")
+    return code, lines
+
+
 def main() -> int:
+    if "--lamp" in sys.argv:              # ЗЛТ8: after the commit, no fetch
+        code, lines = lamp()
+        print("\n".join(lines))
+        print(("FAIL: a gold series is past its limit" if code
+               else "OK: every gold series within its limit"))
+        return code
+
     exp = list(ACTIVE)
     if "--mock" in sys.argv:
         from . import mockdata
