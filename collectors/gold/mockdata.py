@@ -7,7 +7,9 @@ from .register_catalog import ACTIVE
 SERIES = list(ACTIVE)
 BASE = {"mkt_gold_usd": 2650.0,
         "etf_gld_tonnes": 880.0, "etf_gld_oz": 28_300_000.0,
-        "etf_gldm_tonnes": 230.0, "etf_gldm_oz": 7_400_000.0}
+        "etf_gldm_tonnes": 230.0, "etf_gldm_oz": 7_400_000.0,
+        "mkt_gold_spot_usd": 2651.0, "mkt_gold_fut_usd": 2670.0,       # ЗЛТ8
+        "mkt_term_premium_acm_10y": 0.7}
 
 
 def _bdays(n: int, end: dt.date | None = None) -> list[str]:

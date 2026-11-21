@@ -6,7 +6,8 @@ Run: python -m pytest collectors/gold/tests/test_wiring.py
 from pathlib import Path
 import yaml
 
-from collectors.gold import fetch_gld, fetch_gldm, gld_fix, mockdata
+from collectors.gold import (fetch_acm, fetch_fut, fetch_gld, fetch_gldm, fetch_spot,
+                             gld_fix, mockdata)
 from collectors.gold.register_catalog import ACTIVE, ENTRIES, RETIRED
 
 HERE = Path(__file__).resolve().parent.parent
@@ -16,19 +17,22 @@ def _cfg():
     return yaml.safe_load((HERE / "config.yaml").read_text(encoding="utf-8"))
 
 
-def test_catalog_has_ten_series():
-    assert len(ENTRIES) == 10
+def test_catalog_has_thirteen_series():
+    assert len(ENTRIES) == 13
     assert set(ENTRIES) == {
         "mkt_gold_usd", "mkt_gold_gbp", "mkt_gold_eur",
         "etf_gld_tonnes", "etf_gld_oz",
         "etf_gldm_tonnes", "etf_gldm_oz",
         "mkt_silver_usd", "mkt_silver_gbp", "mkt_silver_eur",
+        "mkt_gold_spot_usd", "mkt_gold_fut_usd", "mkt_term_premium_acm_10y",  # ЗЛТ8
     }
 
 
 def test_active_and_retired_split_the_catalog():
     assert set(ACTIVE) == {"mkt_gold_usd", "etf_gld_tonnes", "etf_gld_oz",
-                           "etf_gldm_tonnes", "etf_gldm_oz"}
+                           "etf_gldm_tonnes", "etf_gldm_oz",
+                           "mkt_gold_spot_usd", "mkt_gold_fut_usd",
+                           "mkt_term_premium_acm_10y"}
     assert set(ACTIVE) | set(RETIRED) == set(ENTRIES)
     assert not set(ACTIVE) & set(RETIRED)
 
@@ -41,7 +45,8 @@ def test_retired_series_are_marked_frozen_in_the_catalog():
 
 
 def test_nothing_fetches_a_retired_series():
-    fetched = set(fetch_gld.COLUMNS) | set(fetch_gldm.COLUMNS) | {gld_fix.SERIES}
+    fetched = (set(fetch_gld.COLUMNS) | set(fetch_gldm.COLUMNS) | {gld_fix.SERIES}
+               | {fetch_spot.SERIES, fetch_fut.SERIES, fetch_acm.SERIES})
     assert fetched == set(ACTIVE)
     assert set(mockdata.SERIES) == set(ACTIVE)
     assert "lbma" not in _cfg() and "silver" not in _cfg()

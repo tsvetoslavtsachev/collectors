@@ -198,6 +198,65 @@ ENTRIES = {
         "note": "Null before 1999-01-04 (pre-euro) -- history starts there, "
                "not 1968, same cutoff as mkt_gold_eur.",
     },
+    # ЗЛТ8 (21.11.2026): ordered by Ц. ("Да, строй ги"), names and daily rhythm approved
+    "mkt_gold_spot_usd": {
+        "description": "Gold spot XAU/USD, Swissquote bid/ask mid, one quote per evening run "
+                       "(ЗЛТ8, 21.11.2026). The freshest gold number in the store: the "
+                       "weekend runs carry Friday's 17:00 ET close.",
+        "source": "Swissquote public quote feed (forex-data-feed.swissquote.com)",
+        "manual_source": "none",
+        "license": "public quote feed, no login, no key",
+        "basis": "OTC spot XAU/USD, mid of the 'premium' spread profile; rows also carry "
+                 "bid, ask and quote_ts (UTC)",
+        "frequency": "daily",
+        "window": "open",
+        "unit": "USD/oz",
+        "schema_version": 1,
+        "vrm_role": ["market-context"],
+        "provisional": False,
+        "source_kind": "automated",
+        "note": "No history: the feed gives only the current quote, so the series starts "
+                "on its first run. as_of = CME trading day (a quote from 18:00 ET belongs "
+                "to the next day). Weekday rows are early-session quotes taken when "
+                "GitHub starts the job (~01-05 UTC), NOT closes; check quote_ts. A later "
+                "quote for the same day replaces the earlier one.",
+    },
+    "mkt_gold_fut_usd": {
+        "description": "COMEX gold futures GC=F (continuous front month) daily close via "
+                       "Yahoo (ЗЛТ8, 21.11.2026). A futures series, kept apart from spot.",
+        "source": "Yahoo Finance chart API, GC=F",
+        "manual_source": "none",
+        "license": "Yahoo public chart endpoint, no key; cite as COMEX GC (via Yahoo)",
+        "basis": "front-month COMEX gold futures close (Yahoo continuous GC=F), USD/oz",
+        "frequency": "daily",
+        "window": "open",
+        "unit": "USD/oz",
+        "schema_version": 1,
+        "vrm_role": ["market-context"],
+        "provisional": False,
+        "source_kind": "automated",
+        "note": "Carries contango and roll jumps; never blend with mkt_gold_usd or "
+                "mkt_gold_spot_usd. Seeded with 10 years; the rolling pull is upserted, so "
+                "older rows are kept. Only completed sessions (after 17:00 ET) are written.",
+    },
+    "mkt_term_premium_acm_10y": {
+        "description": "10y Treasury term premium, Adrian-Crump-Moench model (NY Fed), daily "
+                       "(ЗЛТ8, 21.11.2026). A model estimate, not a market quote.",
+        "source": "Federal Reserve Bank of New York, ACMTermPremium.xls (sheet ACM Daily)",
+        "manual_source": "none",
+        "license": "NY Fed public research data, no login; cite Adrian, Crump and Moench (2013)",
+        "basis": "ACM 10-year zero-coupon term premium ACMTP10, percent",
+        "frequency": "daily",
+        "window": "open",
+        "unit": "percent",
+        "schema_version": 1,
+        "vrm_role": ["market-context"],
+        "provisional": False,
+        "source_kind": "automated",
+        "note": "History from 1961-06-14; about one business day behind. A second model "
+                "next to Kim-Wright mkt_term_premium_10y (about 6 days behind), which is "
+                "unchanged: two models, two series, never blended.",
+    },
 }
 
 
