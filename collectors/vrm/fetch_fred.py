@@ -105,6 +105,11 @@ def _to_model_freq(obs: list, m: dict, rdp: int) -> list:
     return [(_month_end(ym), monthly[ym]) for ym in sorted(monthly) if ym < cur]
 
 
+# ИЛЮ3 В5 (22.11.2026): главите, отхвърлени или паднали в този ход. run.py ги чете след
+# записа и връща 3, а vrm.yml прави хода червен в края, след комита.
+LOUD: list = []
+
+
 def _treasury_head(series_id: str, m: dict, obs: list) -> dict:
     """ЗЛТ8: extend a daily FRED series IN PLACE with the Treasury CSV points FRED does
     not have yet (H.15 lags a business day). Returns {date: source label} for the
@@ -118,8 +123,13 @@ def _treasury_head(series_id: str, m: dict, obs: list) -> dict:
         extended, note = fetch_treasury.extend(obs, tre)
     except Exception as e:  # noqa: BLE001 - the head never breaks the FRED series
         print(f"  {series_id}: treasury head skipped ({type(e).__name__}: {e})")
+        LOUD.append(f"{series_id}: treasury head skipped ({type(e).__name__}: {e})")
         return {}
     print(f"  {series_id}: {note}")
+    if not tre or "REFUSED" in note or "not trusted" in note:
+        # ИЛЮ3 В5: отхвърлената или празна глава оставя серията от FRED, но ходът излиза
+        # червен в края (run.py връща 3), за да не мълчи петъкът.
+        LOUD.append(f"{series_id}: {note if tre else 'treasury head: empty answer'}")
     added = extended[len(obs):]
     obs.extend(added)
     label = fetch_treasury.label(th)

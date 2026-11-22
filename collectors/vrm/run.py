@@ -123,7 +123,30 @@ def main() -> int:
     missing = sorted(set(exp) - {r["series_id"] for r in pushed})
     if missing:
         print(f"  ! MISSING from raw (not even attempted): {missing}")
-    return 0
+    loud = loud_failures(raw)
+    for why in loud:
+        print(f"::error::ИЛЮ3 В5 {why}")
+    return LOUD_RC if loud else 0
+
+
+LOUD_RC = 3   # ИЛЮ3 В5: записът е минал, но глава или мост са паднали; vrm.yml червенее в края
+
+
+def loud_failures(raw: dict) -> list:
+    """ИЛЮ3 В5 (22.11.2026): отхвърлена глава от Министерството и застоял, празен или
+    подменен ценови архив за mkt_vix / mkt_move. Серията се пропуска или остава от FRED,
+    но ходът не бива да е зелен."""
+    import importlib
+    out = []
+    ff = sys.modules.get(f"{__package__}.fetch_fred")
+    if ff is not None:
+        out += list(getattr(ff, "LOUD", []))
+    fb = importlib.import_module(f"{__package__}.fetch_bridge")
+    for sid in fb.ARCHIVE_MAP:
+        blk = raw.get(sid)
+        if isinstance(blk, dict) and blk.get("ok") is False:
+            out.append(f"{sid}: {blk.get('error')}")
+    return out
 
 
 if __name__ == "__main__":

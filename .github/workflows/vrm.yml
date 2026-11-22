@@ -35,11 +35,21 @@ on:
     # карта 21.07 срещу канон 28.07). Сега cot върви в 04:23, vrm+мозъкът в 05:23 --
     # картите ядат прясното. Off the round hour: 06:00 sharp queued ~1.5h on the
     # shared scheduler; odd minutes cut that (same lesson as alfred-vintage "17 7").
-    - cron: "23 5 * * 6"
+    # ИЛЮ3 В2 (22.11.2026): съботният ценови ход е в 13:37 UTC (европейският петък); резервата
+    # на мозъка е след него и след радара и ротацията (14:07, 14:19); cot (04:23) и gold (04:43)
+    # остават преди него. В събота с диригента този ход е втори и не пише нищо ново.
+    - cron: "23 15 * * 6"
   workflow_dispatch:
 
 permissions:
   contents: write
+
+# ИЛЮ3 В1 (22.11.2026): диригентът пуска мозъка в събота, а насроченият ход може да го
+# застъпи. Опашка, без прекъсване (както cot и gold): вторият тръгва след първия, с пресен
+# checkout, а push минава през pull --rebase.
+concurrency:
+  group: vrm-collector
+  cancel-in-progress: false
 
 jobs:
   run:
@@ -100,7 +110,14 @@ jobs:
           DATACORE_ALLOW_REAL: "1"
           # ИЛЮ3 (22.11.2026): mkt_vix / mkt_move идват дневно от ценовия архив (fetch_bridge.py).
           PRICE_ARCHIVE_ROOT: ${{ github.workspace }}/_price-archive
-        run: python -m collectors.vrm.run
+        # ИЛЮ3 В5: код 3 = записът е минал, но глава от Министерството или мостът за
+        # VIX/MOVE е паднал. Мозъкът и комитът вървят; ходът червенее в края (стъпка Alarm).
+        id: collector
+        run: |
+          rc=0
+          python -m collectors.vrm.run || rc=$?
+          if [ "$rc" = "3" ]; then echo "loud=1" >> "$GITHUB_OUTPUT"; exit 0; fi
+          exit $rc
 
       - name: Run VRM brain (recompute state on the fresh canonical)
         env:
@@ -139,13 +156,22 @@ jobs:
         # ИЛЮ3 (22.11.2026): the lights read breadth_history.csv (one row per Friday, ШИРН1)
         # and policy_path_futures.json (ПЪТ1). Neither was written by any job, so both stood
         # where a session last left them. Both read only the price archive checked out above.
+        # ИЛЮ3 В6: падането им не спира комита на мозъка (плочки 1, 3, 5, 12, 13); ходът
+        # червенее в края и назовава стъпката (стъпка Alarm).
+        id: breadth
+        continue-on-error: true
         env:
           DATACORE_ROOT: ${{ github.workspace }}/_data-core
           PRICE_ARCHIVE_ROOT: ${{ github.workspace }}/_price-archive
-        run: |
-          set -e
-          python _data-core/migrations/m_breadth/export_breadth.py --history
-          python _data-core/migrations/m_path/build_path.py --px-root "$PRICE_ARCHIVE_ROOT/archive"
+        run: python _data-core/migrations/m_breadth/export_breadth.py --history
+
+      - name: The Fed path from the futures strip (ИЛЮ3 -- after prices)
+        id: fedpath
+        continue-on-error: true
+        env:
+          DATACORE_ROOT: ${{ github.workspace }}/_data-core
+          PRICE_ARCHIVE_ROOT: ${{ github.workspace }}/_price-archive
+        run: python _data-core/migrations/m_path/build_path.py --px-root "$PRICE_ARCHIVE_ROOT/archive"
 
       - name: Commit canonical + state + health + registries -> data-core (private)
         working-directory: _data-core
@@ -169,4 +195,14 @@ jobs:
           # предупредил), commit-ът на храната не спира заради него.
           if [ -d signals ]; then git add signals; fi
           git diff --cached --quiet || git commit -m "vrm: $(date -u +%Y-%m-%d) canonical + state + registries write"
+          # ИЛЮ3 В1: cot, gold и oil пишат в същия data-core; без rebase вторият push пада.
+          git pull --rebase --quiet
           git push
+
+      - name: Alarm (ИЛЮ3 В5/В6 -- red at the end, after the commit)
+        if: always() && (steps.collector.outputs.loud == '1' || steps.breadth.outcome == 'failure' || steps.fedpath.outcome == 'failure')
+        run: |
+          [ "${{ steps.collector.outputs.loud }}" = "1" ] && echo "::error::collector: Treasury head rejected or VIX/MOVE archive stale (see the collector log)"
+          [ "${{ steps.breadth.outcome }}" = "failure" ] && echo "::error::export_breadth.py --history failed (breadth_history.csv not refreshed)"
+          [ "${{ steps.fedpath.outcome }}" = "failure" ] && echo "::error::build_path.py failed (policy_path_futures.json not refreshed)"
+          exit 1

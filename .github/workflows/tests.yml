@@ -89,4 +89,4 @@ jobs:
         run: |
           pip install -r requirements.txt pytest
           python -m pytest -q collectors/price/tests/test_rate_futures.py \
-            collectors/vrm/tests/test_treasury_head.py collectors/vrm/tests/test_fetch_bridge.py
+            collectors/vrm/tests/test_treasury_head.py collectors/vrm/tests/test_fetch_bridge.py collectors/vrm/tests/test_ilu3_vrashtane.py
