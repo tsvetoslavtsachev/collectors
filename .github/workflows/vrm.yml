@@ -98,6 +98,8 @@ jobs:
           # explicit opt-in. Writing to the checkout is the intended CI behavior here
           # (the same as oil/cot writing to their data-core checkout).
           DATACORE_ALLOW_REAL: "1"
+          # ИЛЮ3 (22.11.2026): mkt_vix / mkt_move идват дневно от ценовия архив (fetch_bridge.py).
+          PRICE_ARCHIVE_ROOT: ${{ github.workspace }}/_price-archive
         run: python -m collectors.vrm.run
 
       - name: Run VRM brain (recompute state on the fresh canonical)
@@ -132,6 +134,18 @@ jobs:
           # exporter-ът пише трите VRM обекта и предупреждава.
           PRICE_ARCHIVE_ROOT: ${{ github.workspace }}/_price-archive
         run: python -m collectors.vrm.export_signals
+
+      - name: Friday breadth history + the Fed path (ИЛЮ3 -- the chain, after prices)
+        # ИЛЮ3 (22.11.2026): the lights read breadth_history.csv (one row per Friday, ШИРН1)
+        # and policy_path_futures.json (ПЪТ1). Neither was written by any job, so both stood
+        # where a session last left them. Both read only the price archive checked out above.
+        env:
+          DATACORE_ROOT: ${{ github.workspace }}/_data-core
+          PRICE_ARCHIVE_ROOT: ${{ github.workspace }}/_price-archive
+        run: |
+          set -e
+          python _data-core/migrations/m_breadth/export_breadth.py --history
+          python _data-core/migrations/m_path/build_path.py --px-root "$PRICE_ARCHIVE_ROOT/archive"
 
       - name: Commit canonical + state + health + registries -> data-core (private)
         working-directory: _data-core

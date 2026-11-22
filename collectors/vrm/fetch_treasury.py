@@ -18,6 +18,16 @@ head is best effort, never a reason to fail the FRED series.
 
 Config (collectors/vrm/config.yaml, under the fred series):
     treasury_head: {curve: par|real, column: "10 Yr"}
+    treasury_head: {curve: par, column: "10 Yr", minus: {curve: real, column: "10 YR"}}
+
+ИЛЮ3 (22.11.2026): the head covers every daily yield the Friday needs, not only the
+gold pair -- 2y, 30y, 3m, 5y, 5y real -- and the two FRED spreads that are plain
+differences of curve points: T10Y2Y = DGS10 - DGS2 and T10YIE = DGS10 - DFII10
+(`minus`). WHICH SOURCE WINS on a date both have: FRED, always. The Treasury point is
+appended only AFTER FRED's last date; the next run's FRED observation for that date
+replaces it (to_datacore full-replaces the series from this run's list), and the
+overlap check refuses the whole head if the two sources disagree anywhere in the last
+OVERLAP_DAYS common dates. The row's `source` names which one it came from.
 """
 from __future__ import annotations
 
@@ -63,14 +73,47 @@ def _get(url: str, timeout: int = 60) -> str:
         return r.read().decode("utf-8-sig")
 
 
-def fetch(curve: str, column: str, today: dt.date | None = None, getter=_get) -> list:
+_TEXT_CACHE: dict = {}   # url -> CSV text, one download per curve per run (default getter only)
+
+
+def _cached_get(url: str) -> str:
+    if url not in _TEXT_CACHE:
+        _TEXT_CACHE[url] = _get(url)
+    return _TEXT_CACHE[url]
+
+
+def fetch(curve: str, column: str, today: dt.date | None = None, getter=None) -> list:
     """This year's points (plus last year's in January, so the overlap exists)."""
+    getter = getter or _cached_get
     today = today or dt.datetime.now(dt.timezone.utc).date()
     years = [today.year - 1, today.year] if today.month == 1 else [today.year]
     out: list = []
     for y in years:
-        out += parse_csv(getter(URL.format(year=y, type=CURVE_TYPES[curve])), column)
+        text = getter(URL.format(year=y, type=CURVE_TYPES[curve]))
+        if text.lstrip()[:1] == "<":   # an HTML page instead of CSV is a failure, not data
+            raise ValueError(f"Treasury {curve} {y}: HTML instead of CSV")
+        out += parse_csv(text, column)
     return sorted(set(out))
+
+
+def fetch_head(th: dict, today: dt.date | None = None, getter=None) -> list:
+    """The head for one config entry: a single curve column, or `column - minus.column`
+    on the dates both have (2 decimals, like FRED's spreads)."""
+    kw = {k: v for k, v in (("today", today), ("getter", getter)) if v is not None}
+    obs = fetch(th["curve"], th["column"], **kw)
+    m = th.get("minus")
+    if not m:
+        return obs
+    sub = dict(fetch(m["curve"], m["column"], **kw))
+    return [(d, round(v - sub[d], 2)) for d, v in obs if d in sub]
+
+
+def label(th: dict) -> str:
+    base = SOURCE_LABEL[th["curve"]].format(col=th["column"])
+    m = th.get("minus")
+    if not m:
+        return base
+    return f"{base} minus {SOURCE_LABEL[m['curve']].format(col=m['column'])}"
 
 
 def extend(fred_obs: list, treasury_obs: list, rdp: int = 6) -> tuple:

@@ -79,3 +79,14 @@ jobs:
         run: |
           pip install -r requirements.txt pytest
           python -m pytest collectors/gold/tests -q
+
+      - name: Run offline futures + Friday-rates + VIX/MOVE tests (ИЛЮ3)
+        # pytest: the rate-futures strip and the closing of expired contracts (ПЪТ1, Ч8в),
+        # the US Treasury head of the Friday yields and the daily VIX/MOVE bridge. No network.
+        env:
+          DATACORE_ROOT: ${{ github.workspace }}/_data-core
+          PYTHONPATH: ${{ github.workspace }}/_data-core:${{ github.workspace }}
+        run: |
+          pip install -r requirements.txt pytest
+          python -m pytest -q collectors/price/tests/test_rate_futures.py \
+            collectors/vrm/tests/test_treasury_head.py collectors/vrm/tests/test_fetch_bridge.py

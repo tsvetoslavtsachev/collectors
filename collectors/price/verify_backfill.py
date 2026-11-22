@@ -345,7 +345,8 @@ def _sparse_series(cfg: dict, views: dict, sids: list) -> list:
     return out
 
 
-def freshness_report(cfg: dict, views: dict, sids: list, *, today: str | None = None) -> dict:
+def freshness_report(cfg: dict, views: dict, sids: list, *, today: str | None = None,
+                     retired_tips: dict | None = None) -> dict:
     """The DEFERRED verdict: is every series in the active universe still ARRIVING?
 
     Separated from the rest of verify on purpose. The integrity gates must run BEFORE the
@@ -362,6 +363,11 @@ def freshness_report(cfg: dict, views: dict, sids: list, *, today: str | None = 
         "generated_on": today,
         "universe_session": None,
         "stale": [], "sparse": [], "exempt": [], "expired_exempt": [], "hard": False,
+        # ILU Ch6: names the gate used to leave unsaid. "behind" = active series 1..4d behind
+        # the pack (a throttle or a split-day gap, e.g. SNDK); "retired_stale" = retired
+        # (merged/delisted) series whose frozen tip is >4d old. Both are INFORMATIONAL: they
+        # never turn the run red, they only put the name in the output.
+        "behind": [], "retired_stale": [],
         "thresholds": {"stale_warn_days": _STALE_WARN_DAYS, "stale_fail_days": _STALE_FAIL_DAYS,
                        "sparse_window": _SPARSE_WINDOW, "sparse_warn_max": _SPARSE_WARN_MAX,
                        "sparse_fail_max": _SPARSE_FAIL_MAX},
@@ -383,10 +389,25 @@ def freshness_report(cfg: dict, views: dict, sids: list, *, today: str | None = 
         if ao >= mode_asof:
             continue
         days = (date.fromisoformat(mode_asof) - date.fromisoformat(ao)).days
+        sym = cfg["price"][sid]["symbol"]
+        # US listings only (no venue suffix / index / future marker): foreign venues lag a
+        # day on any US holiday or time-zone edge and would bury the names that matter.
+        if days <= _STALE_WARN_DAYS and not any(c in sym for c in ".^=-"):
+            rep["behind"].append({"series_id": sid, "symbol": cfg["price"][sid]["symbol"],
+                                  "latest": ao, "days": days})
         if days > _STALE_WARN_DAYS:
             rep["stale"].append({"series_id": sid, "symbol": cfg["price"][sid]["symbol"],
                                  "latest": ao, "days": days,
                                  "tier": _tier(sid, days > _STALE_FAIL_DAYS)})
+
+    # ---- retired constituents: skipped by the gate, but named when their tip is old ----
+    for sid, ao in sorted((retired_tips or {}).items()):
+        days = (date.fromisoformat(mode_asof) - date.fromisoformat(ao)).days
+        if days > _STALE_WARN_DAYS:
+            m = cfg["price"][sid]
+            rep["retired_stale"].append({
+                "series_id": sid, "symbol": m["symbol"], "latest": ao, "days": days,
+                "retired_on": m.get("retired_on"), "merged_into": m.get("merged_into")})
 
     # ---- v2d density: interior sessions missing vs the series' own venue calendar ----
     for sid, n, dates in _sparse_series(cfg, views, sids):
@@ -565,7 +586,13 @@ def verify(root: Path, cfg: dict, g: Gate, *, daily: bool = False) -> dict:
         # AFTER committing (`--assert-freshness`) and fails the run there. Good bars land; the run
         # still goes red.
         live_asof_views = {sid: [{"as_of": a} for a in dates] for sid, dates in as_of_lists.items()}
-        fresh = freshness_report(cfg, live_asof_views, sids)
+        retired_tips = {}
+        for rsid, rm in cfg["price"].items():
+            if rm.get("retired"):
+                tip = max((b["as_of"][:10] for b in _raw_lines(root, rsid)), default=None)
+                if tip:
+                    retired_tips[rsid] = tip
+        fresh = freshness_report(cfg, live_asof_views, sids, retired_tips=retired_tips)
         del live_asof_views
         mode_asof = fresh["universe_session"]
         n_fail = sum(1 for r in fresh["stale"] + fresh["sparse"] if r["tier"] == "fail")
@@ -689,6 +716,13 @@ def assert_freshness(path: Path) -> int:
         print(f"  [{r['tier'].upper():>6}] STALE  {r['series_id']} ({r['symbol']}): last bar "
               f"{r['latest']}, {r['days']}d behind the pack "
               f"(hard line >{t.get('stale_fail_days')}d)")
+    for r in rep.get("behind", [])[:30]:
+        print(f"  [  INFO] BEHIND {r['series_id']} ({r['symbol']}): last bar {r['latest']}, "
+              f"{r['days']}d behind the pack (under the {t.get('stale_warn_days')}d line)")
+    for r in rep.get("retired_stale", []):
+        print(f"  [  INFO] RETIRED {r['series_id']} ({r['symbol']}): frozen tip {r['latest']}, "
+              f"{r['days']}d old; retired_on {r.get('retired_on')}, merged_into "
+              f"{r.get('merged_into') or '-'} (out of the index: drop it from membership lists)")
     for r in rep.get("sparse", []):
         print(f"  [{r['tier'].upper():>6}] SPARSE {r['series_id']} ({r['symbol']}): "
               f"{r['missing']} interior sessions missing (hard line >{t.get('sparse_fail_max')}); "

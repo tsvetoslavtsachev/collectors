@@ -17,8 +17,8 @@ settings:
   bloomberg_era_cut: "2026-06-12"   # provenance boundary (last MID Friday, S5)
   history_period_prices: "max"      # yfinance full-history pull, then full-replace write
   round_dp: 6
-  # FEED 5 bridge source — ETF-rr barometer published JSON (Pages). Snapshot feed:
-  # one reading per indicator; the bridge forward-accumulates (Gate 2 wiring).
+  # FEED 5: до ИЛЮ3 (22.11.2026) снимката на барометъра; вече не се чете (fetch_bridge.py
+  # взема VIX и MOVE от ценовия архив). URL-ът остава само за справка.
   barometer_feed_url: "https://tsvetoslavtsachev.github.io/ETF-rotationradar/barometer_feed.json"
   # WRITE MODE — DECIDED (Цветослав, 2026-06-22): full re-pull + replace.
   #   Re-pull full history each run, one write/series (mirrors the S6 importer;
@@ -69,10 +69,9 @@ yfinance:
   etf_ewy:  {symbol: "EWY",        dual_basis: true,  forward_only: true}
   idx_dxy:  {symbol: "DX-Y.NYB",   dual_basis: false}
   # market-context (D2) — DECIDED (Цветослав, 2026-06-22): BRIDGE from the ETF-rr
-  # barometer feed, NOT a direct yfinance pull. bridge:true makes fetch_prices skip
-  # these; fetch_bridge.py reads the barometer feed (single source shared with the
-  # barometer). The barometer-feed location/shape is wired at Gate 2. resolution
-  # daily kept for when the bridge supplies the series. (symbol kept for reference.)
+  # ИЛЮ3 (22.11.2026, решение на Ц. Р2): VIX и MOVE идват ДНЕВНО от ценовия архив
+  # (px_vix_daily, px_move_daily); bridge:true кара fetch_prices да ги прескочи, а
+  # fetch_bridge.py пази Блумбърг историята и добавя архива след нея. (symbol за справка.)
   mkt_vix:  {symbol: "^VIX",       dual_basis: false, resolution: daily, bridge: true}
   mkt_move: {symbol: "^MOVE",      dual_basis: false, resolution: daily, bridge: true}
 
@@ -102,8 +101,10 @@ fred:
   # back from today). ONLY such series carry their head over and are measured on the
   # overlap (to_datacore.push, ЗЛТ1/ЗЛТ2 Ф.0б); every other series is refused on a short answer.
   mkt_hy_oas:              {ticker: "BAMLH0A0HYM2", transform: level, model_freq: daily,   source_freq: daily, rolling_window: true}
-  mkt_breakeven_10y:       {ticker: "T10YIE",       transform: level, model_freq: daily,   source_freq: daily}
-  mkt_curve_10y2y:         {ticker: "T10Y2Y",       transform: level, model_freq: daily,   source_freq: daily}
+  # ИЛЮ3 (22.11.2026): главата от Treasury и за двете разлики (T10YIE = DGS10 - DFII10,
+  # T10Y2Y = DGS10 - DGS2), за 2г, 30г и новите 3м, 5г, реална 5г: петъкът влиза в събота.
+  mkt_breakeven_10y:       {ticker: "T10YIE",       transform: level, model_freq: daily,   source_freq: daily, treasury_head: {curve: par, column: "10 Yr", minus: {curve: real, column: "10 YR"}}}
+  mkt_curve_10y2y:         {ticker: "T10Y2Y",       transform: level, model_freq: daily,   source_freq: daily, treasury_head: {curve: par, column: "10 Yr", minus: {curve: par, column: "2 Yr"}}}
   # Лихвените серии на златото (ЗЛТ1, 28.09.2026): номинална, реална 10г и срочна
   # премия (Kim-Wright, изостава ~6 дни). Тъждество: DGS10 - DFII10 = T10YIE.
   # Дневни като mkt_* — извън месечната кохорта, не са VRM режимен вход.
@@ -111,8 +112,12 @@ fred:
   # с работен ден назад) още не; само при съвпадение на общите дни (fetch_treasury.py).
   mkt_ust_10y:             {ticker: "DGS10",        transform: level, model_freq: daily,   source_freq: daily, treasury_head: {curve: par, column: "10 Yr"}}
   # ЗАЛ2 (08.11.2026): 2г и 30г за машинния falsifier на летописа (DGS2, DGS30).
-  mkt_ust_2y:              {ticker: "DGS2",         transform: level, model_freq: daily,   source_freq: daily}
-  mkt_ust_30y:             {ticker: "DGS30",        transform: level, model_freq: daily,   source_freq: daily}
+  mkt_ust_2y:              {ticker: "DGS2",         transform: level, model_freq: daily,   source_freq: daily, treasury_head: {curve: par, column: "2 Yr"}}
+  mkt_ust_30y:             {ticker: "DGS30",        transform: level, model_freq: daily,   source_freq: daily, treasury_head: {curve: par, column: "30 Yr"}}
+  # ИЛЮ3 (22.11.2026): 3 месеца, 5 години и реална 5 години (бриф ИЛЮ3, стъпка 2).
+  mkt_ust_3m:              {ticker: "DGS3MO",       transform: level, model_freq: daily,   source_freq: daily, treasury_head: {curve: par, column: "3 Mo"}}
+  mkt_ust_5y:              {ticker: "DGS5",         transform: level, model_freq: daily,   source_freq: daily, treasury_head: {curve: par, column: "5 Yr"}}
+  mkt_real_5y:             {ticker: "DFII5",        transform: level, model_freq: daily,   source_freq: daily, treasury_head: {curve: real, column: "5 YR"}}
   mkt_real_10y:            {ticker: "DFII10",       transform: level, model_freq: daily,   source_freq: daily, treasury_head: {curve: real, column: "10 YR"}}
   mkt_term_premium_10y:    {ticker: "THREEFYTP10",  transform: level, model_freq: daily,   source_freq: daily}
   # Кредитният спред с дълга история (s9_tech О2, 24.10.2026): Moody's Baa минус 10г, от 1986.

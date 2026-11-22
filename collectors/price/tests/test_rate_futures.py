@@ -109,3 +109,21 @@ def test_hole_inside_strip_is_named(root):
     p = {"ZQX26.CBT": [("2026-11-20", 96.1)], "ZQF27.CBT": [("2026-11-20", 95.9)]}   # ZQZ26 missing
     out = RF.run(date(2026, 11, 22), "1mo", root, cfg=cfg, fetch_one=fake_fetch(p), log=lambda *a: None)
     assert out["holes"] == ["ZQZ26.CBT"]
+
+
+def test_ilu3_ch8v_expired_contract_is_closed_as_final(root):
+    """ИЛЮ3 Ч8в: последният бар на изтекъл договор не остава провизорен завинаги."""
+    cfg = {"rate_futures": SPEC, "settings": {"round_dp": 6, "daily_period": "1mo"}}
+    nov = {"ZQX26.CBT": [("2026-11-19", 96.1), ("2026-11-20", 96.12)], "ZQZ26.CBT": [("2026-11-20", 95.96)]}
+    RF.run(date(2026, 11, 22), "1mo", root, cfg=cfg, fetch_one=fake_fetch(nov), log=lambda *a: None)
+    tip = lambda: json.loads((root / "archive" / "px_zqx26_cbt_daily" / "2026.jsonl").read_text(encoding="utf-8").splitlines()[-1])
+    assert tip()["provisional"] is True
+    # 5 дни по-късно Yahoo вече не го дава, но е рано: остава провизорен
+    out = RF.run(date(2026, 11, 25), "1mo", root, cfg=cfg, fetch_one=fake_fetch({"ZQZ26.CBT": [("2026-11-25", 95.9)]}), log=lambda *a: None)
+    assert out["closed"] == [] and tip()["provisional"] is True
+    # 11 дни по-късно: затворен като окончателен, без промяна на стойността
+    out = RF.run(date(2026, 12, 1), "1mo", root, cfg=cfg, fetch_one=fake_fetch({"ZQZ26.CBT": [("2026-12-01", 95.97)]}), log=lambda *a: None)
+    assert out["closed"] == [("px_zqx26_cbt_daily", "2026-11-20")]
+    assert tip()["provisional"] is False and tip()["value"] == 96.12
+    z = json.loads((root / "archive" / "px_zqz26_cbt_daily" / "2026.jsonl").read_text(encoding="utf-8").splitlines()[-1])
+    assert z["as_of"] == "2026-12-01" and z["provisional"] is True        # живият не е пипнат

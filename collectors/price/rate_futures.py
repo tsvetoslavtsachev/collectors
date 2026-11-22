@@ -219,7 +219,46 @@ def run(on: date, period: str, root, *, cfg=None, fetch_one=None, log=print) -> 
         log(f"  WARN holes inside the listed strip (Yahoo returned nothing): {holes}")
     tot = sum(a for _, a, _, _ in summary)
     log(f"  appended {tot} bars into {len(summary)} series; not listed: {len(res['missing'])}")
-    return {"strip": strip, "summary": summary, "missing": res["missing"], "holes": holes}
+    closed = close_expired(root, on, set(res["got"]), cat, log=log)
+    return {"strip": strip, "summary": summary, "missing": res["missing"], "holes": holes,
+            "closed": closed}
+
+
+def _tip(root: Path, sid: str) -> dict | None:
+    files = sorted((root / "archive" / sid).glob("*.jsonl"))
+    for f in reversed(files):
+        lines = [l for l in f.read_text(encoding="utf-8").splitlines() if l.strip()]
+        if lines:
+            rows = [json.loads(l) for l in lines]
+            return max(rows, key=lambda r: (r["as_of"], r.get("recorded_on") or ""))
+    return None
+
+
+def close_expired(root, on: date, got: set, cat: dict, *, log=print) -> list:
+    """ИЛЮ3 Ч8в (22.11.2026): an expired contract's last bar stays provisional because no
+    later bar arrives to freeze it. A rate-futures series that Yahoo did NOT return this
+    run and whose provisional tip is older than TIP_MAX_AGE_DAYS is closed: the same bar is
+    re-offered with provisional false (datacore.archive replaces the provisional tip in
+    place, no value change). A live contract gets a fresh bar daily and is never touched."""
+    from datacore import archive
+
+    root = Path(root)
+    closed = []
+    for sid, e in cat.get("series", {}).items():
+        if sid in got or e.get("family") != "future":
+            continue
+        tip = _tip(root, sid)
+        if not tip or not tip.get("provisional"):
+            continue
+        if (on - date.fromisoformat(tip["as_of"])).days <= TIP_MAX_AGE_DAYS:
+            continue
+        rec = {k: v for k, v in tip.items() if k not in ("series_id", "schema_version", "recorded_on")}
+        rec["provisional"] = False
+        archive.append(sid, [rec], root=str(root), catalog=cat)
+        closed.append((sid, tip["as_of"]))
+    if closed:
+        log(f"  closed {len(closed)} expired contract(s) as final: {closed}")
+    return closed
 
 
 def _arg(args, flag):

@@ -323,6 +323,10 @@ price:
   px_vix9d_daily: {symbol: "^VIX9D", name: "Cboe S&P 500 9-Day Volatility Index", category: "Volatility Index"}
   px_vix3m_daily: {symbol: "^VIX3M", name: "Cboe S&P 500 3-Month Volatility Index", category: "Volatility Index"}
   px_vvix_daily:  {symbol: "^VVIX", name: "Cboe VIX of VIX Index", category: "Volatility Index"}
+  # ИЛЮ3 (22.11.2026, решение на Ц. Р2 „Дневни + етикет“): самите VIX и MOVE, дневни. Канонът
+  # mkt_vix / mkt_move ги чете оттук (collectors/vrm/fetch_bridge.py), не от снимката на барометъра.
+  px_vix_daily:   {symbol: "^VIX", name: "Cboe Volatility Index", category: "Volatility Index"}
+  px_move_daily:  {symbol: "^MOVE", name: "ICE BofAML MOVE Index", category: "Volatility Index"}
   px_vxn_daily:   {symbol: "^VXN", name: "Cboe Nasdaq-100 Volatility Index", category: "Volatility Index"}
   px_skew_daily:  {symbol: "^SKEW", name: "Cboe S&P 500 Skew Index", category: "Volatility Index"}
 
@@ -997,6 +1001,7 @@ price:
   px_vst_daily: {symbol: "VST", name: "Vistra Corp.", category: "Utilities", family: "stock"}
   px_vtr_daily: {symbol: "VTR", name: "Ventas", category: "Real Estate", family: "stock"}
   px_vtrs_daily: {symbol: "VTRS", name: "Viatris", category: "Health Care", family: "stock"}
+  px_vylr_daily: {symbol: "VYLR", name: "Vylor", category: "Financials", family: "stock"}  # ИЛЮ Ч6 22.11.2026: член на S&P 500 от 01.10.2026 без серия; сектор по Yahoo (GICS не е сверен)
   px_vz_daily: {symbol: "VZ", name: "Verizon", category: "Communication Services", family: "stock"}
   px_wab_daily: {symbol: "WAB", name: "Wabtec", category: "Industrials", family: "stock"}
   px_wat_daily: {symbol: "WAT", name: "Waters Corporation", category: "Health Care", family: "stock"}

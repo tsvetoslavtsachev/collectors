@@ -1,109 +1,82 @@
 # -*- coding: utf-8 -*-
-"""ЧИС3 казуси 1+2 -- fetch_bridge.py чете value_date по серия и пази срещу
-застояла стойност от фийда (виж manus-factory/prompts/observatory-atlas/CHISTKA-3.md)."""
-from collectors.vrm import fetch_bridge
+"""ИЛЮ3 (22.11.2026): mkt_vix и mkt_move дневни от ценовия архив (решението на Ц. Р2).
+
+Заменя тестовете на ЧИС3 за снимката на барометъра: барометърът вече не храни канона.
+Гейтът G3 (мутация): празен, липсващ или подменен архив дава not-ok с причина, не зелено;
+здравият архив дава дневния път след последния ред от Блумбърг.
+"""
+import datetime as dt
+import json
+
+import pytest
+
+from collectors.vrm import fetch_bridge as fb
+
+CFG = {"yfinance": {"mkt_vix": {"bridge": True}, "mkt_move": {"bridge": True}}, "settings": {}}
+TODAY = dt.date(2026, 11, 22)
 
 
-def _cfg():
-    return {"yfinance": {"mkt_vix": {"bridge": True}, "mkt_move": {"bridge": True}},
-            "settings": {}}
+def _write(root, px_id, rows):
+    d = root / "archive" / px_id
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "2026.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
 
 
-def _feed(as_of, vix_value_date=None, move_value_date=None, vix=18.5, move=95.0):
-    vix_row = {"indicator": "VIX", "value": vix}
-    if vix_value_date is not None:
-        vix_row["value_date"] = vix_value_date
-    move_row = {"indicator": "MOVE", "value": move}
-    if move_value_date is not None:
-        move_row["value_date"] = move_value_date
-    return {"as_of": as_of, "snapshot": [vix_row, move_row]}
+def _bar(as_of, value, rec="2026-11-21", prov=False):
+    return {"as_of": as_of, "value": value, "recorded_on": rec, "provisional": prov}
 
 
-def _patch(monkeypatch, feed, existing=None):
-    monkeypatch.setattr(fetch_bridge, "_fetch_feed", lambda url: feed)
-    monkeypatch.setattr(fetch_bridge.storage, "read_canonical",
-                         lambda sid: (existing or {}).get(sid, []))
+@pytest.fixture
+def env(tmp_path, monkeypatch):
+    monkeypatch.setenv("PRICE_ARCHIVE_ROOT", str(tmp_path))
+    canon = {"mkt_vix": [{"as_of": "2026-06-18", "value": 16.4, "source": "backfill:vix.csv (Bloomberg)", "resolution": "daily"},
+                         {"as_of": "2026-06-19", "value": 16.9, "source": "backfill:vix.csv (Bloomberg)", "resolution": "daily"},
+                         {"as_of": "2026-11-13", "value": 19.3, "source": "etf-rr-barometer", "resolution": "daily"}],
+             "mkt_move": []}
+    monkeypatch.setattr(fb.storage, "read_canonical", lambda sid: list(canon[sid]))
+    return tmp_path
 
 
-def test_uses_value_date_when_present(monkeypatch):
-    feed = _feed(as_of="2026-09-05", vix_value_date="2026-09-06")
-    _patch(monkeypatch, feed)
-    out = fetch_bridge.fetch_bridge(_cfg())
-    assert out["mkt_vix"]["records"][-1]["as_of"] == "2026-09-06"
+def test_healthy_archive_gives_the_daily_path_after_the_backfill(env):
+    _write(env, "px_vix_daily", [_bar("2026-06-18", 16.41), _bar("2026-06-22", 17.0),
+                                 _bar("2026-11-19", 26.4), _bar("2026-11-20", 35.889999, prov=True)])
+    _write(env, "px_move_daily", [_bar("2026-11-19", 101.0), _bar("2026-11-20", 106.309998)])
+    out = fb.fetch_bridge(CFG, today=TODAY)
+    vix = out["mkt_vix"]["records"]
+    assert out["mkt_vix"]["ok"] and out["mkt_move"]["ok"]
+    assert [r["as_of"] for r in vix] == ["2026-06-18", "2026-06-19", "2026-06-22", "2026-11-19", "2026-11-20"]
+    assert vix[0]["value"] == 16.4                       # Блумбърг остава какъвто е
+    assert vix[-1] == {"as_of": "2026-11-20", "value": 35.889999, "resolution": "daily",
+                       "source": "price-archive px_vix_daily (yfinance ^VIX)"}
+    assert all(r["source"] != "etf-rr-barometer" for r in vix)   # седмичната снимка е заменена
 
 
-def test_falls_back_to_feed_as_of_when_missing(monkeypatch):
-    feed = _feed(as_of="2026-09-05")
-    _patch(monkeypatch, feed)
-    out = fetch_bridge.fetch_bridge(_cfg())
-    assert out["mkt_vix"]["records"][-1]["as_of"] == "2026-09-05"
-    assert out["mkt_move"]["records"][-1]["as_of"] == "2026-09-05"
+def test_newest_vintage_wins_per_date(env):
+    _write(env, "px_vix_daily", [_bar("2026-11-20", 30.0, rec="2026-11-21", prov=True),
+                                 _bar("2026-11-20", 35.89, rec="2026-11-24")])
+    _write(env, "px_move_daily", [_bar("2026-11-20", 106.3)])
+    assert fb.fetch_bridge(CFG, today=TODAY)["mkt_vix"]["records"][-1]["value"] == 35.89
 
 
-def test_value_date_used_even_when_older_than_feed_as_of(monkeypatch):
-    # мутация от гейт А: value_date по-стара от as_of -> все пак се пише value_date,
-    # не по-новата от двете.
-    feed = _feed(as_of="2026-09-08", vix_value_date="2026-09-05")
-    _patch(monkeypatch, feed)
-    out = fetch_bridge.fetch_bridge(_cfg())
-    assert out["mkt_vix"]["records"][-1]["as_of"] == "2026-09-05"
+@pytest.mark.parametrize("rows,why", [
+    ([], "empty"),
+    ([_bar("2026-11-20", 0.0)], "non-positive"),
+    ([_bar("2026-11-20", "<html>")], "non-numeric"),
+    ([_bar("2026-11-06", 18.0)], "days old"),
+])
+def test_mutation_bad_archive_is_not_ok_with_reason(env, rows, why):
+    if rows:
+        _write(env, "px_vix_daily", rows)
+    else:
+        (env / "archive" / "px_vix_daily").mkdir(parents=True)
+        (env / "archive" / "px_vix_daily" / "2026.jsonl").write_text("", encoding="utf-8")
+    _write(env, "px_move_daily", [_bar("2026-11-20", 106.3)])
+    out = fb.fetch_bridge(CFG, today=TODAY)
+    assert out["mkt_vix"]["ok"] is False and why in out["mkt_vix"]["error"]
+    assert out["mkt_move"]["ok"] is True                 # другата серия не страда
 
 
-def test_stale_value_is_skipped_not_recorded(monkeypatch, capsys):
-    existing = {"mkt_vix": [{"as_of": "2026-09-05", "value": 18.5,
-                              "source": "etf-rr-barometer", "resolution": "daily"}]}
-    feed = _feed(as_of="2026-09-05", vix_value_date="2026-09-06", vix=18.5001)
-    _patch(monkeypatch, feed, existing)
-    out = fetch_bridge.fetch_bridge(_cfg())
-    assert out["mkt_vix"]["records"] == existing["mkt_vix"]
-    assert "застояла стойност" in capsys.readouterr().out
-
-
-def test_new_value_beyond_deadband_is_recorded(monkeypatch):
-    existing = {"mkt_vix": [{"as_of": "2026-09-05", "value": 18.5,
-                              "source": "etf-rr-barometer", "resolution": "daily"}]}
-    feed = _feed(as_of="2026-09-05", vix_value_date="2026-09-06", vix=19.2)
-    _patch(monkeypatch, feed, existing)
-    out = fetch_bridge.fetch_bridge(_cfg())
-    assert out["mkt_vix"]["records"][-1] == {
-        "as_of": "2026-09-06", "value": 19.2,
-        "source": "etf-rr-barometer", "resolution": "daily",
-    }
-
-
-# ── 27.09.2026 · VIX W39: съвпадение срещу рециклиран отпечатък ───────────────
-# CBOE: 21.09 = 14,87 и 25.09 = 14,87, между тях 14,21 / 15,18 / 15,67. Пазачът изхвърли
-# истинското 25.09. Фийдът вече носи value_since (откога стойността стои същата).
-
-_W39 = {"mkt_vix": [{"as_of": "2026-09-21", "value": 14.87,
-                     "source": "etf-rr-barometer", "resolution": "daily"}]}
-
-
-def _w39_feed(value_since):
-    feed = _feed(as_of="2026-09-25", vix_value_date="2026-09-25",
-                 move_value_date="2026-09-25", vix=14.87, move=96.0)
-    feed["snapshot"][0]["value_since"] = value_since
-    return feed
-
-
-def test_coincidence_with_a_new_print_is_recorded(monkeypatch, capsys):
-    _patch(monkeypatch, _w39_feed(value_since="2026-09-25"), _W39)
-    out = fetch_bridge.fetch_bridge(_cfg())
-    assert out["mkt_vix"]["records"][-1] == {
-        "as_of": "2026-09-25", "value": 14.87,
-        "source": "etf-rr-barometer", "resolution": "daily"}
-    assert "нов отпечатък" in capsys.readouterr().out
-
-
-def test_flat_since_last_canonical_is_still_skipped(monkeypatch, capsys):
-    _patch(monkeypatch, _w39_feed(value_since="2026-09-21"), _W39)
-    out = fetch_bridge.fetch_bridge(_cfg())
-    assert out["mkt_vix"]["records"] == _W39["mkt_vix"]
-    assert "застояла стойност" in capsys.readouterr().out
-
-
-def test_repeat_of_previous_session_is_still_skipped(monkeypatch):
-    # стойността стои от вчера: днешният ред повтаря предния -> може да е рециклиран
-    _patch(monkeypatch, _w39_feed(value_since="2026-09-24"), _W39)
-    out = fetch_bridge.fetch_bridge(_cfg())
-    assert out["mkt_vix"]["records"] == _W39["mkt_vix"]
+def test_missing_archive_series_is_not_ok(env):
+    _write(env, "px_move_daily", [_bar("2026-11-20", 106.3)])
+    out = fb.fetch_bridge(CFG, today=TODAY)
+    assert out["mkt_vix"]["ok"] is False and "no archive files" in out["mkt_vix"]["error"]

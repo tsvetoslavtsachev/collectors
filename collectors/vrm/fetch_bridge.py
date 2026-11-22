@@ -1,105 +1,110 @@
-"""FEED 5 — market-context bridge from the ETF-rr barometer (mkt_vix, mkt_move).
+"""FEED 5 -- mkt_vix and mkt_move, DAILY from the price archive (ИЛЮ3, 22.11.2026).
 
-DECISION (Цветослав, 2026-06-22): VIX/MOVE come from the ETF-rr barometer feed,
-NOT a direct yfinance pull — one source shared with the barometer (D2 intent;
-catalog source = etf-rr-barometer, migration_status = switch).
+DECISION (Цветослав, 22.11.2026, ИЛЮ6 Р2 „Дневни + етикет“): VIX and MOVE are daily
+series in the price archive (px_vix_daily = ^VIX, px_move_daily = ^MOVE, collectors/price),
+and the canonical mkt_vix / mkt_move are built from them. Before this the bridge took ONE
+snapshot per weekly run from the ETF-rr barometer feed (decision of 22.06), so after the
+Bloomberg backfill (to 2026-06-19) the canon held 26 weekly points labelled "daily".
+The barometer pulls the same ^VIX/^MOVE from yfinance, so the levels are the same source.
 
-The barometer publishes its 10 indicators (VIX + MOVE among them) as a JSON feed
-at <Pages>/barometer_feed.json (behavioral-tracker reads the same docs/ file). The
-feed is a CURRENT SNAPSHOT — one reading per indicator, dated `as_of`, with `value`
-holding the raw index level (even where the barometer's own `kind` is robust_z).
-So the bridge FORWARD-ACCUMULATES one record per run into the canonical history
-(the S15 shares_history pattern): read the existing series, add today's reading,
-return the merged list for to_datacore's full_replace to write. Re-running the same
-as_of is idempotent (overwrites by date, never duplicates). A missing feed /
-indicator -> that series not-ok, never a silent zero, and the rest of the run
-proceeds (mkt_vix/mkt_move are not on the regime/overlay critical path).
+THE MERGE. Rows whose source is the Bloomberg backfill ("backfill:...") are kept as they
+are (the archive matches them on 99.8% of 6482 common days, measured 22.11.2026); every
+date after the last backfill row comes from the archive, which replaces the weekly
+barometer snapshots with the full daily path. The newest bar of each date wins
+(bitemporal), the archive's provisional tip included (an index close; the next price
+run finalises it).
+
+LOUD, NOT SILENT. An archive that is missing, empty, holds a non-positive or non-numeric
+level, or has not moved for STALE_DAYS calendar days is a not-ok series with the reason
+(Health shows SKIP and the canon keeps its last good rows); it is never a silent green.
 """
 from __future__ import annotations
+import datetime as dt
 import json
-import urllib.request
+import os
+from pathlib import Path
 
 from datacore import storage
 
-# barometer indicator key -> VRM canonical series_id
-BRIDGE_MAP = {"VIX": "mkt_vix", "MOVE": "mkt_move"}
-DEFAULT_FEED_URL = "https://tsvetoslavtsachev.github.io/ETF-rotationradar/barometer_feed.json"
+ARCHIVE_MAP = {"mkt_vix": "px_vix_daily", "mkt_move": "px_move_daily"}
+SYMBOL = {"mkt_vix": "^VIX", "mkt_move": "^MOVE"}
+STALE_DAYS = 6          # a Friday bar read on the next Thursday is still fine; older is not
+_DEFAULT_ROOTS = (Path(__file__).resolve().parents[3] / "price-archive",
+                  Path(r"C:\Projects\price-archive"))
 
 
-def _fetch_feed(url: str) -> dict:
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+def _archive_root() -> Path | None:
+    env = os.environ.get("PRICE_ARCHIVE_ROOT")
+    if env:
+        return Path(env)
+    return next((p for p in _DEFAULT_ROOTS if (p / "archive").is_dir()), None)
 
 
-def _accumulate(series_id: str, rec: dict) -> list:
-    """Existing canonical history + the new snapshot reading, sorted, de-duplicated
-    by as_of (a same-day re-run overwrites that date, never appends a duplicate)."""
-    by = {r["as_of"]: r for r in storage.read_canonical(series_id)}
-    by[rec["as_of"]] = rec
-    return [by[d] for d in sorted(by)]
+def read_archive(root: Path, px_id: str) -> list:
+    """[(as_of, value)] ascending, newest vintage per date, provisional tip included.
+    Raises ValueError on a missing/empty series or a non-positive/non-numeric level."""
+    files = sorted((root / "archive" / px_id).glob("*.jsonl"))
+    if not files:
+        raise ValueError(f"{px_id}: no archive files under {root}")
+    best: dict = {}
+    for f in files:
+        for line in f.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            r = json.loads(line)
+            key = (r.get("recorded_on") or "", )
+            if r["as_of"] not in best or key >= best[r["as_of"]][0]:
+                best[r["as_of"]] = (key, r.get("value"))
+    if not best:
+        raise ValueError(f"{px_id}: archive files are empty")
+    out = []
+    for d in sorted(best):
+        v = best[d][1]
+        try:
+            v = float(v)
+        except (TypeError, ValueError):
+            raise ValueError(f"{px_id} {d}: non-numeric level {v!r}") from None
+        if v <= 0:
+            raise ValueError(f"{px_id} {d}: non-positive level {v}")
+        out.append((d, v))
+    return out
 
 
-def fetch_bridge(cfg: dict) -> dict:
-    """{series_id: {ok, records}} for the bridge series from the barometer feed."""
+def merge(existing: list, archive: list, sid: str) -> list:
+    """Bloomberg backfill rows kept; every date after the last of them from the archive."""
+    kept = [r for r in existing if str(r.get("source", "")).startswith("backfill:")]
+    cut = max((r["as_of"] for r in kept), default="")
+    src = f"price-archive {ARCHIVE_MAP[sid]} (yfinance {SYMBOL[sid]})"
+    tail = [{"as_of": d, "value": round(v, 6), "source": src, "resolution": "daily"}
+            for d, v in archive if d > cut]
+    return sorted(kept, key=lambda r: r["as_of"]) + tail
+
+
+def fetch_bridge(cfg: dict, today: dt.date | None = None) -> dict:
+    """{series_id: {ok, records}} for mkt_vix / mkt_move from the price archive."""
     bridges = {sid: m for sid, m in cfg["yfinance"].items() if m.get("bridge")}
     out: dict = {}
     if not bridges:
         return out
-    url = cfg["settings"].get("barometer_feed_url", DEFAULT_FEED_URL)
-    try:
-        feed = _fetch_feed(url)
-    except Exception as e:  # noqa: BLE001 — feed down -> all bridge series pending
-        for sid in bridges:
-            out[sid] = {"ok": False, "error": f"barometer feed unreachable: {type(e).__name__}"}
-        return out
-
-    feed_as_of = feed.get("as_of")
-    snap = {row.get("indicator"): row for row in feed.get("snapshot", [])}
-    for ind, sid in BRIDGE_MAP.items():
-        if sid not in bridges:
+    root = _archive_root()
+    today = today or dt.datetime.now(dt.timezone.utc).date()
+    for sid in bridges:
+        px_id = ARCHIVE_MAP.get(sid)
+        if not px_id:
+            out[sid] = {"ok": False, "error": f"{sid}: no archive series mapped"}
             continue
-        row = snap.get(ind)
+        if root is None:
+            out[sid] = {"ok": False, "error": "price archive not found (set PRICE_ARCHIVE_ROOT)"}
+            continue
         try:
-            val = float(row.get("value")) if row else None
-        except (TypeError, ValueError):
-            val = None
-        # VIX/MOVE are index levels -> always > 0; reject missing/non-positive so a
-        # feed glitch (None, 'n/a', 0.0) shows not-ok in Health, never a silent zero.
-        # The parse is guarded per-indicator so one bad value can't abort the run.
-        if not feed_as_of or val is None or val <= 0:
-            out[sid] = {"ok": False,
-                        "error": f"{ind}: missing/non-positive barometer value ({row.get('value') if row else None!r})"}
+            arch = read_archive(root, px_id)
+        except ValueError as e:
+            out[sid] = {"ok": False, "error": str(e)}
             continue
-        # ЧИС3 казус 1: датата на СОБСТВЕНАТА серия (value_date), не общият as_of
-        # на фийда -- as_of следва ETF архива, ^VIX/^MOVE идват от yfinance в момента
-        # и в делник изостава с един ден. Липсва ли value_date (стар фийд), пада
-        # обратно на as_of -- никога по-новата от двете, винаги value_date първо.
-        rec_as_of = row.get("value_date") or feed_as_of
-        rounded = round(val, 6)
-        # ЧИС3 казус 2: пазач срещу застояла стойност от фийда (yfinance връща стар
-        # кеширан ^VIX/^MOVE): нова дата, но стойност до 0.005 от последната
-        # канонична -> записът се ПРОПУСКА, не е грешка, не спира рънa.
-        existing_records = storage.read_canonical(sid)
-        if existing_records:
-            last = max(existing_records, key=lambda r: r["as_of"])
-            same = rec_as_of > last["as_of"] and abs(rounded - float(last["value"])) < 0.005
-            # 27.09.2026 (VIX W39): по CBOE 21.09 = 25.09 = 14,87 и пазачът изхвърли
-            # истинското 25.09. Изключението е тясно: фийдът доказва, че днешният
-            # отпечатък е различен от предния в собствената серия (value_since ==
-            # value_date). Рециклиран отпечатък по дефиниция повтаря предния, значи пак
-            # се пропуска; стар фийд без value_since -> старото поведение.
-            new_print = row.get("value_since") == rec_as_of
-            if same and new_print:
-                print(f"  [bridge] {sid}: същото число като {last['as_of']}, но нов отпечатък "
-                      f"в серията (value_since {rec_as_of}) -> записано")
-            if same and not new_print:
-                print(f"  [bridge] {sid}: застояла стойност от фийда, не е записана "
-                      f"(as_of {rec_as_of}, value {rounded}, последна канонична "
-                      f"{last['as_of']} = {last['value']})")
-                out[sid] = {"ok": True, "records": existing_records}
-                continue
-        rec = {"as_of": rec_as_of, "value": rounded,
-               "source": "etf-rr-barometer", "resolution": "daily"}
-        out[sid] = {"ok": True, "records": _accumulate(sid, rec)}
+        tip = dt.date.fromisoformat(arch[-1][0])
+        if (today - tip).days > STALE_DAYS:
+            out[sid] = {"ok": False, "error": f"{px_id}: archive tip {tip} is {(today - tip).days} "
+                                              f"days old (> {STALE_DAYS}); canon keeps its last rows"}
+            continue
+        out[sid] = {"ok": True, "records": merge(storage.read_canonical(sid), arch, sid)}
     return out

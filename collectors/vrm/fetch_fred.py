@@ -114,7 +114,7 @@ def _treasury_head(series_id: str, m: dict, obs: list) -> dict:
         return {}
     from . import fetch_treasury
     try:
-        tre = fetch_treasury.fetch(th["curve"], th["column"])
+        tre = fetch_treasury.fetch_head(th)
         extended, note = fetch_treasury.extend(obs, tre)
     except Exception as e:  # noqa: BLE001 - the head never breaks the FRED series
         print(f"  {series_id}: treasury head skipped ({type(e).__name__}: {e})")
@@ -122,7 +122,7 @@ def _treasury_head(series_id: str, m: dict, obs: list) -> dict:
     print(f"  {series_id}: {note}")
     added = extended[len(obs):]
     obs.extend(added)
-    label = fetch_treasury.SOURCE_LABEL[th["curve"]].format(col=th["column"])
+    label = fetch_treasury.label(th)
     return {d: label for d, _ in added}
 
 

@@ -109,3 +109,38 @@ def test_live_this_year_matches_fred(ticker, curve, col):
     common = [d for d in tre if d in fred]
     assert len(common) > 150
     assert max(abs(tre[d] - fred[d]) for d in common) <= ft.TOLERANCE
+
+
+# ── ИЛЮ3 (22.11.2026): разликите, новите срокове и шумният отговор ─────────────────
+PAR = ('Date,"3 Mo","2 Yr","5 Yr","10 Yr"\n'
+       "11/20/2026,3.90,3.55,3.70,4.06\n"
+       "11/19/2026,3.91,3.60,3.74,4.10\n")
+REAL = ('Date,"5 YR","10 YR"\n'
+        "11/20/2026,1.40,1.80\n"
+        "11/19/2026,1.45,1.83\n")
+
+
+def _getter(url):
+    return REAL if "real_yield" in url else PAR
+
+
+def test_minus_head_is_the_difference_on_common_dates():
+    th = {"curve": "par", "column": "10 Yr", "minus": {"curve": "real", "column": "10 YR"}}
+    assert ft.fetch_head(th, getter=_getter) == [("2026-11-19", 2.27), ("2026-11-20", 2.26)]
+    th2 = {"curve": "par", "column": "10 Yr", "minus": {"curve": "par", "column": "2 Yr"}}
+    assert ft.fetch_head(th2, getter=_getter)[-1] == ("2026-11-20", 0.51)
+    assert "minus" in ft.label(th) and ft.label({"curve": "par", "column": "5 Yr"}).endswith("5 Yr")
+
+
+def test_mutation_html_instead_of_csv_is_an_error_not_an_empty_head():
+    with pytest.raises(ValueError):
+        ft.fetch("par", "10 Yr", getter=lambda u: "<!DOCTYPE html><html>blocked</html>")
+    assert ft.fetch("par", "5 Yr", getter=_getter)[-1] == ("2026-11-20", 3.70)   # здравият минава
+
+
+def test_every_friday_yield_in_config_has_a_head():
+    import yaml, pathlib
+    cfg = yaml.safe_load((pathlib.Path(fetch_fred.__file__).parent / "config.yaml").read_text(encoding="utf-8"))
+    need = ["mkt_ust_10y", "mkt_real_10y", "mkt_ust_2y", "mkt_ust_30y", "mkt_curve_10y2y",
+            "mkt_breakeven_10y", "mkt_ust_3m", "mkt_ust_5y", "mkt_real_5y"]
+    assert [s for s in need if "treasury_head" not in cfg["fred"].get(s, {})] == []

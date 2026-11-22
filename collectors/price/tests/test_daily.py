@@ -487,6 +487,17 @@ def offline(g: Gate) -> None:
             not base["stale"] and not base["sparse"] and not base["hard"],
             f"stale={len(base['stale'])} sparse={len(base['sparse'])} hard={base['hard']}")
 
+    # d10n (ILU Ch6) the gate NAMES laggards it never fails: a US name 1d behind the pack
+    # (SNDK on a split day) and a retired constituent with an old frozen tip (CTRA, EA...).
+    ret = next(s for s, m in CFG["price"].items() if m.get("retired"))
+    rn = verify_backfill.freshness_report(
+        CFG, {s: [{"as_of": d} for d in (DAYS[:-1] if s == victim else DAYS)] for s in sids_all},
+        sids_all, today="2026-07-10", retired_tips={ret: "2026-05-07"})
+    g.check("d10n a 1d-behind US name and a retired old tip are NAMED, and neither is hard",
+            [r["series_id"] for r in rn["behind"]] == [victim]
+            and [r["series_id"] for r in rn["retired_stale"]] == [ret] and not rn["hard"],
+            f"behind={[r['series_id'] for r in rn['behind']]} retired={rn['retired_stale']}")
+
     # d10b/c RECENCY at the edge: 10 days behind the pack is the last SOFT day; 11 is hard.
     r10 = _rep({victim: [d for d in DAYS if d <= "2026-06-30"]})   # mode 07-10 -> 10 days
     r11 = _rep({victim: [d for d in DAYS if d <= "2026-06-29"]})   # -> 11 days
