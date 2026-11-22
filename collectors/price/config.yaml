@@ -82,6 +82,28 @@ settings:
   # end state; consider lazy-loading only the year buffers a batch touches. MEASURE before
   # relying on these figures -- order-of-magnitude estimate, not a benchmark.
 
+# ---- rate futures (ПЪТ1, 22.11.2026): the market-implied Fed path from free CME futures ----
+# NOT series lines: the contracts roll every month, so rate_futures.py DERIVES the strip from
+# the date and registers each new contract in the archive catalog itself (family "future").
+# Runs as its own step: `python -m collectors.price.rate_futures --daily` (DATACORE_ROOT =
+# price-archive). Kept out of `price:` so the ETF/stock daily and its gates stay byte-identical.
+rate_futures:
+  ZQ:
+    name: "30-Day Fed Funds future"
+    underlying: "monthly average effective fed funds rate"
+    exchange: "CBT"
+    cycle: "monthly"
+    months_ahead: 36     # Yahoo listed Nov 2026..Feb 2028 on 22.11.2026; the rest 404 until listed
+  SR3:
+    name: "3-Month SOFR future"
+    underlying: "SOFR compounded over the reference quarter"
+    exchange: "CME"
+    cycle: "quarterly"
+    quarters_ahead: 17   # current reference quarter + 4 years
+    period: "5d"         # Yahoo refuses longer windows for SR3 ("must be one of: 1d, 5d")
+    history: false       # keep only the newest bar: a "max" pull returned a 2020 fragment of an
+                         # older contract under SR3Z26 (ПЪТ1 rehearsal); our history starts at run 1
+
 # ---- the ETF universe: 131 ETF (ETF-rr) + idx_dxy = 132 daily series ----
 price:
   px_spy_daily:    {symbol: "SPY", name: "SPDR S&P 500", category: "US Equity"}
