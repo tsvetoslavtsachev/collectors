@@ -200,7 +200,7 @@ def test_lihvenite_serii_are_wired_in_config():
         assert m["transform"] == "level" and m["model_freq"] == "daily"
         assert not m.get("computed")
         assert sid in vrm_run.expected_series(cfg)
-    assert len(vrm_run.expected_series(cfg)) == 68   # +4 УБР2, +1 УБР5б, +1 УЛМ1, +1 BAA10Y
+    assert len(vrm_run.expected_series(cfg)) == 72   # +4 УБР2, +1 УБР5б, +1 УЛМ1, +1 BAA10Y, +4 КРЪГ1п
 
 
 # ── ЗЛТ2 Фаза 0б: пренасянето на главата е само за обявените подвижни прозорци ──────
@@ -213,7 +213,7 @@ def _run_full(source_records):
 
 def test_rolling_window_is_declared_only_for_hy():
     # ключът е в config.yaml; днес само ICE серията в FRED е подвижен прозорец
-    assert td.rolling_window_series() == {SID}
+    assert td.rolling_window_series() == {SID, "mkt_ig_oas"}   # КРЪГ1п: IG е също ICE във FRED
     assert FULL not in td.rolling_window_series()
 
 
