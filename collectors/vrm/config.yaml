@@ -101,6 +101,10 @@ fred:
   # back from today). ONLY such series carry their head over and are measured on the
   # overlap (to_datacore.push, ЗЛТ1/ЗЛТ2 Ф.0б); every other series is refused on a short answer.
   mkt_hy_oas:              {ticker: "BAMLH0A0HYM2", transform: level, model_freq: daily,   source_freq: daily, rolling_window: true}
+  # КРЪГ1п (25.11.2026, счупеното на W47, ред 3): спредът на инвестиционния клас, другата
+  # половина от критерия на Ц. за разрастване. Също ICE във FRED: само 3 години назад, затова
+  # rolling_window: true и главата се пренася като при HY. Не е вход на режима.
+  mkt_ig_oas:              {ticker: "BAMLC0A0CM",   transform: level, model_freq: daily,   source_freq: daily, rolling_window: true}
   # ИЛЮ3 (22.11.2026): главата от Treasury и за двете разлики (T10YIE = DGS10 - DFII10,
   # T10Y2Y = DGS10 - DGS2), за 2г, 30г и новите 3м, 5г, реална 5г: петъкът влиза в събота.
   mkt_breakeven_10y:       {ticker: "T10YIE",       transform: level, model_freq: daily,   source_freq: daily, treasury_head: {curve: par, column: "10 Yr", minus: {curve: real, column: "10 YR"}}}
@@ -147,6 +151,14 @@ fred:
   # през тримесечие (празните "." се прескачат). model_freq: monthly_native като УБР2:
   # извън кохортата и котвите, без запълване, с родните дати (първо число на месеца).
   mkt_consumer_sentiment:     {ticker: "UMCSENT", transform: level, model_freq: monthly_native, source_freq: monthly}
+  # КРЪГ1п (25.11.2026, счупеното на W47, редове 3, 6 и 8): ипотечната лихва (седмична,
+  # четвъртък, от 1971), ефективната ставка на Фед (EFFR, работни дни, от 2000, равна на DFF;
+  # същият тикер като таблото на САЩ) и общият CPI (месечен, от 1947). НЕ са вход на режима.
+  # Общият CPI е monthly_native като УЛМ1: извън кохортата, без запълване, първо число на
+  # месеца (macro_core_cpi е в кохортата и е с края на месеца).
+  mkt_mortgage_30y:           {ticker: "MORTGAGE30US", transform: level, model_freq: weekly,         source_freq: weekly}
+  mkt_fed_funds_eff:          {ticker: "EFFR",         transform: level, model_freq: daily,          source_freq: daily}
+  macro_headline_cpi:         {ticker: "CPIAUCSL",     transform: level, model_freq: monthly_native, source_freq: monthly}
   # USD/JPY директно в канона (мандат ORGANISM-v1 Ф6): дрилът четеше двойката
   # само през UUP×FXY прокси-та. Дневна серия като mkt_* — не участва в
   # месечната кохорта/frontier (carry_forward гледа само monthly), не е
