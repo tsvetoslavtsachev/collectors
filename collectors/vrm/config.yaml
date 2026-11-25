@@ -152,12 +152,12 @@ fred:
   # извън кохортата и котвите, без запълване, с родните дати (първо число на месеца).
   mkt_consumer_sentiment:     {ticker: "UMCSENT", transform: level, model_freq: monthly_native, source_freq: monthly}
   # КРЪГ1п (25.11.2026, счупеното на W47, редове 3, 6 и 8): ипотечната лихва (седмична,
-  # четвъртък, от 1971), ефективната ставка на Фед (DFF, дневна с почивните дни, от 1954;
+  # четвъртък, от 1971), ефективната ставка на Фед (EFFR, работни дни, от 2000, равна на DFF;
   # същият тикер като таблото на САЩ) и общият CPI (месечен, от 1947). НЕ са вход на режима.
   # Общият CPI е monthly_native като УЛМ1: извън кохортата, без запълване, първо число на
   # месеца (macro_core_cpi е в кохортата и е с края на месеца).
   mkt_mortgage_30y:           {ticker: "MORTGAGE30US", transform: level, model_freq: weekly,         source_freq: weekly}
-  mkt_fed_funds_eff:          {ticker: "DFF",          transform: level, model_freq: daily,          source_freq: daily}
+  mkt_fed_funds_eff:          {ticker: "EFFR",         transform: level, model_freq: daily,          source_freq: daily}
   macro_headline_cpi:         {ticker: "CPIAUCSL",     transform: level, model_freq: monthly_native, source_freq: monthly}
   # USD/JPY директно в канона (мандат ORGANISM-v1 Ф6): дрилът четеше двойката
   # само през UUP×FXY прокси-та. Дневна серия като mkt_* — не участва в

@@ -1,7 +1,7 @@
 """КРЪГ1п (25.11.2026): четирите серии, които седмичният анализ на W47 не намери.
 
 mkt_ig_oas (BAMLC0A0CM, ICE във FRED: подвижен прозорец от 3 години, главата се пренася
-като при HY), mkt_mortgage_30y (MORTGAGE30US, седмична), mkt_fed_funds_eff (DFF, дневна),
+като при HY), mkt_mortgage_30y (MORTGAGE30US, седмична), mkt_fed_funds_eff (EFFR, работни дни),
 macro_headline_cpi (CPIAUCSL, monthly_native). Нито една не е вход на режима: кохортата,
 котвите и множеството за запълване остават същите. Мутациите доказват, че пазачите не са
 сенки: с model_freq: monthly общият CPI влиза в кохортата; без rolling_window IG губи
@@ -26,7 +26,7 @@ CFG = yaml.safe_load((Path(vrm_run.__file__).parent / "config.yaml")
 NEW = {
     "mkt_ig_oas": ("BAMLC0A0CM", "daily"),
     "mkt_mortgage_30y": ("MORTGAGE30US", "weekly"),
-    "mkt_fed_funds_eff": ("DFF", "daily"),
+    "mkt_fed_funds_eff": ("EFFR", "daily"),
     "macro_headline_cpi": ("CPIAUCSL", "monthly_native"),
 }
 
