@@ -1,0 +1,70 @@
+name: fiscal-weekly
+
+# Needs repo secrets:
+#   DATACORE_PAT  - PAT (repo scope) to checkout + push the private data-core
+#
+# The fiscal citizen (ПРОЛЕТБ2, 27.11.2026): the average rate on US marketable debt
+# (Fiscal Data), the Fed's Treasury portfolio (NY Fed SOMA), debt held by the public
+# (Fiscal Data, Debt to the Penny) into canonical, and the coupon auctions (TreasuryDirect)
+# into data/auctions/. All keyless. Reader: data-core migrations/m_dalg, the block
+# "Петте въпроса" (Saturday, after the citizens). Mirrors gold.yml: fetch -> write -> commit
+# -> freshness lamp.
+
+on:
+  schedule:
+    - cron: "53 4 * * 6"    # Sat 04:53 UTC -- after gold (04:43), before vrm (05:23)
+  workflow_dispatch:
+
+concurrency:
+  group: fiscal-collector
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout collectors
+        uses: actions/checkout@v5
+
+      - name: Checkout data-core (private)
+        uses: actions/checkout@v5
+        with:
+          repository: tsvetoslavtsachev/data-core
+          token: ${{ secrets.DATACORE_PAT }}
+          path: _data-core
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install deps + writer lib
+        run: |
+          pip install -r requirements.txt
+          pip install -e "./_data-core[watch]"
+
+      - name: Run fiscal collector
+        env:
+          DATACORE_ROOT: ${{ github.workspace }}/_data-core
+          PYTHONIOENCODING: utf-8
+        run: python -m collectors.fiscal.run
+
+      - name: Commit canonical + auctions + health -> data-core (private)
+        if: always()
+        working-directory: _data-core
+        run: |
+          git config user.name "collectors-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data health
+          git diff --cached --quiet || git commit -m "fiscal: $(date -u +%Y-%m-%d) canonical + auctions"
+          git pull --rebase --quiet
+          git push
+
+      - name: Freshness lamp (every fiscal series within its limit)
+        env:
+          DATACORE_ROOT: ${{ github.workspace }}/_data-core
+          PYTHONIOENCODING: utf-8
+        run: python -m collectors.fiscal.run --lamp
