@@ -80,6 +80,15 @@ jobs:
           pip install -r requirements.txt pytest
           python -m pytest collectors/gold/tests -q
 
+      - name: Run offline fiscal-citizen tests (ПРОЛЕТБ2)
+        # pytest: the "null" trap, auctions without results, the table guard, the lamp. No network.
+        env:
+          DATACORE_ROOT: ${{ github.workspace }}/_data-core
+          PYTHONPATH: ${{ github.workspace }}/_data-core:${{ github.workspace }}
+        run: |
+          pip install -r requirements.txt pytest
+          python -m pytest collectors/fiscal/tests -q
+
       - name: Run offline futures + Friday-rates + VIX/MOVE tests (ИЛЮ3)
         # pytest: the rate-futures strip and the closing of expired contracts (ПЪТ1, Ч8в),
         # the US Treasury head of the Friday yields and the daily VIX/MOVE bridge. No network.
